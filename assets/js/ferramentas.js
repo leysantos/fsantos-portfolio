@@ -84,41 +84,122 @@ const TOOLS=[
   res:[["Altura",`${f(h,2)} m`],["Banzo superior (comp.)",bs?bs.n:"acima da tabela"],["Banzo inferior (tração)",bi?bi.n:"acima da tabela"],["Diagonal de apoio (comp.)",dg?dg.n:"acima da tabela"]],warn:[bs,bi,dg].some(x=>!x)?["Algum elemento excede a tabela de tubos: aumentar a altura ou usar perfis maiores."]:[]}}}
 ];
 
+// ---------------- MATERIAIS (estimativas) ----------------
+const BARRAS={"5,0":0.154,"6,3":0.245,"8,0":0.395,"10,0":0.617,"12,5":0.963,"16,0":1.578,"20,0":2.466}; // NBR 7480 kg/m
+const BIT=Object.keys(BARRAS);
+// Laje treliçada: consumo de concreto (m³/m²) indicativo por altura
+const TREL_CONSUMO={"H8":0.050,"H12":0.060,"H16":0.070,"H20":0.085,"H25":0.100};
+const ENCH={"Lajota cerâmica (intereixo 42 cm; peça 30×20 cm)":{ie:0.42,comp:0.20,nome:"lajotas cerâmicas"},"EPS (intereixo 50 cm; bloco 40×100 cm)":{ie:0.50,comp:1.00,nome:"blocos de EPS"}};
+const TELAS={"Q-61 (Ø3,4 c/15 — 0,97 kg/m²)":0.97,"Q-92 (Ø4,2 c/15 — 1,48 kg/m²)":1.48};
+const MC=[["nel","Quantidade de elementos iguais","un",1,1,500],["taxa","Taxa de aço estimada","kg/m³",0,1,400],["traco","Traço do concreto (cimento:areia:brita, em massa)","","1:2:3"],["ac","Relação água/cimento","—",0.55,0.3,0.8]];
+const fckI=["fck","fck do concreto","MPa",25,20,90];
+// bar helpers
+function malha(kg,larg,len,cand){for(const b of cand){let q=Math.ceil(kg/(len*BARRAS[b])-1e-9),s=larg/q;if(s>=0.10){if(s>0.20){q=Math.ceil(larg/0.20);s=larg/q}return{b,q,len,s}}}const b=cand[cand.length-1],q=Math.ceil(kg/(len*BARRAS[b]));return{b,q,len,s:larg/q}}
+function longit(kg,q,len,cand=BIT.slice(2)){for(const b of cand)if(q*len*BARRAS[b]>=kg)return{b,q,len};const b=cand[cand.length-1];return{b,q:Math.ceil(kg/(len*BARRAS[b])),len}}
+function estribo(per,L,sp){return{b:"5,0",q:Math.ceil(L/sp)+1,len:per,s:sp}}
+function traco(t){const m=String(t).split(":").map(x=>parseFloat(x.replace(",",".")));return m.length==3&&m[0]==1&&m.every(x=>x>0)?m:null}
+function MAT(t,v,r){const g=t.geo&&t.geo(v,r);if(!g)return null;const n=v.nel||1,out={rows:[],bars:[],perfis:[],notas:[]};
+ if(g.perfis){let tot=0;g.perfis.forEach(([item,p,len,qty])=>{const kg=p.kg*len*qty*n;tot+=kg;out.perfis.push([item,p.n,qty*n,len,p.kg,kg])});
+  out.rows.push(["Aço estrutural (perfis)",f(tot,1),"kg"],["Ligações, chapas e parafusos (+10%)",f(tot*0.1,1),"kg"],["Total estimado de aço",f(tot*1.1,1),"kg"]);out.notas.push("Comprimentos sem cortes/perdas de barra comercial (12 m).");return out}
+ const V=g.V*n,F=g.F*n;out.rows.push([`Concreto C${v.fck} (fck ${v.fck} MPa)`,f(V,3),"m³"]);if(F>0)out.rows.push(["Fôrmas",f(F,2),"m²"]);
+ if(g.extra)g.extra.forEach(x=>out.rows.push(x));
+ let kgTaxa=(g.Vaco??g.V)*n*(v.taxa||0);if(g.taxa2)kgTaxa+=g.taxa2*n;
+ if(g.bars){g.bars.forEach(([item,o])=>out.bars.push([item,o.b,o.q*n,o.len,BARRAS[o.b],o.q*n*o.len*BARRAS[o.b],o.s]))}
+ const kgList=out.bars.reduce((s,x)=>s+x[5],0);
+ if(v.taxa)out.rows.push([`Aço CA-50/60 pela taxa (${f(v.taxa,0)} kg/m³)`,f(kgTaxa,1),"kg"]);
+ if(out.bars.length)out.rows.push(["Aço da lista de barras sugerida",f(kgList,1),"kg"]);
+ if(g.tela)out.rows.push(...g.tela.map(x=>x));
+ const m=traco(v.traco);if(m){const [_,a,b]=m,C=1000/(1/3.1+a/2.65+b/2.7+v.ac),Vp=(g.Vmix??g.V)*n*1.05;
+  out.rows.push([`Cimento (${f(C,0)} kg/m³; +5% perdas)`,`${Math.ceil(C*Vp/50)}`,"sacos 50 kg"],["Areia",f(a*C*Vp/1450,2),"m³"],["Brita 1",f(b*C*Vp/1400,2),"m³"])}
+ // resumo por bitola em barras de 12 m (+10%)
+ const pb={};out.bars.forEach(x=>{pb[x[1]]=(pb[x[1]]||0)+x[2]*x[3]});out.porBitola=Object.entries(pb).map(([b,L])=>[b,L,Math.ceil(L*1.1/12),L*BARRAS[b]]);
+ out.notas.push("Consumo de cimento por volumes absolutos (cimento 3,10; areia 2,65; brita 2,70 t/m³); massas unitárias soltas: areia 1,45 t/m³, brita 1,40 t/m³; perdas de 5% no concreto e 10% nas barras.");
+ if(g.nota)out.notas.push(g.nota);return out}
+const mat=(id,mi,geo)=>{const t=TOOLS.find(x=>x.id==id);t.mi=mi;t.geo=geo};
+const cm=c=>c/100;
+mat("sapata",[fckI,...MC.map(x=>x[0]=="taxa"?[...x.slice(0,3),50,1,400]:x)],(v,r)=>{const[B,L,h]=r._;const V=B*L*h,kg=v.taxa*V,al=(x)=>x-0.10+2*(h-0.10);
+ return{V,F:2*(B+L)*h,bars:[["Malha inferior — direção L",malha(kg/2,B-0.10,al(L),BIT.slice(3))],["Malha inferior — direção B",malha(kg/2,L-0.10,al(B),BIT.slice(3))]],nota:"Volume como prisma retangular (sapata sem chanfro). Barras com ganchos verticais até o topo."}});
+mat("radier",[fckI,...MC.map(x=>x[0]=="taxa"?[...x.slice(0,3),70,1,400]:x)],(v,r)=>{const h=r._[0],A=v.A,lado=Math.sqrt(A),V=A*h,kg=v.taxa*V,q=kg/4;
+ return{V,F:4*lado*h,bars:[["Malha inferior — direção X",malha(q,lado,lado,BIT.slice(2))],["Malha inferior — direção Y",malha(q,lado,lado,BIT.slice(2))],["Malha superior — direção X",malha(q,lado,lado,BIT.slice(1))],["Malha superior — direção Y",malha(q,lado,lado,BIT.slice(1))]],nota:"Planta considerada quadrada equivalente (lado = √A) para perímetro e comprimento das barras; emendas não incluídas."}});
+mat("estacas",[fckI,["Le","Comprimento de cada estaca","m",8,1,40],["te","Taxa de aço das estacas","kg/m³",25,0,150],...MC.map(x=>x[0]=="taxa"?["taxa","Taxa de aço do bloco","kg/m³",80,1,400]:x)],(v,r)=>{const[bx,by,h,ne]=r._,Vb=bx*by*h,ve=ne*Math.PI/4*Math.pow(cm(v.phi),2)*v.Le,kg=v.taxa*Vb;
+ return{V:Vb+ve,Vaco:Vb,taxa2:v.te*ve,F:2*(bx+by)*h,extra:[["  · concreto do bloco",f(Vb*(v.nel||1),3),"m³"],["  · concreto das estacas",f(ve*(v.nel||1),3),"m³"]],
+ bars:[["Bloco — armadura principal (dir. maior)",malha(kg*0.4,by-0.10,bx-0.10+2*(h-0.10),BIT.slice(3))],["Bloco — armadura (dir. menor)",malha(kg*0.4,bx-0.10,by-0.10+2*(h-0.10),BIT.slice(3))],["Bloco — estribos/pele",malha(kg*0.2,h*2,2*(bx+by),BIT.slice(1))],["Estacas — longitudinais (arranque)",longit(v.te*ve/ne*0.8,4*ne,Math.min(v.Le,4))]],
+ nota:"Aço do bloco pela taxa do bloco; aço das estacas pela taxa das estacas (armadura de topo/arranque). Fôrma só do bloco."}});
+mat("pilar",[["pd","Pé-direito por pavimento","m",3,2,8],...MC.map(x=>x[0]=="taxa"?[...x.slice(0,3),130,1,400]:x)],(v,r)=>{const[b,h]=r._,H=v.pd*v.np,V=b*h*H,kg=v.taxa*V,ql=h>0.40?6:4;
+ return{V,F:2*(b+h)*H,bars:[["Longitudinais (com 15% p/ emendas)",longit(kg*0.75,ql,H*1.15)],["Estribos",estribo(2*(b+h)-0.16+0.10,H,0.15)]],nota:"Pilar contínuo com a mesma seção em todos os pavimentos (estimativa a favor do consumo)."}});
+mat("viga",[fckI,...MC.map(x=>x[0]=="taxa"?[...x.slice(0,3),110,1,400]:x)],(v,r)=>{const bw=cm(v.bw),h=r._[0],L=v.L,V=bw*h*L,kg=v.taxa*V,Lb=L+0.30;
+ const es=estribo(2*(bw+h)-0.16+0.10,L,0.15),kges=es.q*es.len*BARRAS["5,0"];
+ return{V,F:(2*h+bw)*L,bars:[["Armadura positiva (inferior)",longit(Math.max(0,(kg-kges))*0.7,3,Lb)],["Armadura negativa/porta-estribos",longit(Math.max(0,(kg-kges))*0.3,2,Lb,BIT.slice(1))],["Estribos",es]],nota:"Barras longitudinais com ancoragem de 15 cm em cada apoio."}});
+mat("laje",[fckI,...MC.map(x=>x[0]=="taxa"?[...x.slice(0,3),80,1,400]:x)],(v,r)=>{const h=r._[0],lx=Math.min(v.lx,v.ly),ly=Math.max(v.lx,v.ly),V=lx*ly*h,kg=v.taxa*V;
+ return{V,F:lx*ly+2*(lx+ly)*h,bars:[["Positiva — direção lx",malha(kg*0.35,ly,lx+0.20,BIT.slice(1))],["Positiva — direção ly",malha(kg*0.25,lx,ly+0.20,BIT.slice(1))],["Negativa sobre apoios (estim.)",malha(kg*0.40,2*(lx+ly),0.25*lx*2+0.20,BIT.slice(1))]]}});
+mat("trelicada",[fckI,["B","Largura da laje (perpendicular às vigotas)","m",4,0.5,30],["ench","Enchimento","",Object.keys(ENCH)[0],null,null,Object.keys(ENCH)],["tela","Tela soldada da capa","",Object.keys(TELAS)[0],null,null,Object.keys(TELAS)],["nel","Quantidade de lajes iguais","un",1,1,500],["traco","Traço do concreto (cimento:areia:brita, em massa)","","1:2:3"],["ac","Relação água/cimento","—",0.55,0.3,0.8]],(v,r)=>{
+ const tipo=r._&&r._[0];if(!tipo)return null;const A=v.L*v.B,cons=TREL_CONSUMO[tipo.split(" ")[0]],V=cons*A,e=ENCH[v.ench],nv=Math.ceil(v.B/e.ie)+1,lv=v.L+0.10,nen=(nv-1)*Math.ceil(v.L/e.comp),tk=TELAS[v.tela],paineis=Math.ceil(A*1.1/14.7),n=v.nel||1;
+ return{V,F:0,extra:[["Área de laje",f(A*n,2),"m²"],[`Consumo de concreto (${tipo.split(" ")[0]})`,f(cons,3),"m³/m²"],[`Vigotas treliçadas (${f(lv,2)} m)`,`${nv*n}`,"un"],[e.nome[0].toUpperCase()+e.nome.slice(1),`${nen*n}`,"un"],["Escoramento (área)",f(A*n,2),"m²"]],
+ tela:[[`Tela soldada ${v.tela.split(" ")[0]} (painel 2,45×6,00 m, +10% transpasse)`,`${paineis*n}`,"painéis"],["Peso da tela",f(A*1.1*tk*n,1),"kg"]],nota:"Consumo de concreto (capa + nervuras) indicativo por altura — confirmar com o fabricante. Fôrma substituída por escoramento + enchimento."}});
+mat("pilar-aco",[["nel","Quantidade de pilares iguais","un",1,1,500]],(v,r)=>r._?{perfis:[["Pilar",r._[0],v.L,1]]}:null);
+mat("viga-aco",[["nel","Quantidade de vigas iguais","un",1,1,500]],(v,r)=>r._?{perfis:[["Viga",r._[0],v.L,1]]}:null);
+mat("trelica",[["nel","Quantidade de treliças iguais","un",1,1,500]],(v,r)=>{const g=r._;if(!g||!g[0]||!g[1]||!g[2])return null;const np=Math.ceil(v.L/v.p);
+ return{perfis:[["Banzo superior",g[0],v.L,1],["Banzo inferior",g[1],v.L,1],["Diagonais",g[2],+Math.hypot(g[3],v.L/np).toFixed(2),np],["Montantes",g[2],+g[3].toFixed(2),np+1]]}});
+// expose geometry from calcs: wrap calc to attach r._
+(()=>{const W=(id,fn)=>{const t=TOOLS.find(x=>x.id==id),c=t.calc;t.calc=v=>{const r=c(v);r._=fn(v,r);return r}};
+ const num=s=>parseFloat(String(s).replace(/\./g,"").replace(",","."));
+ W("sapata",(v,r)=>{const [B,L]=r.res[0][1].match(/[\d.,]+/g).map(num),h=num(r.res[1][1]);return[B/100,L/100,h/100]});
+ W("radier",(v,r)=>[num(r.res[0][1])/100]);
+ W("estacas",(v,r)=>{const [bx,by]=r.res[1][1].match(/[\d.,]+/g).map(num),h=num(r.res[2][1]),ne=parseInt(r.res[0][1]);return[bx/100,by/100,h/100,ne]});
+ W("pilar",(v,r)=>r.res[2][1].match(/[\d.,]+/g).map(num).map(x=>x/100));
+ W("viga",(v,r)=>[num(r.res[0][1].split("×")[1])/100]);
+ W("laje",(v,r)=>[num(r.res[0][1])/100]);
+ W("trelicada",(v,r)=>/^H\d/.test(r.res[0][1])?[r.res[0][1]]:null);
+ const pf=n=>PERFIS_W.find(p=>p.n==n),tb=n=>TUBOS.find(p=>p.n==n);
+ W("pilar-aco",(v,r)=>{const m=r.res[0][1].match(/^(W\S+)/);return m?[pf(m[1])]:null});
+ W("viga-aco",(v,r)=>{const m=r.res[3][1].match(/^(W\S+)/);return m?[pf(m[1])]:null});
+ W("trelica",(v,r)=>[tb(r.res[1][1]),tb(r.res[2][1]),tb(r.res[3][1]),v.L/parseInt(v.r.slice(2))])})();
+
 // ---------------- UI ----------------
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
-const tabs=$("#ftabs"),panel=$("#fpanel");let cur=null;
+const tabs=$("#ftabs"),panel=$("#fpanel");let cur=null,last=null;
 [...new Set(TOOLS.map(t=>t.g))].forEach(g=>{tabs.insertAdjacentHTML("beforeend",`<div class="fgrp"><span>${g}</span>${TOOLS.filter(t=>t.g==g).map(t=>`<button data-id="${t.id}">${t.t}</button>`).join("")}</div>`)});
 tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{open(b.dataset.id);history.replaceState(null,"","#"+b.dataset.id)});
-function readVals(t){const v={},err=[];t.inp.forEach(([id,lab,un,def,mn,mx,opts])=>{const el=$("#i-"+id);if(opts){v[id]=el.value;return}const x=parseFloat(String(el.value).replace(",","."));const lo=mn??(id=="n"?0:1e-9),hi=mx??1e7;
+const allInp=t=>[...t.inp,...(t.mi||[])];
+const field=([id,lab,un,def,mn,mx,opts])=>`<label>${lab}${un&&un!="—"?` (${un})`:""}${opts?`<select id="i-${id}">${opts.map(o=>`<option ${o==def?"selected":""}>${o}</option>`).join("")}</select>`:`<input id="i-${id}" ${id=="traco"?"":'inputmode="decimal"'} value="${String(def).replace(".",",")}">`}</label>`;
+function readVals(t){const v={},err=[];allInp(t).forEach(([id,lab,un,def,mn,mx,opts])=>{const el=$("#i-"+id);if(opts){v[id]=el.value;return}
+  if(id=="traco"){if(!traco(el.value)){err.push("Traço inválido (use 1:a:b, ex.: 1:2:3)");el.classList.add("bad")}else{el.classList.remove("bad");v[id]=el.value}return}
+  const x=parseFloat(String(el.value).replace(",","."));const lo=mn??1e-9,hi=mx??1e7;
   if(!isFinite(x)||x<lo||x>hi){err.push(`${lab}: valor inválido${mn!=null||mx!=null?` (${mn??"…"} a ${mx??"…"})`:" (deve ser > 0)"}`);el.classList.add("bad")}else{el.classList.remove("bad");v[id]=x}});return{v,err}}
 function open(id){cur=TOOLS.find(t=>t.id==id)||TOOLS[0];tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id==cur.id));const t=cur;
-  panel.innerHTML=`<h2>${t.t}</h2><p class="fg">${t.g}</p><div class="fcols"><form class="oform" id="fform" onsubmit="return false"><div class="ogrid">${t.inp.map(([id,lab,un,def,mn,mx,opts])=>`<label>${lab}${un&&un!="—"?` (${un})`:""}${opts?`<select id="i-${id}">${opts.map(o=>`<option ${o==def?"selected":""}>${o}</option>`).join("")}</select>`:`<input id="i-${id}" inputmode="decimal" value="${String(def).replace(".",",")}">`}</label>`).join("")}</div>
+  panel.innerHTML=`<h2>${t.t}</h2><p class="fg">${t.g}</p><div class="fcols"><form class="oform" id="fform" onsubmit="return false"><div class="ogrid">${t.inp.map(field).join("")}</div>
+  ${t.mi?`<fieldset class="fmat"><legend>Materiais (estimativa)</legend><div class="ogrid">${t.mi.map(field).join("")}</div></fieldset>`:""}
   ${t.table?`<details class="ftab"><summary>Tabela de vãos máximos (editável)</summary><table><thead><tr><th>Laje</th>${TRELICADA.cargas.map(c=>`<th>q ≤ ${f(c,1)}</th>`).join("")}</tr></thead><tbody>${TRELICADA.linhas.map((r,i)=>`<tr><td>${r[0]}</td>${r.slice(1).map((x,j)=>`<td><input data-r="${i}" data-c="${j+1}" value="${f(x,1)}"></td>`).join("")}</tr>`).join("")}</tbody></table></details>`:""}
   <details><summary>Hipóteses adotadas</summary><ul>${t.hip.map(h=>`<li>${h}</li>`).join("")}</ul></details></form>
-  <div class="fres" id="fres"></div></div>`;
+  <div class="fres" id="fres"></div></div><div id="fmatout"></div>`;
   if(t.id=="estacas")$("#i-tipo").onchange=()=>{const[d,q]=ESTACAS[$("#i-tipo").value];$("#i-Q").value=q;$("#i-phi").value=d;run()};
   panel.querySelectorAll(".ftab input").forEach(i=>i.oninput=()=>{const x=parseFloat(i.value.replace(",","."));if(x>0)TRELICADA.linhas[i.dataset.r][i.dataset.c]=x;run()});
-  $("#fform").addEventListener("input",run);run()}
-let last=null;
-function run(){const t=cur,{v,err}=readVals(t),box=$("#fres");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;return}
-  const r=t.calc({...v});last={t,v,r};
+  $("#fform").addEventListener("input",run);$("#fform").addEventListener("change",run);run()}
+function matHTML(M,cls=""){if(!M)return"";return `<h3>Tabela resumo de aço e materiais <small>(estimativa)</small></h3>
+ <table class="${cls}"><thead><tr><th>Item</th><th>Quantidade</th><th>Unid.</th></tr></thead><tbody>${M.rows.map(([a,b,c])=>`<tr><td>${a}</td><td class="n">${b}</td><td>${c}</td></tr>`).join("")}</tbody></table>
+ ${M.bars.length?`<h4>Lista de barras sugerida (NBR 7480)</h4><table class="${cls}"><thead><tr><th>Posição</th><th>Ø (mm)</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th><th>Espaç.</th></tr></thead><tbody>${M.bars.map(([a,b,q,l,m,kg,s])=>`<tr><td>${a}</td><td>${b}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,3)}</td><td class="n">${f(kg,1)}</td><td>${s?"c/ "+f(s*100,0)+" cm":"—"}</td></tr>`).join("")}<tr><td colspan="5"><b>Total</b></td><td class="n"><b>${f(M.bars.reduce((s,x)=>s+x[5],0),1)}</b></td><td></td></tr></tbody></table>
+ <h4>Resumo por bitola</h4><table class="${cls}"><thead><tr><th>Ø (mm)</th><th>Comprimento total (m)</th><th>Barras de 12 m (+10%)</th><th>Peso (kg)</th></tr></thead><tbody>${M.porBitola.map(([b,L,n12,kg])=>`<tr><td>${b}</td><td class="n">${f(L,1)}</td><td class="n">${n12}</td><td class="n">${f(kg,1)}</td></tr>`).join("")}</tbody></table>`:""}
+ ${M.perfis.length?`<h4>Lista de perfis</h4><table class="${cls}"><thead><tr><th>Elemento</th><th>Perfil</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th></tr></thead><tbody>${M.perfis.map(([a,p,q,l,m,kg])=>`<tr><td>${a}</td><td>${p}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,1)}</td><td class="n">${f(kg,1)}</td></tr>`).join("")}</tbody></table>`:""}
+ <p class="fnote">Estimativa de quantitativos para orçamento preliminar. ${M.notas.join(" ")}</p>`}
+function run(){const t=cur,{v,err}=readVals(t),box=$("#fres"),mo=$("#fmatout");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;mo.innerHTML="";return}
+  const r=t.calc({...v}),M=MAT(t,{...v},r);last={t,v,r,M};
   box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
   <details open><summary>Passo a passo</summary><ol>${r.steps.map(([a,b,c])=>`<li><b>${a}</b><br><code>${b}</code><br>${c}</li>`).join("")}</ol></details>
   <button class="btn" id="fmem" type="button">Gerar memória de cálculo</button><p class="fdisc">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART.</p>`;
-  $("#fmem").onclick=memorial}
-function memorial(){if(!last)return;const {t,v,r}=last,el=$("#proposta"),hoje=new Date().toLocaleDateString("pt-BR");
+  mo.innerHTML=M?`<div class="fmatbox">${matHTML(M)}</div>`:"";$("#fmem").onclick=memorial}
+function memorial(){if(!last)return;const {t,v,r,M}=last,el=$("#proposta"),hoje=new Date().toLocaleDateString("pt-BR");
   el.innerHTML=`<div class="pp-head"><img src="assets/img/logo-fsantos.png" alt=""><div><strong>FSantos Engenharia — Santos Projetos & Orçamentos</strong><br>Eng. Civil Francirley Pereira Santos — CREA 31.410-AM</div></div>
   <p class="pp-flag">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART</p><h2>MEMÓRIA DE CÁLCULO</h2><p class="pp-sub">${t.g} — ${t.t}</p><p>Manaus/AM, ${hoje}</p>
-  <h3>1. Dados de entrada</h3><table class="pp-t"><tbody>${t.inp.map(([id,lab,un])=>`<tr><td>${lab}</td><td>${typeof v[id]=="number"?f(v[id],v[id]%1?2:0):esc(v[id])} ${un&&un!="—"?un:""}</td></tr>`).join("")}</tbody></table>
+  <h3>1. Dados de entrada</h3><table class="pp-t"><tbody>${allInp(t).map(([id,lab,un])=>`<tr><td>${lab}</td><td>${typeof v[id]=="number"?f(v[id],v[id]%1?2:0):esc(v[id])} ${un&&un!="—"?un:""}</td></tr>`).join("")}</tbody></table>
   <h3>2. Hipóteses</h3><ul>${t.hip.map(h=>`<li>${h}</li>`).join("")}</ul>
   <h3>3. Cálculo passo a passo</h3><table class="pp-t"><thead><tr><th>Etapa</th><th>Fórmula</th><th>Resultado</th></tr></thead><tbody>${r.steps.map(([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`).join("")}</tbody></table>
   <h3>4. Resultados</h3><table class="pp-t"><tbody>${r.res.map(([a,b])=>`<tr><td><b>${a}</b></td><td><b>${b}</b></td></tr>`).join("")}</tbody></table>${r.warn.length?`<p><b>Observações:</b> ${r.warn.join(" ")}</p>`:""}
-  <h3>5. Referências</h3><ul>${t.refs.map(x=>`<li>${x}</li>`).join("")}</ul>
-  <p class="pp-flag">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART. Os valores devem ser confirmados por cálculo estrutural completo, sondagem e normas vigentes.</p>
+  ${M?`<div class="pp-mat">${matHTML(M,"pp-t").replace("<h3>","<h3>5. ")}</div>`:""}
+  <h3>${M?6:5}. Referências</h3><ul>${t.refs.map(x=>`<li>${x}</li>`).join("")}${M&&M.bars.length?"<li>ABNT NBR 7480:2022 — aço para armaduras (massas lineares nominais)</li>":""}</ul>
+  <p class="pp-flag">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART. Quantitativos são estimativas e devem ser confirmados pelo projeto executivo, sondagem e normas vigentes.</p>
   <div class="pp-sig"><div class="pp-sb"><div class="pp-sl"><img src="assets/img/logo-fsantos.png" alt=""></div><div class="pp-line"></div><div class="pp-st"><b>ENG. CIVIL FRANCIRLEY PEREIRA SANTOS</b><br>CREA: 31.410-AM<br>Santos Projetos & Orçamentos<br>Fone: (92) 99226-2786</div></div></div>
   <div class="pp-act noprint"><button class="btn" data-a="p">Imprimir / salvar PDF</button><button class="btn ghost" data-a="c">Fechar</button></div>`;
   el.querySelector('[data-a="p"]').onclick=()=>print();el.querySelector('[data-a="c"]').onclick=()=>document.body.classList.remove("pp-open");document.body.classList.add("pp-open");scrollTo(0,0)}
 open(location.hash.slice(1));
-// menu mobile
 (()=>{const b=document.querySelector(".burger"),n=document.getElementById("menu");if(b)b.onclick=()=>{const o=n.classList.toggle("open");b.setAttribute("aria-expanded",o)}})();
-window.__TOOLS=TOOLS;
+window.__TOOLS=TOOLS;window.__MAT=MAT;

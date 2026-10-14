@@ -12,3 +12,8 @@
 .ftab table{width:100%;border-collapse:collapse;font-size:.85rem}.ftab td,.ftab th{padding:.25rem;border-bottom:1px solid #ffffff14}.ftab input{width:60px;padding:.25rem;background:var(--navy);color:var(--txt);border:1px solid #ffffff2a;border-radius:4px}
 @media(max-width:900px){.fwrap{grid-template-columns:1fr}.ftabs{position:static;flex-direction:row;overflow-x:auto}.fgrp{flex-direction:row;align-items:center;flex-wrap:nowrap}.fgrp span{white-space:nowrap}.ftabs button{white-space:nowrap}.fcols{grid-template-columns:1fr}}
 @media(max-width:900px){.ftabs{flex-direction:column;overflow:visible;gap:.6rem}.fgrp{flex-wrap:wrap;gap:.35rem}.fgrp span{width:100%}.ftabs button{padding:.4rem .7rem;font-size:.88rem}}
+.fmat{margin-top:1rem}.fmatbox{margin-top:1.5rem;background:var(--navy2);border:1px solid #2ee59d44;border-radius:12px;padding:1rem 1.2rem;overflow-x:auto}
+.fmatbox h3{margin:0 0 .6rem;color:#2ee59d}.fmatbox h3 small{color:var(--mut);font-weight:400}.fmatbox h4{margin:1.1rem 0 .4rem;color:var(--gold)}
+.fmatbox table{width:100%;border-collapse:collapse;font-size:.88rem}.fmatbox th,.fmatbox td{padding:.4rem .5rem;border-bottom:1px solid #ffffff14;text-align:left}.fmatbox td.n{text-align:right;font-variant-numeric:tabular-nums}
+.fnote{color:var(--mut);font-size:.82rem;margin-top:.8rem}#proposta .pp-mat h4{color:#0b1a30;margin:.9rem 0 .3rem}#proposta .pp-mat table{margin-bottom:.4rem}#proposta td.n{text-align:right}#proposta .fnote{color:#444}
+#proposta .pp-t tr{break-inside:avoid}
