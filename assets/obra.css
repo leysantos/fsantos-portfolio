@@ -55,3 +55,12 @@ body.obra #proposta .pb-f{display:flex;justify-content:space-between;gap:8px;bor
 .ob.cont .nc{display:none!important}.ob:not(.cont) .cont-only{display:none!important}
 
 .oid{margin:.2rem 0 .8rem;padding:.55rem .8rem;border-left:3px solid #f2b632;background:rgba(242,182,50,.08);border-radius:8px}
+
+/* alinhamento dos campos pela base das caixas */
+.ob .ogrid{align-items:end}
+.ob .ogrid>label{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.ob .ogrid>label .lt{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ob .ogrid>label .lt small{display:inline;font-size:.78em;opacity:.7;margin-left:.2rem;font-weight:400}
+.ob .ogrid>label.ck{justify-content:flex-end}
+.ob .ogrid>label.ck>span{min-height:44px;align-items:center}
+.ob .ogrid>label>input:not([type=checkbox]),.ob .ogrid>label>select{height:44px;box-sizing:border-box;margin-top:.3rem}
