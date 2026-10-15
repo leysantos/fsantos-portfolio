@@ -93,3 +93,14 @@ footer a.restrito{color:var(--mut);opacity:.6;font-size:.8rem;text-decoration:no
 @keyframes bpulse2{0%{box-shadow:0 0 0 0 rgba(46,196,182,.6)}70%{box-shadow:0 0 0 7px rgba(46,196,182,0)}100%{box-shadow:0 0 0 0 rgba(46,196,182,0)}}
 @media(max-width:700px){.hero .cta,.hero .tcta-row{grid-template-columns:1fr;width:min(360px,100%)}.hero .cta .btn{width:100%}.hero .tcta-row .tcta,.hero .tcta-row .tcta.tcta-obra{height:72px}}
 @media(prefers-reduced-motion:reduce){.hero .tcta .tbadge{animation:none!important}.hero .tcta-row .tcta:hover{transform:none}}
+
+/* logo v2: anel âmbar, flutuação e brilho */
+.logo-anim{position:relative;display:inline-block;width:min(220px,50vw);animation:lfloat 6s ease-in-out infinite;will-change:transform}
+.logo-anim picture,.logo-anim .hlogo{display:block;width:100%;height:auto}
+.logo-anim::before{content:"";position:absolute;left:5.1%;top:5.3%;width:89.6%;aspect-ratio:1;border-radius:50%;border:2px solid #f2b63259;box-shadow:0 0 14px 2px #f2b63240,inset 0 0 10px #f2b63222;pointer-events:none;animation:lglow 6s ease-in-out infinite}
+.logo-anim::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 38%,#ffffff8c 50%,transparent 62%) no-repeat;background-size:260% 100%;background-position:160% 0;-webkit-mask:url(img/logo-fsantos@2x.png) center/100% 100% no-repeat;mask:url(img/logo-fsantos@2x.png) center/100% 100% no-repeat;mix-blend-mode:screen;animation:lshine 7s ease-in-out 1.2s infinite}
+@keyframes lfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes lglow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
+@keyframes lshine{0%{background-position:160% 0}28%,100%{background-position:-60% 0}}
+.brand img{image-rendering:auto}
+@media (prefers-reduced-motion:reduce){.logo-anim,.logo-anim::before{animation:none}.logo-anim::after{display:none}}

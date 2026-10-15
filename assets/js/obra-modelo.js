@@ -13,7 +13,7 @@ export const TIPOS={
 // CUB-AM (Sinduscon-AM), competência ago/2026, R$/m² — referência de comparação apenas
 export const CUB={ref:"08/2026",fonte:"Sinduscon-AM (via CBIC)","R1-B":3120.00,"R1-N":3742.05,"R1-A":5095.41,"GI":1737.94,"CSL8-N":3121.77,"CAL8-N":3412.30};
 // tipos de ambiente: s=seco, d=dormitório, b=banheiro, c=cozinha, a=área de serviço, e=externo coberto (varanda/garagem), g=galpão/produção
-export const TAMB={s:"Sala / seco",d:"Dormitório",b:"Banheiro",c:"Cozinha",a:"Área de serviço",e:"Varanda / garagem",g:"Área de produção / armazenagem",l:"Loja / salão comercial"};
+export const TAMB={s:"Sala / seco",d:"Dormitório",b:"Banheiro",c:"Cozinha",a:"Área de serviço",e:"Varanda / garagem",g:"Área de produção / armazenagem",l:"Loja / salão comercial",m:"Área gourmet"};
 export const PRESETS={
   baixo:[["Sala","s",3.5,4],["Cozinha","c",2.8,3],["Dormitório 1","d",3,3],["Dormitório 2","d",2.8,3],["Banheiro","b",1.5,2.2],["Área de serviço","a",1.5,2]],
   medio:[["Sala de estar/jantar","s",4,5],["Cozinha","c",3,3.5],["Suíte","d",3.3,3.6],["Dormitório","d",3,3.2],["Banheiro social","b",1.6,2.4],["Banho suíte","b",1.6,2.2],["Área de serviço","a",1.6,2.2],["Varanda","e",2,4]],
@@ -23,7 +23,7 @@ export const PRESETS={
   galpao:[["Área de produção / armazenagem","g",20,22.4],["Escritório","s",4,5],["Banheiro masc.","b",2,2.5],["Banheiro fem.","b",2,2.5],["Copa","c",2.5,3]]};
 const UP=(x)=>Math.ceil(x-1e-9);
 // pontos por tipo de ambiente: [tomadas, interruptores, pontos de luz, pontos de água]
-const PTS={s:[4,1,1,0],d:[4,1,1,0],b:[2,1,1,3],c:[6,1,1,2],a:[3,1,1,2],e:[2,1,2,1],g:[0,0,0,0],l:[0,0,0,0]};
+const PTS={s:[4,1,1,0],d:[4,1,1,0],b:[2,1,1,3],c:[6,1,1,2],a:[3,1,1,2],e:[2,1,2,1],g:[0,0,0,0],l:[0,0,0,0],m:[6,1,2,2]};
 export const REGRAS=[
  "Área dos ambientes (Aamb) = Σ largura × comprimento de todos os ambientes informados (de todos os pavimentos).",
  "Área construída (Ac) = Aamb × fator de paredes (baixo 1,12; médio 1,15; alto 1,18; galpão 1,03). Projeção (Ap) = Ac ÷ nº de pavimentos.",
@@ -45,6 +45,7 @@ export const REGRAS=[
  "Canteiro: barracão de obra 3×4 m (galpão 4×6 m) composto com itens SINAPI (paredes em compensado, cobertura em fibrocimento, piso em concreto); ligações provisórias com entrada de energia e kit cavalete SINAPI; placa de obra 3,0×2,0 m (casas 2,0×1,5 m); ART como verba (taxa CREA-AM, conferir tabela vigente).",
  "Cobertura (casas): Simples = telhado sobre estrutura (madeira; terças de aço p/ termoacústica) + forro. Completa = laje pré-moldada de cobertura + tesouras/terças de aço + telha + manta asfáltica em calhas/faixa exposta + teto da laje em gesso. Telha: Simples = fibrocimento (baixo) ou cerâmica (médio/alto), metálica nos galpões; Termoacústica = telha metálica SINAPI + adicional de verba R$ 85/m² (telha sanduíche sem preço SINAPI-AM).",
  "Calibração CUB: o ajuste é calculado na configuração de referência do padrão (cobertura simples p/ baixo/médio, completa p/ alto; telha simples; sem mezanino) e mantido fixo; as diferenças de cobertura, telha e mezanino entram integralmente no total.",
+ "Piscina (casas): escavação, lastro, concreto armado 15 cm (fundo e paredes, fôrma 2 faces, aço 90 kg/m³), reaterro, impermeabilização polimérica com véu, pastilha, borda em granito, calçada 1 m, motobomba; casa de máquinas/filtro/tubulação como verba a cotar. Fora da base comparável do CUB: entra integralmente no total.",
  "Mezanino (galpões, 1 pavimento fixo): área ≤ projeção do galpão; estrutura metálica 30 kg/m², laje pré-moldada, escada, guarda-corpo, contrapiso e piso cerâmico, iluminação. Área do mezanino somada à área construída.",
  "Pavimentos: cada ambiente indica em qual pavimento fica (padrão Térreo; Todos = repetido em cada pavimento). A área construída é a soma de todos os pavimentos; a projeção (maior pavimento) define cobertura e fundações. Cada pavimento extra acrescenta laje entre pisos, escada, pilares, vigas, alvenaria, revestimentos e instalações; a cobertura é contada uma vez.",
  "Calibração CUB-AM (casas e galpão industrial, opcional e ativada por padrão): base comparável = custo direto − fundações (etapa 4) − muro/área externa (etapa 17), sem BDI. Ajuste = CUB-AM do padrão (R1-B, R1-N, R1-A; GI para galpão industrial) × Ac − base, lançado como linha própria (etapa 19). Lajes entre pisos e escadas ficam fora da base comparável (o CUB R1 é de residência térrea) e são somadas integralmente, de modo que o total sempre cresce com o número de pavimentos. Galpão comercial não é calibrado (CUB comercial CSL/CAL é de edifício de 8 pavimentos).",
@@ -67,7 +68,8 @@ const SEL={
   tanque:{baixo:"86929",medio:"86925",alto:"86919",galpao:"86929"}};
 export const TERMO_VB=85; // R$/m² adicional (placeholder) da telha sanduíche sobre a telha metálica simples — sem preço SINAPI-AM
 export const defCob=t=>t==="alto"?"completa":"simples";
-export function opcoes(inp){const g=String(inp.tipo).startsWith("galpao");return{cob:g?"simples":(inp.cobertura==="completa"||inp.cobertura==="simples"?inp.cobertura:defCob(inp.tipo)),telha:inp.telha==="termo"?"termo":"simples",mez:g&&inp.mezanino&&inp.mezanino.on?Math.max(0,+inp.mezanino.area||0):0}}
+export function opcoes(inp){const g=String(inp.tipo).startsWith("galpao");return{cob:g?"simples":(inp.cobertura==="completa"||inp.cobertura==="simples"?inp.cobertura:defCob(inp.tipo)),telha:inp.telha==="termo"?"termo":"simples",mez:g&&inp.mezanino&&inp.mezanino.on?Math.max(0,+inp.mezanino.area||0):0,pisc:!g&&inp.piscina&&inp.piscina.on&&+inp.piscina.c>0&&+inp.piscina.l>0&&+inp.piscina.p>0?{c:Math.min(Math.max(+inp.piscina.c,.5),30),l:Math.min(Math.max(+inp.piscina.l,.5),15),p:Math.min(Math.max(+inp.piscina.p,.3),3)}:null}}
+export const PISC_VB=9000; // verba (placeholder) casa de máquinas, filtro, dispositivos, iluminação e tubulação — sem composição SINAPI-AM
 export function quantitativos(inp){
   const T=TIPOS[inp.tipo],g=inp.tipo.startsWith("galpao"),gi=inp.tipo==="galpao_ind",gc=inp.tipo==="galpao_com",nIn=inp.tipo.startsWith("galpao")?1:Math.max(1,inp.pav|0),h=+inp.pd||T.pd;
   // ambientes: p=0 -> repete em todos os pavimentos; p=k (padrão 1, térreo) -> só no pavimento k
@@ -81,7 +83,7 @@ export function quantitativos(inp){
   const Asup=Afl.slice(1).reduce((s,A)=>s+A,0)*T.kp;
   const sumPer=amb.reduce((s,a)=>s+2*(a.l+a.c),0);
   const Lint=Math.max(0,(sumPer-Pext)/2);
-  const fech=amb.filter(a=>a.t!=="e"&&a.t!=="g"&&a.t!=="l"),wet=amb.filter(a=>"bca".includes(a.t)),ban=amb.filter(a=>a.t==="b"),coz=amb.filter(a=>a.t==="c"),serv=amb.filter(a=>a.t==="a");
+  const fech=amb.filter(a=>a.t!=="e"&&a.t!=="g"&&a.t!=="l"&&a.t!=="m"),wet=amb.filter(a=>"bcam".includes(a.t)),ban=amb.filter(a=>a.t==="b"),coz=amb.filter(a=>a.t==="c"),serv=amb.filter(a=>a.t==="a");
   const nPortInt=fech.length,nPortExt=Ac>120?2:1,nPort=nPortInt+nPortExt;
   let Ajan=0,Amax=0,Ljan=0;
   amb.forEach(a=>{const A=a.l*a.c;if(a.t==="b"){Amax+=.48;Ljan+=.6}else if("sdc".includes(a.t)){const w=A/(inp.tipo==="alto"?5:6);Ajan+=w;Ljan+=w/1.2}else if(a.t==="a"){Ajan+=A/8;Ljan+=A/8/1.2}});
@@ -115,9 +117,10 @@ export function quantitativos(inp){
   // elétrica / hidro
   const mult=inp.tipo==="alto"?1.5:1;let Tm=0,Im=0,Lu=0,Pa=0;
   amb.forEach(a=>{const p=PTS[a.t]||[0,0,0,0];Tm+=p[0];Im+=p[1];Lu+=p[2];Pa+=p[3];if(a.t==="g"){const A=a.l*a.c;Lu+=UP(A/20);Tm+=UP(A/25);Im+=2}if(a.t==="l"){const A=a.l*a.c;Lu+=UP(A/6);Tm+=UP(A/12);Im+=3}});
+  const nEsc=amb.filter(a=>/escrit/i.test(a.nome||"")&&!String(inp.tipo).startsWith("galpao")).length;Tm+=nEsc*4;
   Tm=UP(Tm*mult);Im=UP(Im*mult);Lu=UP(Lu*mult);
   const dur=Math.max(3,2.5+Math.pow(Ac,.6)/4)*T.dur;
-  return {T,g,gi,gc,Aprod:amb.filter(a=>a.t==="g").reduce((s,a)=>s+a.l*a.c,0),Aloja:amb.filter(a=>a.t==="l").reduce((s,a)=>s+a.l*a.c,0),Afl:Afl.map(A=>A*T.kp),nPav:n,OP,Amez,mezReq,mezErr,Atop:Afl[n-1],nPavIn:nIn,Asup,nPNE:amb.filter(a=>/PNE/i.test(a.nome||"")).length,nVest:amb.filter(a=>a.t==="b"&&/vesti/i.test(a.nome||"")).length,nMasc:amb.filter(a=>a.t==="b"&&/masc/i.test(a.nome||"")).length,n,h,Aamb,Ac,Ap,Pext1,Pext,Lint,nPortInt,nPortExt,nPort,Ajan,Amax,Ljan,Avaos,Alv,RebInt,RebExt,Ceram,Awet,Pwet,Pseco,Aforro,Acob,Lcum,Lb,Vb,Np,Vs,Escs,Lastro,Escb,Vp,Fp,Lv,Vv,Fv,Alaje,aco,terca,Lmuro,hm,Amuro,Tm,Im,Lu,Pa,nBan:ban.length,nDorm:amb.filter(a=>a.t==="d").length,nSala:amb.filter(a=>a.t==="s"&&!/closet/i.test(a.nome||"")).length,nSalaE:amb.filter(a=>a.t==="e"||(a.t==="s"&&/sala|living|estar/i.test(a.nome||""))).length,nCoz:coz.length,nServ:serv.length,nWet:wet.length,dur,terrA:L*C,frente:L};
+  return {T,g,gi,gc,Aprod:amb.filter(a=>a.t==="g").reduce((s,a)=>s+a.l*a.c,0),Aloja:amb.filter(a=>a.t==="l").reduce((s,a)=>s+a.l*a.c,0),Afl:Afl.map(A=>A*T.kp),nPav:n,nEsc,nGour:amb.filter(a=>a.t==="m").length,OP,Amez,mezReq,mezErr,Atop:Afl[n-1],nPavIn:nIn,Asup,nPNE:amb.filter(a=>/PNE/i.test(a.nome||"")).length,nVest:amb.filter(a=>a.t==="b"&&/vesti/i.test(a.nome||"")).length,nMasc:amb.filter(a=>a.t==="b"&&/masc/i.test(a.nome||"")).length,n,h,Aamb,Ac,Ap,Pext1,Pext,Lint,nPortInt,nPortExt,nPort,Ajan,Amax,Ljan,Avaos,Alv,RebInt,RebExt,Ceram,Awet,Pwet,Pseco,Aforro,Acob,Lcum,Lb,Vb,Np,Vs,Escs,Lastro,Escb,Vp,Fp,Lv,Vv,Fv,Alaje,aco,terca,Lmuro,hm,Amuro,Tm,Im,Lu,Pa,nBan:ban.length,nDorm:amb.filter(a=>a.t==="d").length,nSala:amb.filter(a=>a.t==="s"&&!/closet/i.test(a.nome||"")).length,nSalaE:amb.filter(a=>a.t==="e"||(a.t==="s"&&/sala|living|estar/i.test(a.nome||""))).length,nCoz:coz.length,nServ:serv.length,nWet:wet.length,dur,terrA:L*C,frente:L};
 }
 // cada item: [etapa(1-18), código SINAPI ou null para verba, quantidade, obs?, custoVerba?]
 export function itens(inp,Q){
@@ -178,6 +181,16 @@ export function itens(inp,Q){
   add(7,termo?"94213":S("telha"),Q.Acob,termo?"Telhamento com telha metálica (base da telha termoacústica)":"Telhamento");
   if(termo)I.push({e:7,c:"VERBA-TERMO",u:"M2",q:Q.Acob,o:"Adicional telha termoacústica sanduíche (PU 30 mm) sobre a telha metálica simples — sem composição/preço SINAPI-AM (só insumo I40740 sem preço); verba de referência R$ "+TERMO_VB+"/m², cotar localmente",v:TERMO_VB});
   if(!termo)add(7,S("cumeeira"),Q.Lcum,"Cumeeira");
+  if(Q.nEsc)add(9,"98307",Q.nEsc*2,"Escritório — pontos de rede RJ45 (2 por escritório; +4 tomadas já somadas)");
+  if(Q.nGour){add(16,"93441",Q.nGour,"Área gourmet — bancada de granito com cuba");add(16,"106781",Q.nGour,"Área gourmet — bancada de apoio em granito 3,00 m");I.push({e:16,c:"VERBA-CHURR",u:"UN",q:Q.nGour,o:"Área gourmet — churrasqueira pré-moldada com coifa/duto — sem composição SINAPI-AM; verba de referência R$ 3.500,00, cotar localmente",v:3500})}
+  if(OP.pisc){const {c:C,l:W,p:D}=OP.pisc,Pp=2*(C+W),Aint=C*W+Pp*D,Vc=C*W*.15+Pp*D*.15,Esc=(C+.6)*(W+.6)*(D+.2);
+    add(17,"96523",Esc,"Piscina — escavação ("+C+"×"+W+"×"+D+" m)");add(17,"96617",C*W,"Piscina — lastro de concreto magro");
+    add(17,"96542",Pp*D*2,"Piscina — fôrmas das paredes (2 faces)");add(17,"104918",Vc*90,"Piscina — aço do fundo e paredes (90 kg/m³)");add(17,"96556",Vc,"Piscina — concreto armado fundo e paredes 15 cm");
+    add(17,"93382",Math.max(0,Esc-C*W*D-Vc-C*W*.03),"Piscina — reaterro lateral compactado");
+    add(17,"98556",Aint,"Piscina — impermeabilização argamassa polimérica 4 demãos com véu");add(17,"88789",Aint,"Piscina — revestimento em pastilha de porcelana 2,5×2,5");
+    add(17,"98689",Pp+.6,"Piscina — borda em granito");add(17,"94992",(Pp+4)*1.0,"Piscina — calçada/deck de concreto 1,0 m");
+    add(17,"102111",1,"Piscina — motobomba 0,5 CV (bomba centrífuga SINAPI como referência)");
+    I.push({e:17,c:"VERBA-PISC",q:1,o:"Piscina — casa de máquinas, filtro, dispositivos (retorno, skimmer, dreno), iluminação e tubulação — sem composição SINAPI-AM; verba de referência R$ "+PISC_VB.toLocaleString("pt-BR")+", cotar localmente",v:PISC_VB})}
   if(Q.Amez>0){const A=Q.Amez;add(5,"100378",A*30,"Mezanino — estrutura metálica de vigas e pilares (30 kg/m²; composição de tesoura de aço como referência de aço fabricado e instalado)");add(5,"100744",A*30*.03*2,"Mezanino — pintura esmalte da estrutura");add(5,"106056",A,"Mezanino — laje pré-moldada sobre vigas metálicas (steel deck sem composição SINAPI-AM com preço)");
     add(5,"92419",12,"Mezanino — escada (fôrma)");add(5,"95946",150,"Mezanino — escada (aço)");add(5,"103686",1.5,"Mezanino — escada de concreto (escada metálica sem composição SINAPI-AM)");
     add(17,"99858",2*Math.sqrt(A)+4,"Mezanino — guarda-corpo/corrimão em aço galvanizado (corrimão duplo como referência; cotar guarda-corpo completo)");
@@ -282,7 +295,7 @@ export function orcar(inp){
   const direto=etapas.reduce((s,e)=>s+e.sub,0),vbdi=direto*bdi,total=direto+vbdi;
   const cub=Q.T.cub?CUB[Q.T.cub]:null;
   const extraPav=L.filter(x=>x.mp&&x.e!==4&&x.e!==17).reduce((s,x)=>s+x.tot,0);const base0=etapas.filter(e=>e.n!==4&&e.n!==17).reduce((s,e)=>s+e.sub,0)-extraPav;let ajuste=0,ref=null;
-  if(cub&&inp.calibrar!==false){ref=inp.__ref?null:orcar({...inp,__ref:1,calibrar:false,cobertura:defCob(inp.tipo),telha:"simples",mezanino:null});const bR=ref?ref.base0:base0,AR=ref?ref.Q.Ac:Q.Ac;ajuste=Math.round((cub*AR-bR)*100)/100;const it={e:19,c:"VERBA-CUB",q:1,desc:`Ajuste de padrão (calibração CUB-AM ${Q.T.cub} ${CUB.ref}: ${cub.toLocaleString("pt-BR",{minimumFractionDigits:2})}/m² × ${(ref?ref.Q.Ac:Q.Ac).toFixed(2)} m² − base comparável na configuração de referência)`,u:"VB",pu:ajuste,tot:ajuste,item:"19.1",o:"Cobre acabamentos e itens não representados nas composições SINAPI"};etapas.push({n:19,nome:ETAPAS[18],itens:[it],sub:ajuste})}
+  if(cub&&inp.calibrar!==false){ref=inp.__ref?null:orcar({...inp,__ref:1,calibrar:false,cobertura:defCob(inp.tipo),telha:"simples",mezanino:null,piscina:null});const bR=ref?ref.base0:base0,AR=ref?ref.Q.Ac:Q.Ac;ajuste=Math.round((cub*AR-bR)*100)/100;const it={e:19,c:"VERBA-CUB",q:1,desc:`Ajuste de padrão (calibração CUB-AM ${Q.T.cub} ${CUB.ref}: ${cub.toLocaleString("pt-BR",{minimumFractionDigits:2})}/m² × ${(ref?ref.Q.Ac:Q.Ac).toFixed(2)} m² − base comparável na configuração de referência)`,u:"VB",pu:ajuste,tot:ajuste,item:"19.1",o:"Cobre acabamentos e itens não representados nas composições SINAPI"};etapas.push({n:19,nome:ETAPAS[18],itens:[it],sub:ajuste})}
   const direto2=etapas.reduce((s,e)=>s+e.sub,0),vbdi2=direto2*bdi,total2=direto2+vbdi2;
   return{Q,etapas,base0,ajuste,semAjuste:{direto,total,m2:total/Q.Ac},direto:direto2,bdi:vbdi2,total:total2,m2:total2/Q.Ac,m2dir:direto2/Q.Ac,cub,cubCod:Q.T.cub,extraPav,ref:SINAPI.ref,regime:inp.regime==="d"?"Desonerado":"Não desonerado"};
 }
