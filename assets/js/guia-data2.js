@@ -297,3 +297,49 @@ add("impermeabilizacao-fundacoes","Impermeabilização das fundações (baldrame
 ["Subida na alvenaria","Impermeabilize as primeiras fiadas ≥ 30 cm nas duas faces.",["Subida ≥ 30 cm","Argamassa com hidrófugo"],[SG.eq],["Subida baixa (umidade ascendente)"]],
 ["Proteção e reaterro","Proteja e reaterre com cuidado.",["Sem danos à camada"],[SG.esc2],["Reaterro com entulho/pedras"]]]);
 })();
+// ================= CONTENÇÃO EM TERRA ARMADA =================
+(()=>{const{N,R,C,T,DH,DV,WORKER,LD,CO}=K;const{sec,SEG,sv}=GUIA.kit;const S=GUIA.S;
+const iso=(ox,oy,cz=.55,sz=.32)=>{const pt=(x,h,z)=>[+(ox+x+z*cz).toFixed(1),+(oy-h-z*sz).toFixed(1)],Q=a=>a.map(p=>pt(...p));
+ const PR=(x0,x1,h0,h1,z0,z1,c,st=N,sw=.8)=>K.P(Q([[x0,h1,z0],[x1,h1,z0],[x1,h1,z1],[x0,h1,z1]]),K.sh(c,1.15),st,sw)+K.P(Q([[x1,h0,z0],[x1,h1,z0],[x1,h1,z1],[x1,h0,z1]]),K.sh(c,.78),st,sw)+K.P(Q([[x0,h0,z0],[x1,h0,z0],[x1,h1,z0],[x0,h1,z0]]),c,st,sw);
+ const LN=(p,c=N,w=1,ex="")=>K.PL(Q(p),c,w,ex);
+ const CL=(p,n,lx,ly,lab)=>{const c=pt(...p);return LD(c[0],c[1],lx,ly,(n?n+" ":"")+lab,lx>380?"end":"start")+(n?CO(c[0],c[1]-15,n):"")};
+ const AR=(a,b,c="#c0392b",w=2.2)=>{a=pt(...a);b=pt(...b);return K.ARW(a[0],a[1],b[0],b[1],c,w)};return{pt,PR,LN,CL,AR}};
+const TT=["Locação e escavação","Soleira de nivelamento","1ª fiada de escamas (escoras e prumo)","Fitas metálicas / geogrelhas (L ≈ 0,7H)","Aterro selecionado em camadas","Repetição das fiadas","Drenagem (geotêxtil e dreno de pé)","Coroamento / viga de topo","Controle de prumo e compactação"];
+function terra(k){const I=iso(70,395),Z=200,CH=60,H=240,LR=168,X0=100,X1=116;
+ const nC=k<2?0:k<5?1:4,top=nC*CH,fillTop=k<4?0:k<5?CH:top;
+ let s=R(0,0,760,430,"#eaf2fa","none")+I.PR(-20,520,-30,0,0,Z,"#a87b4f");
+ // talude de corte (solo natural)
+ s+=I.PR(380,520,0,H+20,0,Z,"#b08458");
+ if(k==0){s+=I.LN([[X0,0,0],[X0,0,Z]],"#e74c3c",2,'stroke-dasharray="6 4"')+I.LN([[X0,0,0],[X0,40,0]],"#7f5539",3)+I.LN([[X0,0,Z],[X0,40,Z]],"#7f5539",3);
+  s+=I.CL([X0,30,0],1,30,70,"gabarito: alinhamento da face do muro")+I.CL([380,160,0],2,748,60,"corte com talude estável (≥ L + folga)")+I.CL([240,0,100],3,748,400,"fundo regularizado e compactado")+WORKER(...I.pt(250,0,40),.9)+DH(...[I.pt(X1,0,0)[0],I.pt(380,0,0)[0],I.pt(0,0,0)[1]+16],"≥ 0,7H + 0,5 m",10)}
+ if(k>=1){s+=I.PR(86,140,-12,0,0,Z,"#b9bec5");if(k==1)s+=I.CL([110,0,60],1,30,70,"soleira de concreto magro ≈ 15×30 cm, nivelada")+I.CL([86,-6,0],2,30,400,"nível rigoroso (± 5 mm): define o prumo do muro")+WORKER(...I.pt(220,0,80),.9)}
+ // aterro
+ if(fillTop>0){s+=I.PR(X1,380,0,fillTop,0,Z,"#d9c08a");for(let h=25;h<fillTop;h+=25)s+=I.LN([[X1,h,0],[380,h,0],[380,h,Z]],"#a8875a",.6,'stroke-dasharray="4 3"')}
+ // fitas
+ if(k>=3)for(let c=0;c<Math.max(nC,1);c++){const h=c*CH+(c<nC-1||fillTop>=top?30:30);if(c*CH+30>fillTop&&k>=4&&c>=nC)continue;const vis=h>=fillTop;for(let z=25;z<Z;z+=50)s+=I.LN([[X1,h,z],[X1+LR,h,z]],vis?"#5d6d7e":"#7f8c8d",vis?3.5:2.2);s+=I.LN([[X1,h,0],[X1+LR,h,0]],"#5d6d7e",2.5)}
+ if(k>=6)s+=I.PR(X1,X1+40,0,30,0,Z,"#95a5a6")+C(...I.pt(X1+20,15,0),8,"#2c3e50");
+ // escamas
+ for(let c=0;c<nC;c++)for(let z=-(c%2)*25;z<Z;z+=50){const z0=Math.max(z,0),z1=Math.min(z+50,Z);if(z1-z0<5)continue;s+=I.PR(X0,X1,c*CH,(c+1)*CH,z0,z1,"#cfd6dc","#7b8a97",.8)}
+ if(k==2){s+=I.LN([[X0-60,0,40],[X0,50,40]],"#8d5524",4)+I.LN([[X0-60,0,140],[X0,50,140]],"#8d5524",4)+I.LN([[X0+2,90,10],[X0+2,0,10]],"#2c3e50",1)+C(...I.pt(X0+2,0,10),3,"#2c3e50");
+  s+=I.CL([X0,30,20],1,30,60,"escamas (painéis de concreto) na soleira")+I.CL([X0-30,25,40],2,30,400,"escoras / grampos provisórios")+I.CL([X0+2,80,10],3,748,60,"prumo com leve inclinação para trás (≈ 1:50)")}
+ if(k==3){s+=I.CL([X1+100,30,25],1,748,60,"fitas metálicas galvanizadas / geogrelha")+I.CL([X1,30,0],2,30,60,"ligação ao painel (parafuso / esperas)")+DH(I.pt(X1,30,0)[0],I.pt(X1+LR,30,0)[0],I.pt(0,0,0)[1]+16,"L ≈ 0,7H (mín. 3 m)",10)+I.CL([X1+60,30,150],3,748,400,"espaçamento conforme projeto, sem cruzar")}
+ if(k==4){const r=I.pt(300,CH,120);s+=R(r[0]-30,r[1]-30,60,26,"#f1c40f",N,1)+C(r[0]-12,r[1],9,"#555")+C(r[0]+18,r[1],9,"#555")+WORKER(...I.pt(150,CH,60),.85);
+  s+=I.CL([300,CH,120],1,748,60,"rolo vibratório longe da face (> 1,5 m)")+I.CL([150,CH,60],2,30,60,"placa vibratória leve junto às escamas")+I.CL([380,25,0],3,748,400,"camadas ≤ 20–25 cm, solo selecionado (granular)")+I.AR([300,CH+10,30],[200,CH+10,30],"#2980b9")}
+ if(k==5)s+=I.CL([X0,180,0],1,30,60,"novas fiadas: escamas → fitas → aterro")+I.CL([X1+100,150,25],2,748,60,"fitas a cada nível de ancoragem")+DV(I.pt(X0,0,0)[1],I.pt(X0,top,0)[1],I.pt(X0,0,0)[0]-20,"H",10,10);
+ if(k>=6){for(let c=1;c<nC;c++)s+=I.LN([[X0,c*CH,0],[X0,c*CH,Z]],"#ffffff",3,'stroke-dasharray="8 4"');
+  if(k==6)s+=I.CL([X0,CH,0],1,30,60,"geotêxtil nas juntas entre escamas")+I.CL([X1+20,15,0],2,30,400,"dreno de pé: tubo perfurado + brita")+I.CL([380,200,100],3,748,60,"dreno de interface no talude, se houver água")+I.AR([380,120,0],[X1+40,40,0],"#2980b9")}
+ if(k>=7){s+=I.PR(X0-10,X1+20,top,top+24,0,Z,"#9aa3ab");if(k==7)s+=I.CL([X0,top+24,40],1,30,60,"viga de coroamento moldada in loco")+I.CL([X1+60,top,150],2,748,60,"guarda-corpo / defensa e drenagem superficial")}
+ if(k==8){s+=I.LN([[X0-4,top+24,10],[X0-4,0,10]],"#c0392b",1.2,'stroke-dasharray="3 3"')+DV(I.pt(X0,0,0)[1],I.pt(X0,top,0)[1],I.pt(X0,0,0)[0]-20,"H",10,10)+WORKER(...I.pt(260,top,100),.9);
+  s+=I.CL([X0-4,top/2,10],1,30,60,"prumo / alinhamento a cada fiada (tol. ± 1–2 cm)")+I.CL([260,top,100],2,748,60,"grau de compactação ≥ 95% PN por camada")+I.CL([380,40,0],3,748,400,"monitorar deslocamentos e recalques")}
+ return sv(k+1,TT[k],s)}
+const sec2=sec("terra-armada","Contenção em terra armada (solo reforçado)",[],["NBR 19286:2024 (solo reforçado / terra armada)","NBR 11682:2009 (estabilidade de encostas)","NBR 7182 (ensaio de compactação)","NR-18 · NR-6"],terra,[
+["Locação e escavação","Loque a face do muro com gabarito e escave até a cota com talude de corte estável, liberando largura para os reforços.",["Alinhamento e cotas conferidos","Largura ≥ 0,7H + folga","Fundo regularizado e compactado"],[SEG.esc2,"Talude de corte com inclinação segura; não estocar material na borda."],["Corte vertical instável","Largura insuficiente para o comprimento dos reforços"]],
+["Soleira de nivelamento","Execute a soleira de concreto magro nivelada que receberá a primeira fiada.",["Nível ± 5 mm","Seção ≈ 15×30 cm","Cura antes de montar"],[SEG.conc],["Soleira desnivelada (muro fora de prumo)"]],
+["1ª fiada de escamas","Posicione os painéis da 1ª fiada, alinhe, escore e confira o prumo com leve inclinação para trás.",["Juntas com espaçadores","Escoras em todos os painéis","Inclinação ≈ 1:50 p/ trás"],["Içamento: área isolada, ninguém sob a carga; cintas inspecionadas."],["Painéis sem escora","Prumo exato (sem compensar o deslocamento)"]],
+["Fitas / geogrelhas","Fixe as fitas metálicas ou geogrelhas nos níveis de projeto, esticadas e perpendiculares à face, com L ≈ 0,7H.",["L ≥ 0,7H e ≥ 3 m","Fitas galvanizadas / geogrelha certificada","Fixação ao painel conferida"],[SEG.esc],["Reforço curto","Fitas dobradas ou sem tensão","Geogrelha em sentido errado"]],
+["Aterro em camadas","Lance aterro selecionado em camadas ≤ 20–25 cm e compacte; junto à face use apenas compactação leve.",["Solo granular conforme projeto","Umidade ótima","Rolo pesado > 1,5 m da face"],["Rolo/placa vibratória: protetor auricular, distância de pessoas."],["Camadas espessas","Rolo pesado colado à face (desaprumo)","Argila/entulho no aterro"]],
+["Repetição das fiadas","Repita: retire escoras da fiada abaixo após o aterro, monte nova fiada, reforços e aterro.",["Prumo a cada fiada","Sequência escamas → fitas → aterro"],[SEG.alt],["Subir fiadas sem aterrar a anterior"]],
+["Drenagem","Cubra as juntas com geotêxtil por trás e execute o dreno de pé; preveja dreno de interface se houver água no talude.",["Geotêxtil em todas as juntas","Dreno de pé com saída","Drenagem superficial no topo"],[SEG.esc],["Juntas sem geotêxtil (perda de finos)","Dreno sem saída"]],
+["Coroamento","Concrete a viga de coroamento e instale guarda-corpo/defensa e canaletas.",["Viga contínua com juntas","Guarda-corpo no topo"],[SEG.alt,SEG.conc],["Topo sem drenagem (infiltração no aterro)"]],
+["Controle de prumo e compactação","Registre prumo/alinhamento, ensaios de compactação por camada e monitore deslocamentos.",["GC ≥ 95% PN","Tolerância de prumo do projeto","Registros por camada"],[SEG.esc],["Não ensaiar camadas","Ignorar desaprumo progressivo"]]]);
+const i=S.findIndex(x=>x.id=="pavimento");S.splice(i<0?S.length:i+1,0,sec2)})();
