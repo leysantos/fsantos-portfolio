@@ -51,3 +51,5 @@ body.obra #proposta .pb-f{display:flex;justify-content:space-between;gap:8px;bor
 #au-out>p:has(#au-go){display:flex;align-items:center;gap:1rem;margin:0}#au-go{height:48px;min-width:140px;display:inline-flex;align-items:center;justify-content:center;margin:0}
 #au-reset{line-height:48px;padding:0}
 @media(max-width:560px){#au-out{max-width:none}#au-out>p:has(#au-go){flex-direction:column;align-items:stretch;gap:.4rem}#au-go{width:100%}#au-reset{line-height:2}}
+
+.ob.cont .nc{display:none!important}.ob:not(.cont) .cont-only{display:none!important}

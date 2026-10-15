@@ -9,6 +9,7 @@ export const TIPOS={
   alto:{nome:"Casa — alto padrão",kp:1.18,pd:3.0,cub:"R1-A",dur:1.3,eng:.12},
   galpao_ind:{nome:"Galpão industrial",kp:1.03,pd:9.0,cub:"GI",dur:.8,eng:.10},
   galpao_com:{nome:"Galpão comercial",kp:1.05,pd:5.5,cub:null,dur:.8,eng:.10},
+  muro_contencao:{nome:"Muro de contenção",kp:1,pd:0,cub:null,dur:1,eng:.10,cont:1},
   galpao:{nome:"Galpão (modelo anterior)",kp:1.03,pd:6.0,cub:null,dur:.75,eng:.10,old:1}};
 // CUB-AM (Sinduscon-AM), competência ago/2026, R$/m² — referência de comparação apenas
 export const CUB={ref:"08/2026",fonte:"Sinduscon-AM (via CBIC)","R1-B":3120.00,"R1-N":3742.05,"R1-A":5095.41,"GI":1737.94,"CSL8-N":3121.77,"CAL8-N":3412.30};
@@ -286,6 +287,7 @@ export function itens(inp,Q){
   return I;
 }
 export function orcar(inp){
+  if(inp.tipo==="muro_contencao")return orcarCont(inp);
   const Q=quantitativos(inp),reg=inp.regime==="d"?3:2,bdi=(+inp.bdi||0)/100;
   const L=itens(inp,Q).map(x=>{const s=SINAPI.c[x.c];
     const desc=s?s[0]:x.o,u=s?s[1]:(x.u||"VB"),pu=s?(s[reg]??s[2]):x.v;
@@ -297,5 +299,63 @@ export function orcar(inp){
   const extraPav=L.filter(x=>x.mp&&x.e!==4&&x.e!==17).reduce((s,x)=>s+x.tot,0);const base0=etapas.filter(e=>e.n!==4&&e.n!==17).reduce((s,e)=>s+e.sub,0)-extraPav;let ajuste=0,ref=null;
   if(cub&&inp.calibrar!==false){ref=inp.__ref?null:orcar({...inp,__ref:1,calibrar:false,cobertura:defCob(inp.tipo),telha:"simples",mezanino:null,piscina:null});const bR=ref?ref.base0:base0,AR=ref?ref.Q.Ac:Q.Ac;ajuste=Math.round((cub*AR-bR)*100)/100;const it={e:19,c:"VERBA-CUB",q:1,desc:`Ajuste de padrão (calibração CUB-AM ${Q.T.cub} ${CUB.ref}: ${cub.toLocaleString("pt-BR",{minimumFractionDigits:2})}/m² × ${(ref?ref.Q.Ac:Q.Ac).toFixed(2)} m² − base comparável na configuração de referência)`,u:"VB",pu:ajuste,tot:ajuste,item:"19.1",o:"Cobre acabamentos e itens não representados nas composições SINAPI"};etapas.push({n:19,nome:ETAPAS[18],itens:[it],sub:ajuste})}
   const direto2=etapas.reduce((s,e)=>s+e.sub,0),vbdi2=direto2*bdi,total2=direto2+vbdi2;
-  return{Q,etapas,base0,ajuste,semAjuste:{direto,total,m2:total/Q.Ac},direto:direto2,bdi:vbdi2,total:total2,m2:total2/Q.Ac,m2dir:direto2/Q.Ac,cub,cubCod:Q.T.cub,extraPav,ref:SINAPI.ref,regime:inp.regime==="d"?"Desonerado":"Não desonerado"};
+  return{Q,etapas,base0,ajuste,semAjuste:{direto,total,m2:total/Q.Ac},direto:direto2,bdi:vbdi2,total:total2,m2:total2/Q.Ac,m2dir:direto2/Q.Ac,cub,cubCod:Q.T.cub,extraPav,refInfo:{area:ref?ref.Q.Ac:Q.Ac,base:ref?ref.base0:base0},ref:SINAPI.ref,regime:inp.regime==="d"?"Desonerado":"Não desonerado"};
 }
+
+// ===== Muro de contenção (cantilever sobre sapata corrida estaqueada) =====
+// Pré-dimensionamento com a mesma lógica da ferramenta "Muro de contenção" (ferramentas.html), usando valores típicos:
+// solo γ=18 kN/m³, φ=30°, sobrecarga 10 kPa; cortina topo 20 cm e base ≈ H/10; sapata h ≥ máx(40; φest+15) cm; 2 filas a 3φ (1 fila se H ≤ 1,5 m).
+const up5=x=>Math.ceil(x/5-1e-9)*5;
+export function predimCont(H,sis){
+  const d=H<=2?30:H<=3?35:H<=4.5?40:50,fil=H<=1.5?1:2,s=H<=3?1.5:1.2,Le=Math.max(6,Math.round(2*H+4)),phi=d/100;
+  const tt=sis==="bloco"?(H<=2.5?.14:.29):.20,tb=sis==="bloco"?tt:Math.max(tt+.05,up5(H*10)/100),h=Math.max(.40,up5(d+15)/100);
+  const e=fil===2?3*phi:0,B=fil===2?Math.max(up5((e+phi+.40)*100)/100,tb+.6):Math.max(up5((phi+.40)*100)/100,tb+.30),toe=+((B-tb)*.3).toFixed(2),heel=+(B-tb-toe).toFixed(2);
+  return{d,fil,s,Le,tt,tb,h,B,toe,heel}}
+export const CONT_SIS={cortina:"Cortina de concreto armado",bloco:"Bloco de concreto estrutural armado e grauteado"};
+export function orcarCont(inp){
+  const c=inp.contencao||{},sis=c.sistema==="bloco"?"bloco":"cortina",L=Math.max(1,+c.comprimento||0),H=Math.min(6,Math.max(.5,+c.altura||0)),T=TIPOS.muro_contencao;
+  const P=predimCont(H,sis),ne=P.fil*(Math.floor(L/P.s)+1),mEst=ne*P.Le,Vest=ne*Math.PI/4*(P.d/100)**2*P.Le,face=L*H;
+  const Vs=P.B*P.h*L,Esc=(P.B+.6)*(P.h+.05)*L,Vc=sis==="cortina"?(P.tt+P.tb)/2*H*L:0,dur=Math.max(1,Math.round((face/70+.5)*10)/10),bdi=(+inp.bdi||0)/100,reg=inp.regime==="d"?3:2;
+  const I=[],add=(e,cd,q,o,v,u)=>{if(q>0.0001)I.push({e,c:cd,q,o,v,u})};
+  const ESTC={30:"107108",35:"107109",40:"107110",50:"107111"}[P.d];
+  add(1,"93565",dur*T.eng,"Engenheiro civil júnior — "+Math.round(T.eng*100)+"% de dedicação × "+dur.toFixed(1)+" meses");
+  add(1,"94295",dur*.5,"Mestre de obras — 50% de dedicação");
+  add(2,"98524",L*(P.B+3),"Limpeza da faixa de trabalho");
+  add(2,"99059",L+2,"Locação do muro (gabarito)");
+  add(2,"103689",2,"Placa de obra");
+  add(2,"VERBA-ART",1,"Taxa de ART de execução (CREA-AM) — valor de referência, conferir tabela vigente",270,"VB");
+  add(3,"96525",Esc,"Escavação da vala da sapata corrida ("+num2(P.B+.6)+" × "+num2(P.h+.05)+" m)");
+  add(3,"93382",Math.max(0,Esc-Vs-P.B*L*.03)+.6*H*L,"Reaterro compactado — vala da sapata + faixa de 60 cm atrás do muro");
+  add(4,ESTC,mEst,`Estacas escavadas Ø${P.d} cm — ${ne} un × ${num2(P.Le)} m (${P.fil} fila(s) a cada ${num2(P.s)} m)`);
+  add(4,"104919",Vest*25,"Aço das estacas (25 kg/m³, armadura de topo/arranque)");
+  add(4,"96617",P.B*L,"Lastro de concreto magro 3 cm sob a sapata corrida");
+  add(4,"104929",2*P.h*L,"Fôrma da sapata corrida (2 faces laterais)");
+  add(4,"104920",Vs*90,"Aço da sapata corrida (90 kg/m³)");
+  add(4,"104923",Vs,`Concreto da sapata corrida B = ${num2(P.B)} m × h = ${num2(P.h)} m (ponta ${num2(P.toe)} m, talão ${num2(P.heel)} m)`);
+  if(sis==="cortina"){
+    add(5,"92419",2*H*L,"Fôrma da cortina — 2 faces");
+    add(5,"102731",Vc*90,"Aço da cortina (90 kg/m³)");
+    add(5,"103669",Vc,`Concreto da cortina, espessura ${num2(P.tt*100)} → ${num2(P.tb*100)} cm`);
+  }else{
+    const fol=P.tt>.2?2:1,kv=H<=2?2.5:H<=3?4.8:6;
+    add(6,"89480",face*fol,`Alvenaria de blocos de concreto estrutural 14 cm fbk 14 MPa${fol>1?" — parede dupla (29 cm) para H > 2,5 m":""}`);
+    add(6,"89993",face*fol*.07,"Graute fgk 20 MPa — todos os furos grauteados (≈ 0,07 m³/m²)");
+    add(6,"89997",face*fol*kv,`Armadura vertical Ø12,5 (${num2(kv)} kg/m²) ancorada na sapata`);
+    add(6,"102920",face*fol*1.6,"Armadura horizontal em canaletas a cada 80 cm (1,60 kg/m²)");
+  }
+  add(8,"98557",(H+P.heel)*L,"Impermeabilização da face em contato com a terra e topo do talão — emulsão asfáltica 2 demãos");
+  add(17,"102722",L,"Dreno longitudinal no pé do muro (tubo PEAD perfurado + brita + manta geotêxtil)");
+  add(17,"102724",Math.ceil(L/2)*Math.max(1,Math.floor(H/1.5)),"Barbacãs DN 100 mm (1 a cada 2 m, a cada 1,5 m de altura)");
+  const L2=I.map(x=>{const sv=SINAPI.c[x.c],desc=sv?sv[0]:x.o,u=sv?sv[1]:(x.u||"VB"),pu=sv?(sv[reg]??sv[2]):x.v,q=Math.round(x.q*100)/100;return{...x,q,desc,u,pu,tot:Math.round(q*pu*100)/100}}).filter(x=>x.pu>0);
+  const etapas=ETAPAS.map((nome,i)=>{const it=L2.filter(x=>x.e===i+1);return{n:i+1,nome,itens:it,sub:it.reduce((s,x)=>s+x.tot,0)}}).filter(e=>e.itens.length);
+  etapas.forEach(e=>e.itens.forEach((x,k)=>x.item=e.n+"."+(k+1)));
+  const direto=etapas.reduce((s,e)=>s+e.sub,0),vb=direto*bdi,total=direto+vb;
+  const Q={T,Ac:face,Aamb:0,n:1,h:H,hm:0,Lmuro:0,dur,g:false,Amez:0,Afl:[0],nPav:1,OP:{cob:null,telha:null,mez:0,pisc:null},cont:{sistema:sis,L,H,...P,ne,mEst,Vest,Vs,Vc}};
+  return{Q,etapas,base0:direto,ajuste:0,semAjuste:{direto,total,m2:total/face},direto,bdi:vb,total,m2:total/face,m2dir:direto/face,mlin:total/L,cub:null,cubCod:null,extraPav:0,refInfo:{area:face,base:direto},ref:SINAPI.ref,regime:inp.regime==="d"?"Desonerado":"Não desonerado",cont:1};
+}
+function num2(v){return(+v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+export const REGRAS_CONT=["Muro de contenção em balanço (cantilever) sobre sapata corrida apoiada em estacas escavadas; pré-dimensionamento automático pela altura (mesma lógica da ferramenta de muro de contenção do site), com solo típico γ = 18 kN/m³, φ = 30° e sobrecarga de 10 kPa — confirmar com sondagem SPT e projeto estrutural/geotécnico.",
+"Estacas: Ø30 cm (H ≤ 2 m), Ø35 (≤ 3 m), Ø40 (≤ 4,5 m), Ø50 (> 4,5 m); 1 fila para H ≤ 1,5 m, senão 2 filas a 3Ø; espaçamento 1,5 m (H ≤ 3 m) ou 1,2 m; comprimento máx(6; 2H + 4) m. Mobilização/desmobilização do equipamento de estacas não incluída.",
+"Cortina: topo 20 cm e base ≈ H/10; aço 90 kg/m³ (cortina e sapata). Bloco: blocos de concreto estrutural 14 cm, totalmente grauteados e armados; parede dupla (29 cm) acima de 2,5 m de altura.",
+"Inclui impermeabilização da face em contato com a terra, dreno longitudinal com manta geotêxtil e brita, barbacãs e reaterro compactado. Não inclui aterro além da faixa de 60 cm atrás do muro, rebaixamento de lençol, contenção provisória nem acabamento da face aparente.",
+"Sem calibração pelo CUB-AM (o CUB não tem padrão para obras de contenção): o valor reflete apenas as composições SINAPI. Indicadores: R$/m linear de muro e R$/m² de face (comprimento × altura)."];
