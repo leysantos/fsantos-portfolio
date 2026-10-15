@@ -63,3 +63,9 @@ body.guia[data-only]:not([data-only=""]) .gch{display:none}}
 
 @media print{body.guia[data-only=rufo] #rufo,body.guia[data-only=calhas] #calhas,body.guia[data-only=telhado] #telhado,body.guia[data-only=locacao] #locacao,body.guia[data-only=seguranca] #seguranca,body.guia[data-only=alvenaria] #alvenaria,body.guia[data-only=verga] #verga,body.guia[data-only=reboco] #reboco,body.guia[data-only=instalacoes] #instalacoes,body.guia[data-only=contrapiso] #contrapiso,body.guia[data-only=ceramica] #ceramica,body.guia[data-only=junta] #junta,body.guia[data-only=drenagem] #drenagem,body.guia[data-only=impermeabilizacao-fundacoes] #impermeabilizacao-fundacoes{display:block!important;break-before:auto}}
 @media print{body.guia[data-only=terra-armada] #terra-armada{display:block!important;break-before:auto}}
+
+.ftr{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:.3rem}.ftr th,.ftr td{border:1px solid #ffffff22;padding:.35rem .45rem;text-align:left}.ftr th{background:#0b1a30;color:#f2b632}
+@media print{.ftr th{background:#0b1a30!important;color:#f2b632!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ftr th,.ftr td{border-color:#999}}
+.pp-t .ftr td,.pp-t .ftr th{border:1px solid #bbb}
+.fres dt:has(+dd .ftr),.fres dd:has(.ftr){grid-column:1/-1}.fres dd:has(.ftr){font-weight:400;overflow-x:auto}.ftr td:not(:first-child),.ftr th:not(:first-child){text-align:right;white-space:nowrap}
+.ftrw{overflow-x:auto;margin:.6rem 0}.ftrh{margin:.8rem 0 .2rem;color:var(--gold)}

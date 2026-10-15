@@ -99,4 +99,21 @@ D.pavimento=(v,r)=>{const g=r._;if(!g)return"";const h=g.h,hp=h*260,hs=(v.hs??15
  for(let i=1;i<3;i++)for(let x=PX+6;x<PX+2*lw;x+=10)s+=L(x,PY+i*cw-4,x,PY+i*cw+4,STL,1.6);for(let y=PY+10;y<PY+3*cw;y+=16)s+=L(PX+lw-5,y,PX+lw+5,y,"#2e86c1",2);
  s+=DV(PY,PY+cw,PX-10,`J = ${fm(J,2)} m`,4,11)+DH(PX,PX+lw,PY+3*cw+18,`${fm(lw/k,2)} m`,12,11)+LD(PX+lw+3,PY+cw*2.5,PX+2*lw+10,PY+cw*2.6,"ligação")+LD(PX+lw*0.5,PY+cw,PX+2*lw+10,PY+cw*0.8,g.dw?"transferência":"junta serrada")+T(PX+lw,PY+3*cw+44,"tráfego ↕",11);
  return SV(640,Math.max(PY+3*cw+60,Y+hp+hs+110),s,"Esquema do pavimento rígido")};
+D.traco=(v,r)=>{const sel=v.prep[0],AM="#f2b632",hl=k=>sel===k?AM:"#9aa6b2",sw=k=>sel===k?3:1.4;let s="";
+ // lata 18 L
+ const lx=40,ly=70;s+=R(lx-8,ly-14,96,170,sel==="L"?"#fff7e0":"none",hl("L"),sw("L"),'rx="10"');
+ s+=P([[lx+6,ly+10],[lx+74,ly+10],[lx+70,ly+120],[lx+10,ly+120]],"#c9d1da",N,1.4)+R(lx+2,ly+4,76,8,"#aeb8c4",N,1.2,'rx="3"')+PL([[lx+14,ly+4],[lx+40,ly-10],[lx+66,ly+4]],N,1.6)+L(lx+12,ly+40,lx+68,ly+40,"#8a96a3",1)+L(lx+12,ly+75,lx+68,ly+75,"#8a96a3",1);
+ s+=T(lx+40,ly+70,"18 L",15,"middle",N,800)+T(lx+40,ly+142,"Lata 18 L",12,"middle",N,700)+T(lx+40,ly+156,"medida rasa",10,"middle","#556",500);
+ // padiola
+ const px=170,py=70;s+=R(px-8,py-14,200,170,sel==="P"?"#fff7e0":"none",hl("P"),sw("P"),'rx="10"');
+ s+=L(px,py+60,px+184,py+60,"#7a5a30",5)+L(px,py+72,px+184,py+72,"#7a5a30",5);
+ s+=P([[px+42,py+30],[px+142,py+30],[px+150,py+20],[px+50,py+20]],"#e2c48f",N,1.2)+R(px+42,py+30,100,48,"#d4b07a",N,1.4)+P([[px+142,py+30],[px+150,py+20],[px+150,py+68],[px+142,py+78]],"#c29a60",N,1.2);
+ s+=T(px+92,py+58,"36,23 L",14,"middle",N,800)+T(px+92,py+100,"35 × 45 cm (interno)",11,"middle",N,600)+T(px+92,py+114,"altura 23 cm",11,"middle",N,600)+T(px+92,py+142,"Padiola",12,"middle",N,700)+T(px+92,py+156,"medida rasa",10,"middle","#556",500);
+ // betoneira
+ const bx=400,by=70,cap=v.bet;s+=R(bx-8,by-14,220,170,sel==="B"?"#fff7e0":"none",hl("B"),sw("B"),'rx="10"');
+ s+=P([[bx+40,by+20],[bx+120,by+5],[bx+150,by+60],[bx+70,by+95]],"#e67e22",N,1.5)+P([[bx+120,by+5],[bx+140,by-5],[bx+165,by+45],[bx+150,by+60]],"#c0601a",N,1.3)+C(bx+95,by+50,6,N);
+ s+=L(bx+95,by+50,bx+95,by+118,N,3)+L(bx+60,by+118,bx+170,by+118,N,3)+L(bx+70,by+118,bx+55,by+132,N,2)+L(bx+160,by+118,bx+175,by+132,N,2)+C(bx+55,by+134,7,"#555")+C(bx+175,by+134,7,"#555")+R(bx+150,by+80,30,24,"#566573",N,1.2)+T(bx+165,by+96,"M",10,"middle","#fff",700);
+ s+=T(bx+102,by+142,"Betoneira "+cap,12,"middle",N,700)+T(bx+102,by+156,"carga seca ≈ 62% do tambor",10,"middle","#556",500);
+ s+=T(320,22,"Equipamento de medida/mistura selecionado em destaque",12,"middle",N,700);
+ return SV(640,250,s,"Lata, padiola e betoneira")};
 return D})();

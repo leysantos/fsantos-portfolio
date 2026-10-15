@@ -118,7 +118,43 @@ const TOOLS=[
   res:[["Espessura da placa h",`${f(hc,0)} cm`],["k no topo da sub-base",`${f(k,0)} MPa/m`],["Tensão de projeto / admissível",`${f(S.sd,2)} / ${f(sa,2)} MPa`],["Juntas transversais",`a cada ${f(J,2)} m; longitudinais a cada faixa (≤ 4 m)`],["Barras de transferência (lisas CA-25)",dw?`${dwl[0]} ${dwl[1]}, L = ${dwl[2]}`:"não adotadas"],["Barras de ligação (CA-50)",`${tie[0]} ${tie[1]}, L = ${tie[2]}`]],
   warn:[...(S.sd>sa?["Mesmo com h = 40 cm a tensão excede a admissível: melhorar a sub-base/subleito ou reduzir a carga."]:[]),...(v.cbr<2?["CBR < 2%: substituir/estabilizar o subleito."]:[]),...(!dw&&Pax>=80?["Tráfego médio/pesado sem barras de transferência: recomenda-se usá-las."]:[])]};
   r._={h,J,k,dwl,tie,sb:v.sb,Pax,dw};return r}}
-
+,
+{id:"traco",g:"Execução em obra",t:"Preparo do traço de concreto",refs:["ABNT NBR 12655:2022 — Concreto de cimento Portland: preparo, controle, recebimento (fcj = fck + 1,65·sd; condições de preparo A, B e C)","ABNT NBR 6118:2023 — classes mínimas de concreto estrutural (C20; C25 em CAA II)","ABNT NBR 16889 — abatimento do tronco de cone (slump)","Helene, P.; Terzian, P. — Manual de dosagem e controle do concreto (método IPT/EPUSP: curvas de Abrams, Lyse e Molinari)","ABCP — Guia prático de dosagem / tabelas de traços de referência para obras"],
+ inp:[["fck","Resistência característica fck","","25 MPa",null,null,["10 MPa","15 MPa","20 MPa","25 MPa","30 MPa","35 MPa","40 MPa","45 MPa"]],
+  ["cond","Condição de preparo (NBR 12655)","","B — cimento em massa, agregados em volume com correção da umidade (sd = 5,5 MPa)",null,null,["A — tudo em massa, umidade medida (sd = 4,0 MPa)","B — cimento em massa, agregados em volume com correção da umidade (sd = 5,5 MPa)","C — cimento em massa, agregados em volume, umidade estimada (sd = 7,0 MPa)"]],
+  ["slump","Abatimento (slump)","","80 ± 10 mm — usual (lajes, vigas, pilares)",null,null,["50 ± 10 mm — seco (pisos, pré-moldados)","80 ± 10 mm — usual (lajes, vigas, pilares)","100 ± 20 mm — plástico (peças densamente armadas)"]],
+  ["brita","Agregado graúdo","","Brita 1 (9,5–19 mm)",null,null,["Brita 1 (9,5–19 mm)","Brita 0 (4,8–9,5 mm)"]],
+  ["prep","Tipo de preparo / medida","","Betoneira",null,null,["Latas de 18 L","Padiola 35 × 45 × 23 cm (36,23 L)","Betoneira"]],
+  ["bet","Betoneira (capacidade nominal do tambor)","","400 L",null,null,["250 L","400 L","600 L"]],
+  ["Vt","Volume de concreto a produzir","m³",1,0.05,100]],
+ hip:["Traço de REFERÊNCIA (não é dosagem experimental): relação a/c pela curva de Abrams fc28 ≈ 154 / 17,4^(a/c), calibrada nas tabelas práticas de referência para CP II-32 / CP IV-32 (a/c 0,65 → 24 MPa; 0,60 → 29; 0,55 → 34; 0,50 → 39; 0,40 → 49 MPa); teor de argamassa α = 51% (50% p/ slump 50 mm, 53% p/ 100 mm); m = a + p pela lei de Lyse típica m ≈ 13·(a/c) − 2,7 (±0,5 conforme o abatimento; brita 0: −0,6).","Resistência de dosagem fcj = fck + 1,65·sd (NBR 12655), sd conforme a condição de preparo escolhida.","Massas específicas: cimento 3,10; areia 2,63; brita 2,70 kg/dm³; ar incorporado 2%. Consumo de cimento C = 980 / (1/3,10 + a/2,63 + p/2,70 + a/c) kg/m³.","Volume ↔ massa: cimento 1,42 kg/dm³ (saco de 50 kg ≈ 35,21 L); areia seca 1,50 kg/dm³, areia úmida com inchamento 1,25 e umidade 4% (água da areia descontada da água de amassamento); brita 1,40 kg/dm³ (brita 0: 1,35).","Latas de 18 L e padiola 35 × 45 × 23 cm = 36,23 L, medidas rasas. Preparo manual/latas/padiola: 1 saco por traço (masseira).","Betoneira: carga seca por betonada ≈ 62% da capacidade nominal do tambor (250 L ≈ 155 L; 400 L ≈ 248 L; 600 L ≈ 372 L de materiais secos), arredondada para ½ saco; rendimento = sacos × 50 / C.","Tempo de mistura na betoneira ≥ 90 s após a colocação de todos os materiais; ordem: parte da água + brita, cimento, areia, restante da água."],
+ calc(v){const fck=parseInt(v.fck),sd={A:4,B:5.5,C:7}[v.cond[0]],fcj=fck+1.65*sd,ac0=Math.log(154/fcj)/Math.log(17.4),ac=Math.min(0.80,Math.max(0.35,Math.round(ac0*100)/100));
+  const sl=v.slump.startsWith("50")?0:v.slump.startsWith("80")?1:2,al=[0.50,0.51,0.53][sl],b0=v.brita.startsWith("Brita 0");
+  let m=13*ac-2.7+[0.5,0,-0.5][sl]-(b0?0.6:0);m=Math.max(2.5,m);const a=Math.round((al*(1+m)-1)*10)/10,pp=Math.round((m-a)*10)/10,x=ac;
+  const C=980/(1/3.10+a/2.63+pp/2.70+x),yb=b0?1.35:1.40;
+  const Vc=50/1.42,Va=50*a/1.50*1.25,Vb=50*pp/yb,ag=50*x-0.04*50*a; // por saco (L)
+  const VsecoSaco=Vc+Va+Vb,rendSaco=50/C; // m³ por saco
+  const pr=v.prep[0],cap=parseInt(v.bet),carga=cap*0.62;let sac=1;if(pr==="B"){sac=Math.max(0.5,Math.floor(carga/VsecoSaco*2)/2)}
+  const unid=pr==="L"?18:pr==="P"?36.225:null,un=pr==="L"?"latas de 18 L":pr==="P"?"padiolas":"";
+  const rend=sac*rendSaco,nb=1/rend,nt=v.Vt/rend;
+  const med=L=>unid?`${f(L/unid)} ${un} (${f(L)} L)`:`${f(L)} L`;
+  const tb=`<table class="ftr"><thead><tr><th>Material</th><th>Por ${pr==="B"?"betonada":"traço (1 saco)"}</th><th>Por m³</th><th>Total (${f(v.Vt)} m³)</th></tr></thead><tbody>
+<tr><td>Cimento (saco 50 kg)</td><td>${f(sac)} saco(s) = ${f(sac*50)} kg</td><td>${f(C/50)} sacos = ${f(C)} kg</td><td>${f(C*v.Vt/50)} sacos</td></tr>
+<tr><td>Areia média úmida</td><td>${med(Va*sac)}</td><td>${f(Va/1000/rendSaco)} m³ (${f(C*a)} kg seca)</td><td>${f(Va/1000/rendSaco*v.Vt)} m³</td></tr>
+<tr><td>${b0?"Brita 0":"Brita 1"}</td><td>${med(Vb*sac)}</td><td>${f(Vb/1000/rendSaco)} m³ (${f(C*pp)} kg)</td><td>${f(Vb/1000/rendSaco*v.Vt)} m³</td></tr>
+<tr><td>Água (já descontada a umidade da areia)</td><td>${f(ag*sac)} L</td><td>${f(ag/rendSaco)} L</td><td>${f(ag/rendSaco*v.Vt)} L</td></tr></tbody></table>`;
+  const warn=[];
+  if(fck<20)warn.push("fck < 20 MPa não é concreto estrutural (NBR 6118 exige no mínimo C20; C25 em ambiente urbano, CAA II): use apenas para contrapiso, lastro, calçada ou concreto magro.");
+  if(fck>=25)warn.push("fck ≥ 25 MPa: recomenda-se dosagem experimental (estudo de traço) com os materiais da obra e controle por corpos de prova; para peças estruturais, o traço deve ser definido/validado por laboratório ou concreteira.");
+  if(fck>=40)warn.push("fck 40–45 MPa: exige dosagem em central (concreto usinado), aditivo superplastificante e controle tecnológico — não é viável com segurança em betoneira de obra; o traço mostrado é só referência teórica.");
+  if(v.cond[0]==="C"&&fck>15)warn.push("NBR 12655: a condição C só é permitida para C10 e C15. Use condição B (até C25) ou A.");
+  if(v.cond[0]==="B"&&fck>25)warn.push("NBR 12655: a condição B é permitida até C25. Para C30 ou mais use condição A (materiais em massa).");
+  if(ac0<0.35)warn.push("a/c calculado abaixo de 0,35 — limitado a 0,35; requer aditivo e dosagem experimental.");
+  if(pr!=="B"&&v.Vt>3)warn.push("Mais de 3 m³ com mistura manual: prefira betoneira ou concreto usinado.");
+  return{steps:[["Resistência de dosagem","fcj = fck + 1,65·sd",`${fck} + 1,65 × ${f(sd)} = ${f(fcj)} MPa`],["Relação água/cimento (Abrams de referência, CP II/IV-32)","a/c = log(154/fcj) / log 17,4",`${f(ac0,3)} → adotado ${f(ac)}`],["Agregado total (Lyse típica)","m = 13·(a/c) − 2,7 ± ajuste",`m = ${f(a+pp)}`],["Teor de argamassa","a = α(1 + m) − 1 ; p = m − a",`α = ${f(al*100)}% → a = ${f(a)} ; p = ${f(pp)}`],["Consumo de cimento","C = 980 / (1/3,10 + a/2,63 + p/2,70 + a/c)",`${f(C)} kg/m³`],["Traço em volume por saco",`Vareia = 50·a/1,50×1,25 ; Vbrita = 50·p/${f(yb)}`,`areia ${f(Va)} L ; brita ${f(Vb)} L ; cimento ${f(Vc)} L`],["Água por saco","50·a/c − 4% × 50·a",`${f(ag)} L`],
+   ...(pr==="B"?[["Carga da betoneira",`carga seca ≈ 62% × ${cap} L = ${f(carga)} L`,`materiais secos por saco ${f(VsecoSaco)} L → ${f(sac)} saco(s) por betonada`]]:[]),["Rendimento","V = sacos × 50 / C",`${f(rend*1000)} L por ${pr==="B"?"betonada":"traço"} → ${f(nb)} ${pr==="B"?"betonadas":"traços"}/m³`]],
+   res:[["Traço unitário em massa (cimento : areia : brita : a/c)",`<b>1 : ${f(a)} : ${f(pp)} : ${f(x)}</b>`],["Traço em volume por saco de 50 kg",`1 saco : ${f(Va)} L areia úmida : ${f(Vb)} L brita : ${f(ag)} L água`],["Consumo de cimento",`${f(C)} kg/m³ (${f(C/50)} sacos/m³)`],["Relação água/cimento",f(x)],
+    ["Rendimento",`${f(rend*1000)} L por ${pr==="B"?`betonada (${v.bet})`:"traço"} · ${f(nb)} por m³ · ${f(nt)} para ${f(v.Vt)} m³`],["Classificação","Traço de referência — conferir com dosagem experimental"]],warn,html:`<h4 class="ftrh">Quantidades de materiais</h4><div class="ftrw">${tb}</div>`}}}
 ];
 
 // ---------------- MATERIAIS (estimativas) ----------------
@@ -228,7 +264,7 @@ function matHTML(M,cls=""){if(!M)return"";return `<h3>Tabela resumo de aço e ma
  <p class="fnote">Estimativa de quantitativos para orçamento preliminar. ${M.notas.join(" ")}</p>`}
 function run(){const t=cur,{v,err}=readVals(t),box=$("#fres"),mo=$("#fmatout");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;mo.innerHTML="";return}
   const r=t.calc({...v}),M=MAT(t,{...v},r);last={t,v,r,M};
-  box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
+  box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${r.html||""}${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
   <details open><summary>Passo a passo</summary><ol>${r.steps.map(([a,b,c])=>`<li><b>${a}</b><br><code>${b}</code><br>${c}</li>`).join("")}</ol></details>
   <button class="btn" id="fmem" type="button">Gerar memória de cálculo</button><p class="fdisc">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART.</p>`;
   mo.innerHTML=M?`<div class="fmatbox">${matHTML(M)}</div>`:"";const dr=DRAW[t.id]?DRAW[t.id]({...v},r):"";$("#fdraw").innerHTML=dr?`<h3>Desenho esquemático <small>(cotas atualizadas com o resultado — sem escala)</small></h3>${dr}`:"";$("#fmem").onclick=memorial}
@@ -238,7 +274,7 @@ function memorial(){if(!last)return;const {t,v,r,M}=last,el=$("#proposta"),hoje=
   <h3>1. Dados de entrada</h3><table class="pp-t"><tbody>${allInp(t).map(([id,lab,un])=>`<tr><td>${lab}</td><td>${typeof v[id]=="number"?f(v[id],v[id]%1?2:0):esc(v[id])} ${un&&un!="—"?un:""}</td></tr>`).join("")}</tbody></table>
   <h3>2. Hipóteses</h3><ul>${t.hip.map(h=>`<li>${h}</li>`).join("")}</ul>
   <h3>3. Cálculo passo a passo</h3><table class="pp-t"><thead><tr><th>Etapa</th><th>Fórmula</th><th>Resultado</th></tr></thead><tbody>${r.steps.map(([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`).join("")}</tbody></table>
-  <h3>4. Resultados</h3><table class="pp-t"><tbody>${r.res.map(([a,b])=>`<tr><td><b>${a}</b></td><td><b>${b}</b></td></tr>`).join("")}</tbody></table>${r.warn.length?`<p><b>Observações:</b> ${r.warn.join(" ")}</p>`:""}
+  <h3>4. Resultados</h3><table class="pp-t"><tbody>${r.res.map(([a,b])=>`<tr><td><b>${a}</b></td><td><b>${b}</b></td></tr>`).join("")}</tbody></table>${r.html?r.html.replace('class="ftr"','class="pp-t ftr"'):""}${r.warn.length?`<p><b>Observações:</b> ${r.warn.join(" ")}</p>`:""}
   <h3>5. Desenho esquemático</h3><div class="pp-draw">${DRAW[t.id]?DRAW[t.id]({...v},r):""}</div><p class="fnote">Esquema orientativo, sem escala; cotas conforme o pré-dimensionamento acima.</p>
   ${M?`<div class="pp-mat">${matHTML(M,"pp-t").replace("<h3>","<h3>6. ")}</div>`:""}
   <h3>${M?7:6}. Referências</h3><ul>${t.refs.map(x=>`<li>${x}</li>`).join("")}${M&&M.bars.length?"<li>ABNT NBR 7480:2022 — aço para armaduras (massas lineares nominais)</li>":""}</ul>
