@@ -325,7 +325,8 @@ export function orcarCont(inp){
   add(2,"103689",2,"Placa de obra");
   add(2,"VERBA-ART",1,"Taxa de ART de execução (CREA-AM) — valor de referência, conferir tabela vigente",270,"VB");
   add(3,"96525",Esc,"Escavação da vala da sapata corrida ("+num2(P.B+.6)+" × "+num2(P.h+.05)+" m)");
-  add(3,"93382",Math.max(0,Esc-Vs-P.B*L*.03)+.6*H*L,"Reaterro compactado — vala da sapata + faixa de 60 cm atrás do muro");
+  add(3,"93382",Math.max(0,Esc-Vs-P.B*L*.03),"Reaterro compactado da vala da sapata corrida");
+  add(3,"93382",P.heel*H*L,`Reaterro compactado atrás do muro (sobre o talão: ${num2(P.heel)} m × ${num2(H)} m × ${num2(L)} m), após a camada drenante`);
   add(4,ESTC,mEst,`Estacas escavadas Ø${P.d} cm — ${ne} un × ${num2(P.Le)} m (${P.fil} fila(s) a cada ${num2(P.s)} m)`);
   add(4,"104919",Vest*25,"Aço das estacas (25 kg/m³, armadura de topo/arranque)");
   add(4,"96617",P.B*L,"Lastro de concreto magro 3 cm sob a sapata corrida");
@@ -344,7 +345,9 @@ export function orcarCont(inp){
     add(6,"102920",face*fol*1.6,"Armadura horizontal em canaletas a cada 80 cm (1,60 kg/m²)");
   }
   add(8,"98557",(H+P.heel)*L,"Impermeabilização da face em contato com a terra e topo do talão — emulsão asfáltica 2 demãos");
-  add(17,"102722",L,"Dreno longitudinal no pé do muro (tubo PEAD perfurado + brita + manta geotêxtil)");
+  add(17,"102719",(.30*H+.30*.30)*L,`Camada drenante de brita no tardoz — 0,30 m × ${num2(H)} m × ${num2(L)} m + berço do tubo 0,30 × 0,30 m`);
+  add(17,"102713",(H+.30+.30+.60)*1.10*L,"Manta geotêxtil não tecido RT-14 (tipo Bidim) envolvendo a camada drenante — face do solo + topo + base/berço, 10% de transpasse");
+  add(17,"102704",L,"Tubo dreno PEAD corrugado perfurado DN 100 mm na base do tardoz, com saída nas extremidades");
   add(17,"102724",Math.ceil(L/2)*Math.max(1,Math.floor(H/1.5)),"Barbacãs DN 100 mm (1 a cada 2 m, a cada 1,5 m de altura)");
   const L2=I.map(x=>{const sv=SINAPI.c[x.c],desc=sv?sv[0]:x.o,u=sv?sv[1]:(x.u||"VB"),pu=sv?(sv[reg]??sv[2]):x.v,q=Math.round(x.q*100)/100;return{...x,q,desc,u,pu,tot:Math.round(q*pu*100)/100}}).filter(x=>x.pu>0);
   const etapas=ETAPAS.map((nome,i)=>{const it=L2.filter(x=>x.e===i+1);return{n:i+1,nome,itens:it,sub:it.reduce((s,x)=>s+x.tot,0)}}).filter(e=>e.itens.length);
@@ -357,5 +360,5 @@ function num2(v){return(+v).toLocaleString("pt-BR",{minimumFractionDigits:2,maxi
 export const REGRAS_CONT=["Muro de contenção em balanço (cantilever) sobre sapata corrida apoiada em estacas escavadas; pré-dimensionamento automático pela altura (mesma lógica da ferramenta de muro de contenção do site), com solo típico γ = 18 kN/m³, φ = 30° e sobrecarga de 10 kPa — confirmar com sondagem SPT e projeto estrutural/geotécnico.",
 "Estacas: Ø30 cm (H ≤ 2 m), Ø35 (≤ 3 m), Ø40 (≤ 4,5 m), Ø50 (> 4,5 m); 1 fila para H ≤ 1,5 m, senão 2 filas a 3Ø; espaçamento 1,5 m (H ≤ 3 m) ou 1,2 m; comprimento máx(6; 2H + 4) m. Mobilização/desmobilização do equipamento de estacas não incluída.",
 "Cortina: topo 20 cm e base ≈ H/10; aço 90 kg/m³ (cortina e sapata). Bloco: blocos de concreto estrutural 14 cm, totalmente grauteados e armados; parede dupla (29 cm) acima de 2,5 m de altura.",
-"Inclui impermeabilização da face em contato com a terra, dreno longitudinal com manta geotêxtil e brita, barbacãs e reaterro compactado. Não inclui aterro além da faixa de 60 cm atrás do muro, rebaixamento de lençol, contenção provisória nem acabamento da face aparente.",
+"Inclui impermeabilização da face em contato com a terra; drenagem com camada de brita de 0,30 m no tardoz (altura total), manta geotêxtil envolvendo a brita, tubo PEAD perfurado DN 100 na base e barbacãs; reaterro compactado da vala e sobre o talão (itens separados). Não inclui aterro além da projeção do talão, rebaixamento de lençol, contenção provisória nem acabamento da face aparente.",
 "Sem calibração pelo CUB-AM (o CUB não tem padrão para obras de contenção): o valor reflete apenas as composições SINAPI. Indicadores: R$/m linear de muro e R$/m² de face (comprimento × altura)."];
