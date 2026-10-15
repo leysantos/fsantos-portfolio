@@ -17,3 +17,30 @@
 .fmatbox table{width:100%;border-collapse:collapse;font-size:.88rem}.fmatbox th,.fmatbox td{padding:.4rem .5rem;border-bottom:1px solid #ffffff14;text-align:left}.fmatbox td.n{text-align:right;font-variant-numeric:tabular-nums}
 .fnote{color:var(--mut);font-size:.82rem;margin-top:.8rem}#proposta .pp-mat h4{color:#0b1a30;margin:.9rem 0 .3rem}#proposta .pp-mat table{margin-bottom:.4rem}#proposta td.n{text-align:right}#proposta .fnote{color:#444}
 #proposta .pp-t tr{break-inside:avoid}
+/* esquemas */
+.fsvg{width:100%;height:auto;display:block;overflow:hidden;border-radius:10px;border:1px solid #f2b63244}
+.fdraw{margin-top:1.5rem;background:var(--navy2);border:1px solid #f2b63244;border-radius:12px;padding:1rem 1.2rem}.fdraw:empty{display:none}.fdraw h3{margin:0 0 .6rem;color:var(--gold)}.fdraw h3 small{color:var(--mut);font-weight:400;font-size:.8rem}
+.fdraw .fsvg{max-width:900px;margin:auto}.fexec{margin:1rem 0 0 .3rem!important;padding:.6rem 1rem}
+#proposta .pp-draw .fsvg{max-width:640px;margin:.5rem auto;border:1px solid #bbb;break-inside:avoid}
+#proposta .pp-annex{break-before:page}#proposta .gstep{break-inside:avoid}#proposta .gsec h2{font-size:1.2rem;text-align:left}
+/* guia */
+.gidx{padding-top:1.2rem;padding-bottom:0;display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center}.gidx a{background:var(--navy2);border:1px solid #ffffff22;border-radius:20px;padding:.25rem .8rem;text-decoration:none;font-size:.9rem}.gidx a:hover{border-color:var(--gold)}
+.gsec{margin-bottom:3rem;scroll-margin-top:80px}.ghd{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}.ghd h2{margin:0}.gpr{padding:.45rem .9rem;font-size:.85rem;cursor:pointer;font:inherit}
+.gnor{color:var(--mut);font-size:.88rem}.gsteps{list-style:none;padding:0;margin:1rem 0 0;display:flex;flex-direction:column;gap:1.4rem}
+.gstep{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:1.2rem;background:var(--navy2);border:1px solid #ffffff14;border-radius:14px;padding:1rem;align-items:start}
+.gfig{margin:0}.gtx h3{margin:.2rem 0 .4rem;display:flex;gap:.5rem;align-items:center;font-size:1.05rem}.gtx h3 span{background:var(--gold);color:var(--navy);border-radius:50%;min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-weight:800}
+.gtx p{margin:.2rem 0 .6rem;font-size:.92rem}.gchk,.gseg{font-size:.84rem;border-radius:8px;padding:.4rem .7rem;margin-top:.5rem}.gchk{background:#0f2a1f;border-left:3px solid #2ee59d}.gseg{background:#2f2210;border-left:3px solid var(--gold)}.gchk ul,.gseg ul{margin:.2rem 0;padding-left:1.1rem}
+@media(max-width:900px){.gstep{grid-template-columns:1fr}}
+@media print{body.guia{background:#fff;color:#111}body.guia .nav,body.guia .gidx,body.guia .contact,body.guia footer,body.guia .gpr,body.guia #gpdf,body.guia .fhero .btn{display:none!important}
+body.guia .fhero{background:#fff;padding:0 0 1rem}body.guia .fhero p{color:#333}body.guia .gstep{background:#fff;border:1px solid #bbb;break-inside:avoid;grid-template-columns:3fr 2fr}body.guia .gsec{break-before:page}body.guia .gsec:first-child{break-before:auto}
+body.guia .gchk{background:#eefaf3}body.guia .gseg{background:#fff6e5}body.guia h2{color:#0b1a30}body.guia .gnor{color:#444}
+body.guia[data-only]:not([data-only=""]) .gsec{display:none}body.guia[data-only=sapata] #sapata,body.guia[data-only=radier] #radier,body.guia[data-only=estacas] #estacas,body.guia[data-only=pilar] #pilar,body.guia[data-only=viga] #viga,body.guia[data-only=laje] #laje,body.guia[data-only=trelicada] #trelicada,body.guia[data-only=metalica] #metalica,body.guia[data-only=muro] #muro,body.guia[data-only=pavimento] #pavimento{display:block!important;break-before:auto}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+#proposta .gstep{display:grid;grid-template-columns:3fr 2fr;gap:.8rem;border:1px solid #bbb;border-radius:8px;padding:.5rem;margin-bottom:.6rem;background:#fff}#proposta .gsteps{list-style:none;padding:0}#proposta .gchk{background:#eefaf3}#proposta .gseg{background:#fff6e5}#proposta .gtx h3{border:0;margin:.2rem 0;font-size:1rem}#proposta .gtx h3 span{background:#f2b632;border-radius:50%;padding:0 .45rem;margin-right:.3rem}#proposta .gpr{display:none}
+
+.gfig{width:100%;max-width:760px;margin:0 auto}.gsvg{width:100%!important;max-width:760px;aspect-ratio:16/10;height:auto}
+@media print{body.guia .gstep{grid-template-columns:110mm 1fr}body.guia .gfig,body.guia .gsvg{width:110mm!important;max-width:110mm}}
+.gerr{font-size:.84rem;border-radius:8px;padding:.4rem .7rem;margin-top:.5rem;background:#341a20;border-left:3px solid #ff7b6b}.gerr ul{margin:.2rem 0;padding-left:1.1rem}
+@media print{body.guia .gerr{background:#fdecea}body.guia[data-only=impermeabilizacao] #impermeabilizacao{display:block!important;break-before:auto}}
+.gmat{background:var(--navy2);border:1px solid #f2b63244;border-radius:14px;padding:1rem;margin-top:1.4rem}.gmat h3{margin:0 0 .6rem;color:var(--gold)}.gmatw{overflow-x:auto}.gmat table{width:100%;border-collapse:collapse;font-size:.86rem;min-width:720px}.gmat th,.gmat td{padding:.45rem;border-bottom:1px solid #ffffff18;text-align:left;vertical-align:middle}.gmat th{color:var(--gold)}.gico{width:46px;height:46px}
+@media print{body.guia .gmat{background:#fff;border:1px solid #bbb;break-inside:avoid}body.guia .gmat th{color:#0b1a30}body.guia .gmat table{min-width:0;font-size:.75rem}body.guia[data-only=impermeabilizacao-laje] #impermeabilizacao-laje{display:block!important;break-before:auto}}
