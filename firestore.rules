@@ -40,8 +40,8 @@ service cloud.firestore {
       return v is number && v >= mn && v <= mx;
     }
 
-    function validNovoOrcamentoObra(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'total', 'totalPorM2', 'status', 'createdAt'])
+    function validObraBase(d) {
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'areaAlvo', 'total', 'totalPorM2', 'status', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'regime', 'bdi', 'sinapiRef', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.uid == request.auth.uid
         && d.numero is string && d.numero.matches('^OBR-[0-9]{4}-[A-Z0-9]{4}$')
@@ -64,15 +64,31 @@ service cloud.firestore {
               && d.piscina.keys().hasAll(['comprimento', 'largura', 'profundidade'])
               && num(d.piscina.comprimento, 0.5, 30) && num(d.piscina.largura, 0.5, 15) && num(d.piscina.profundidade, 0.3, 3)))
         && (!('modo' in d) || d.modo in ['simples', 'avancado'])
+        && (!('areaAlvo' in d) || num(d.areaAlvo, 0, 100000))
         && (!('ajusteCub' in d) || num(d.ajusteCub, -1000000000, 1000000000))
         && d.ambientes is list && d.ambientes.size() >= 1 && d.ambientes.size() <= 40
         && d.etapas is list && d.etapas.size() >= 1 && d.etapas.size() <= 19
         && num(d.areaConstruida, 0, 100000)
         && num(d.custoDireto, 0, 1000000000)
         && num(d.total, 0, 1000000000)
-        && num(d.totalPorM2, 0, 100000)
+        && num(d.totalPorM2, 0, 100000);
+    }
+
+    function validNovoOrcamentoObra(d) {
+      return validObraBase(d)
         && d.status == 'novo'
-        && d.createdAt == request.time;
+        && d.createdAt == request.time
+        && !('updatedAt' in d);
+    }
+
+    function validEdicaoOrcamentoObra(d, old) {
+      return validObraBase(d)
+        && old.uid == request.auth.uid
+        && d.uid == old.uid
+        && d.numero == old.numero
+        && d.createdAt == old.createdAt
+        && d.status == old.status
+        && d.updatedAt == request.time;
     }
 
     function validPerfil(d) {
@@ -89,7 +105,9 @@ service cloud.firestore {
     match /orcamentos_obra/{orcamentoId} {
       allow create: if request.auth != null && validNovoOrcamentoObra(request.resource.data);
       allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (request.auth != null && validEdicaoOrcamentoObra(request.resource.data, resource.data));
+      allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
     }
 
     match /users/{uid} {

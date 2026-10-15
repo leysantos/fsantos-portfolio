@@ -56,7 +56,7 @@ function draw(){if(MODE==="simples"){gerarSimples();PAVN=NPAV()}syncPav();[...tb
 function tabela(r,pdf){return`<div class="otab"><table class="obt"><thead><tr><th>Item</th><th>Código SINAPI</th><th>Descrição</th><th>Un.</th><th>Qtd.</th><th>Custo unit.</th><th>Total</th></tr></thead><tbody>${r.etapas.map(e=>`<tr class="grp"><td>${e.n}</td><td colspan="5">${esc(e.nome.toUpperCase())}</td><td>${brl(e.sub)}</td></tr>`+e.itens.map(x=>`<tr><td>${x.item}</td><td>${x.c.startsWith("VERBA")?"Verba":x.c}</td><td>${esc(x.desc)}${x.o&&!x.c.startsWith("VERBA")?`<small>${esc(x.o)}</small>`:""}</td><td>${esc(x.u)}</td><td>${num(x.q)}</td><td>${brl(x.pu)}</td><td>${brl(x.tot)}</td></tr>`).join("")).join("")}
 <tr class="sub"><td colspan="6">Custo direto</td><td>${brl(r.direto)}</td></tr><tr class="sub"><td colspan="6">BDI (${num(IN.bdi)}%)</td><td>${brl(r.bdi)}</td></tr><tr class="tot"><td colspan="6">TOTAL ESTIMADO (${brl(r.m2)}/m²)</td><td>${brl(r.total)}</td></tr></tbody></table></div>`}
 const tipoUI=()=>{const t=$("#p-tipo").value,g=t.startsWith("galpao");$("#l-pav").hidden=g;if(g)$("#p-pav").value="1";$("#l-cob").hidden=g;$("#l-mez").hidden=!g;$("#l-meza").hidden=!g||$("#p-mez").value!=="1";$("#l-pis").hidden=g;document.querySelectorAll(".l-pisd").forEach(e=>e.hidden=g||$("#p-pis").value!=="1")};
-$("#md-s").onclick=()=>setModo("simples");$("#md-a").onclick=()=>setModo("avancado");$("#a-adv").onclick=()=>{setModo("avancado");$("#amb").scrollIntoView({behavior:"smooth",block:"center"})};
+$("#ed-cancel").onclick=()=>{fimEdit();mm("Edição cancelada; um novo PDF criará um novo orçamento.",1)};$("#md-s").onclick=()=>setModo("simples");$("#md-a").onclick=()=>setModo("avancado");$("#a-adv").onclick=()=>{setModo("avancado");$("#amb").scrollIntoView({behavior:"smooth",block:"center"})};
 $("#p-tipo").onchange=()=>{const t=$("#p-tipo").value;if(MODE==="simples")$("#p-area").value=num(t.startsWith("galpao")?500:t==="alto"?250:t==="baixo"?60:100);$("#p-pd").value=num(TIPOS[t].pd);$("#p-cob").value=defCob(t);tipoUI();preset();draw()};$("#p-mez").addEventListener("change",tipoUI);$("#p-pis").addEventListener("change",tipoUI);tipoUI();
 $("#ob-form").addEventListener("input",draw);$("#a-add").onclick=()=>{const k=$("#a-kind").value;if(tb.children.length>=40)return;if(k==="gourmet")row({nome:"Área gourmet",t:"m",l:3.5,c:5,p:1});else if(k==="escritorio")row({nome:"Escritório",t:"d",l:3,c:3,p:1});else if(k==="edicula"){row({nome:"Edícula",t:"s",l:3.5,c:4,p:1});if(tb.children.length<40)row({nome:"Banheiro edícula",t:"b",l:1.5,c:2,p:1})}else row();draw()};$("#a-pre").onclick=()=>{preset();draw()};
 preset();draw();
@@ -115,18 +115,39 @@ function fill(u){$("#c-nome").value=PERFIL?.nome||u.displayName||"";$("#c-tel").
 let MEUS=[];
 async function meus(){if(!USER)return;const {db,F}=await fb();try{const s=await F.getDocs(F.query(F.collection(db,"orcamentos_obra"),F.where("uid","==",USER.uid)));
   MEUS=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-  $("#meus-rows").innerHTML=MEUS.map((o,i)=>`<tr data-i="${i}"><td>${o.createdAt?.toDate?o.createdAt.toDate().toLocaleDateString("pt-BR"):"—"}</td><td>${esc(o.numero)}</td><td>${esc(TIPOS[o.tipo]?.nome||o.tipo)}</td><td>${num(o.areaConstruida)}</td><td>${brl(o.total)}</td><td>${brl(o.totalPorM2)}</td></tr>`).join("")||'<tr><td colspan="6">Nenhum orçamento salvo ainda.</td></tr>';
-  $("#meus-rows").querySelectorAll("tr[data-i]").forEach(r=>r.onclick=()=>carregar(MEUS[+r.dataset.i]))}catch(e){$("#meus-rows").innerHTML=`<tr><td colspan="6">Não foi possível carregar (${esc(e.code||e.message)}).</td></tr>`}}
-function carregar(o){const x=o.entradas||{};$("#p-tipo").value=o.tipo;$("#p-pav").value=o.pavimentos;$("#p-pd").value=num(o.peDireito);$("#p-reg").value=o.regime;$("#p-bdi").value=num(o.bdi);$("#p-cal").checked=x.calibrar!==false;
+  $("#meus-rows").innerHTML=MEUS.map((o,i)=>`<tr data-i="${i}"><td>${o.createdAt?.toDate?o.createdAt.toDate().toLocaleDateString("pt-BR"):"—"}</td><td>${esc(o.numero)}</td><td>${esc(TIPOS[o.tipo]?.nome||o.tipo)}</td><td>${num(o.areaConstruida)}</td><td>${brl(o.total)}</td><td>${brl(o.totalPorM2)}</td><td class="m-act"><button type="button" class="btn ghost small" data-ac="abrir">Abrir</button><button type="button" class="btn ghost small" data-ac="editar">Editar</button><button type="button" class="btn danger small" data-ac="excluir">Excluir</button></td></tr>`).join("")||'<tr><td colspan="7">Nenhum orçamento salvo ainda.</td></tr>';
+  $("#meus-rows").querySelectorAll("tr[data-i]").forEach(r=>{const o=MEUS[+r.dataset.i];r.onclick=()=>carregar(o,false);
+    r.querySelector('[data-ac="editar"]').onclick=ev=>{ev.stopPropagation();carregar(o,true)};
+    r.querySelector('[data-ac="abrir"]').onclick=ev=>{ev.stopPropagation();carregar(o,false)};
+    r.querySelector('[data-ac="excluir"]').onclick=async ev=>{ev.stopPropagation();if(!confirm(`Excluir o orçamento ${o.numero}? Esta ação não pode ser desfeita.`))return;
+      try{const {db,F}=await fb();await F.deleteDoc(F.doc(db,"orcamentos_obra",o.id));if(EDIT&&EDIT.id===o.id)fimEdit();mm(`Orçamento ${o.numero} excluído.`,1);meus()}catch(e){mm("Não foi possível excluir ("+(e.code||e.message)+").")}}})}catch(e){$("#meus-rows").innerHTML=`<tr><td colspan="7">Não foi possível carregar (${esc(e.code||e.message)}).</td></tr>`}}
+let EDIT=null;const mm=(t,ok)=>{const m=$("#meus-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t};
+function fimEdit(){EDIT=null;$("#ed-bar").hidden=true;$("#b-pdf").textContent="Gerar orçamento em PDF"}
+function carregar(o,editar){const x=o.entradas||{},g=String(o.tipo).startsWith("galpao");
+  $("#p-tipo").value=TIPOS[o.tipo]?o.tipo:"galpao_ind";$("#p-pav").value=g?1:(o.pavimentos||1);$("#p-pd").value=num(o.peDireito||TIPOS[o.tipo]?.pd||3);$("#p-reg").value=o.regime||"nd";$("#p-bdi").value=num(o.bdi??25);$("#p-cal").checked=x.calibrar!==false;
   $("#t-l").value=num(o.terreno?.largura);$("#t-c").value=num(o.terreno?.comprimento);$("#m-on").checked=!!o.muro?.ativo;$("#m-h").value=num(o.muro?.altura||2);["frente","fundos","esq","dir"].forEach(k=>$("#m-"+k).checked=!!x["muro_"+k]);
-  tb.innerHTML="";(o.ambientes||[]).forEach(a=>row({nome:a.nome,t:a.tipo,l:a.largura,c:a.comprimento}));if(o.cidade)$("#c-cid").value=o.cidade;draw();scrollTo({top:$("#res").offsetTop-80,behavior:"smooth"})}
-async function salvar(no){const {db,F}=await fb();const r2=v=>Math.round(v*100)/100;
-  const d={numero:no,uid:USER.uid,cliente:IN.cliente,cidade:IN.cidade,tipo:IN.tipo,modo:MODE==="simples"?"simples":"avancado",pavimentos:IN.tipo.startsWith("galpao")?1:IN.pav,cobertura:R.Q.OP.cob,telha:R.Q.OP.telha,mezanino:r2(R.Q.Amez),...(R.Q.OP.pisc?{piscina:{comprimento:r2(R.Q.OP.pisc.c),largura:r2(R.Q.OP.pisc.l),profundidade:r2(R.Q.OP.pisc.p)}}:{}),peDireito:r2(IN.pd),regime:IN.regime,bdi:r2(IN.bdi),sinapiRef:String(R.ref),
+  $("#p-cob").value=o.cobertura||defCob(o.tipo);$("#p-telha").value=o.telha||"simples";
+  $("#p-mez").value=o.mezanino>0?"1":"0";if(o.mezanino>0)$("#p-meza").value=num(o.mezanino);
+  $("#p-pis").value=o.piscina?"1":"0";if(o.piscina){$("#p-pisc").value=num(o.piscina.comprimento);$("#p-pisl").value=num(o.piscina.largura);$("#p-pisp").value=num(o.piscina.profundidade)}
+  if(o.cidade)$("#c-cid").value=o.cidade;
+  const simples=o.modo==="simples"&&o.areaAlvo>0;MODE=simples?"simples":"avancado";
+  document.querySelector(".ob").classList.toggle("simples",simples);$("#md-s").classList.toggle("on",simples);$("#md-a").classList.toggle("on",!simples);
+  if(simples)$("#p-area").value=num(o.areaAlvo);
+  PAVN=null;tb.innerHTML="";(o.ambientes||[]).forEach(a=>row({nome:a.nome,t:a.tipo,l:a.largura,c:a.comprimento,p:a.pavimento??1}));PAVN=NPAV();
+  tipoUI();draw();
+  let av=o.modo==="simples"&&!simples?" Orçamento antigo do modo simples sem área-alvo salva: aberto no modo avançado com os ambientes salvos.":"";
+  const d=Math.abs((R?.total||0)-(o.total||0));if(d>0.05)av+=` Atenção: o total recalculado (${brl(R.total)}) difere do salvo (${brl(o.total)})${o.sinapiRef&&o.sinapiRef!==R.ref?` porque a base SINAPI mudou (${o.sinapiRef} → ${R.ref})`:" (composições ou regras do modelo atualizadas)"}.`;
+  if(editar){EDIT={id:o.id,numero:o.numero};$("#ed-txt").textContent=`Editando ${o.numero} — ao gerar o PDF as alterações serão salvas neste mesmo orçamento.`;$("#ed-bar").hidden=false;$("#b-pdf").textContent="Salvar alterações e gerar PDF"}else fimEdit();
+  mm(`Orçamento ${o.numero} carregado.`+av,!av);scrollTo({top:$("#res").offsetTop-80,behavior:"smooth"})}
+function montarDoc(no,ts){const r2=v=>Math.round(v*100)/100;
+  return {numero:no,uid:USER?.uid||"test",cliente:IN.cliente,cidade:IN.cidade,tipo:IN.tipo,modo:MODE==="simples"?"simples":"avancado",...(MODE==="simples"?{areaAlvo:r2(pf($("#p-area").value))}:{}),pavimentos:IN.tipo.startsWith("galpao")?1:IN.pav,cobertura:R.Q.OP.cob,telha:R.Q.OP.telha,mezanino:r2(R.Q.Amez),...(R.Q.OP.pisc?{piscina:{comprimento:r2(R.Q.OP.pisc.c),largura:r2(R.Q.OP.pisc.l),profundidade:r2(R.Q.OP.pisc.p)}}:{}),peDireito:r2(IN.pd),regime:IN.regime,bdi:r2(IN.bdi),sinapiRef:String(R.ref),
     terreno:{largura:r2(IN.terreno.l),comprimento:r2(IN.terreno.c)},muro:{ativo:IN.muro.on,altura:r2(IN.muro.h),comprimento:r2(R.Q.Lmuro)},
     entradas:{calibrar:IN.calibrar!==false,muro_frente:IN.muro.frente,muro_fundos:IN.muro.fundos,muro_esq:IN.muro.esq,muro_dir:IN.muro.dir},
     ambientes:IN.ambientes.filter(a=>a.l>0&&a.c>0).map(a=>({nome:a.nome,tipo:a.t,largura:r2(a.l),comprimento:r2(a.c),pavimento:a.p??1})),
-    etapas:R.etapas.map(e=>({n:e.n,nome:e.nome,subtotal:r2(e.sub)})),areaConstruida:r2(R.Q.Ac),custoDireto:r2(R.direto),ajusteCub:r2(R.ajuste||0),total:r2(R.total),totalPorM2:r2(R.m2),status:"novo",createdAt:F.serverTimestamp()};
-  await Promise.race([F.addDoc(F.collection(db,"orcamentos_obra"),d),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
+    etapas:R.etapas.map(e=>({n:e.n,nome:e.nome,subtotal:r2(e.sub)})),areaConstruida:r2(R.Q.Ac),custoDireto:r2(R.direto),ajusteCub:r2(R.ajuste||0),total:r2(R.total),totalPorM2:r2(R.m2),status:"novo",createdAt:ts}}
+async function salvar(no){const {db,F}=await fb();const d=montarDoc(no,F.serverTimestamp());
+  let op;if(EDIT){delete d.createdAt;delete d.status;d.numero=EDIT.numero;d.updatedAt=F.serverTimestamp();op=F.updateDoc(F.doc(db,"orcamentos_obra",EDIT.id),{...d,...(MODE==="simples"?{}:{areaAlvo:F.deleteField()}),...(d.piscina?{}:{piscina:F.deleteField()})})}else op=F.addDoc(F.collection(db,"orcamentos_obra"),d);
+  await Promise.race([op,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);if(EDIT)fimEdit();
   try{await salvarPerfil(USER,IN.cliente.nome,IN.cliente.telefone)}catch(e){}}
 const SITE="leysantos.github.io/fsantos-portfolio",WHATS="(92) 99226-2786",MAIL="leyfps@gmail.com";
 export function renderPDF(r,inp,no,el=document.getElementById("proposta")){const c=inp.cliente,Q=r.Q,hoje=new Date().toLocaleDateString("pt-BR"),bl="________________";
@@ -148,9 +169,16 @@ export function renderPDF(r,inp,no,el=document.getElementById("proposta")){const
 $("#b-pdf").onclick=async()=>{draw();if(!R)return;msg.className="omsg";
   if(!USER){msg.textContent="Entre ou crie sua conta (passo 1) para gerar o orçamento.";msg.classList.add("err");$("#auth").scrollIntoView({behavior:"smooth"});return}
   if(!IN.cliente.nome||!IN.cliente.telefone){msg.textContent="Informe nome e telefone para gerar o orçamento.";msg.classList.add("err");$("#c-nome").focus();return}
-  const b=$("#b-pdf");b.disabled=true;b.textContent="Gerando…";let no=numero();
-  try{await salvar(no);msg.textContent=`Orçamento ${no} salvo em Meus orçamentos.`;msg.classList.add("ok");meus()}
+  const b=$("#b-pdf"),ed=!!EDIT;b.disabled=true;b.textContent="Gerando…";let no=ed?EDIT.numero:numero();
+  try{await salvar(no);msg.textContent=ed?`Orçamento ${no} atualizado.`:`Orçamento ${no} salvo em Meus orçamentos.`;msg.classList.add("ok");meus()}
   catch(e){console.error(e);no="";msg.textContent="Não foi possível registrar agora; o PDF foi gerado mesmo assim.";msg.classList.add("err")}
-  finally{b.disabled=false;b.textContent="Gerar orçamento em PDF"}
+  finally{b.disabled=false;b.textContent=EDIT?"Salvar alterações e gerar PDF":"Gerar orçamento em PDF"}
   renderPDF(R,IN,no)};
-window.__obra={xlsxBlob,renderPDF,orcar,input,draw,get R(){return R}};
+const smsg=(t,ok)=>{const m=$("#sinapi-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t};
+{const k=sessionStorage.getItem("sinapiAtualizada");if(k){sessionStorage.removeItem("sinapiAtualizada");smsg(k===SINAPI.ref?`Base atualizada para ${SINAPI.ref} – ${SINAPI.uf}.`:`A atualização não foi carregada ainda (o servidor ainda entrega ${SINAPI.ref}); tente novamente em alguns minutos.`,k===SINAPI.ref)}}
+const refN=r=>{const [m,a]=String(r).split("/");return(+a||0)*12+(+m||0)};
+$("#b-sinapi").onclick=async()=>{const b=$("#b-sinapi");b.disabled=true;smsg("Verificando…",1);try{const j=await fetch("assets/data/sinapi-latest.json?t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+  if(refN(j.ref)<=refN(SINAPI.ref))smsg(`Você já está usando a base SINAPI mais recente (${SINAPI.ref} – ${SINAPI.uf}).`,1);
+  else{smsg(`Nova base ${j.ref} disponível; atualizando…`,1);await Promise.all(["assets/js/sinapi-am.js","assets/js/obra-modelo.js","assets/js/obra.js"].map(u=>fetch(u,{cache:"reload"})));sessionStorage.setItem("sinapiAtualizada",j.ref);location.reload()}}
+  catch(e){smsg("Não foi possível verificar agora ("+(e.message||e)+").")}finally{b.disabled=false}};
+window.__obra={montarDoc,carregar,xlsxBlob,renderPDF,orcar,input,draw,get R(){return R}};

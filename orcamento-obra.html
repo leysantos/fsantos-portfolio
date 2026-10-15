@@ -32,8 +32,8 @@
 </form>
 <section id="res" class="obres" aria-live="polite"></section>
 <p class="omsg" id="ob-msg" role="status"></p>
-<div class="obact"><button class="btn" id="b-pdf">Gerar orçamento em PDF</button><button class="btn ghost" id="b-csv">Exportar CSV</button><button class="btn ghost" id="b-xlsx">Exportar XLSX</button><a class="btn ghost" id="b-wa" target="_blank" rel="noopener">Falar com o engenheiro</a></div>
-<section id="meus" class="obmeus" hidden><h3>Meus orçamentos</h3><div class="otab"><table class="obt"><thead><tr><th>Data</th><th>Número</th><th>Tipo</th><th>Área (m²)</th><th>Total</th><th>R$/m²</th></tr></thead><tbody id="meus-rows"></tbody></table></div></section>
+<p class="omsg" id="sinapi-msg" role="status"></p><div class="obact"><button class="btn" id="b-pdf">Gerar orçamento em PDF</button><button class="btn ghost" id="b-csv">Exportar CSV</button><button class="btn ghost" id="b-xlsx">Exportar XLSX</button><button class="btn ghost" id="b-sinapi" type="button">Verificar atualização SINAPI</button><a class="btn ghost" id="b-wa" target="_blank" rel="noopener">Falar com o engenheiro</a></div>
+<section id="meus" class="obmeus" hidden><h3>Meus orçamentos</h3><p class="omsg" id="meus-msg" role="status"></p><p id="ed-bar" class="onote" hidden><b id="ed-txt"></b> <button type="button" class="linkbtn" id="ed-cancel">Cancelar edição</button></p><div class="otab"><table class="obt"><thead><tr><th>Data</th><th>Número</th><th>Tipo</th><th>Área (m²)</th><th>Total</th><th>R$/m²</th><th>Ações</th></tr></thead><tbody id="meus-rows"></tbody></table></div></section>
 <details class="obreg"><summary>Regras de cálculo dos quantitativos (premissas)</summary><ol id="regras"></ol></details>
 <section id="tab"></section>
 </main>
