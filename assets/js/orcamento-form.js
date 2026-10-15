@@ -6,7 +6,7 @@ function addItem(){if(box.children.length>=10)return;const k=n++;const d=documen
   d.querySelector(".rm").onclick=()=>{d.remove();draw()};box.append(d);draw()}
 const cf=v=>(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});const f=id=>$("#o-"+id).value.trim();
 function read(){return[...box.children].map(d=>{const sel=[...d.querySelectorAll(".disc input:checked")].map(x=>+x.value);return{...calcItem({nome:d.querySelector(".i-nome").value.trim(),area:parseFloat(d.querySelector(".i-area").value.replace(/\./g,"").replace(",","."))||0,sel}),sel}})}
-function build(){const itens=read(),t=calcTotal(itens,parseFloat($("#o-art").value.replace(",","."))||0);return{cliente:{nome:f("nome").slice(0,120),telefone:f("tel").slice(0,40),email:f("email").slice(0,120)},projeto:f("proj").slice(0,160),cidade:f("cid").slice(0,100),itens,subtotal:t.subtotal,artPct:t.artPct,art:t.art,total:t.total,totalPorM2:t.totalPorM2,area:t.area}}
+function build(){const itens=read(),t=calcTotal(itens,parseFloat($("#o-art").value.replace(",","."))||0);const pg={pix:f("pix").slice(0,120),banco:f("banco").slice(0,120),titular:f("tit").slice(0,120)};return{...(pg.pix||pg.banco||pg.titular?{pagamento:pg}:{}),cliente:{nome:f("nome").slice(0,120),telefone:f("tel").slice(0,40),email:f("email").slice(0,120)},projeto:f("proj").slice(0,160),cidade:f("cid").slice(0,100),itens,subtotal:t.subtotal,artPct:t.artPct,art:t.art,total:t.total,totalPorM2:t.totalPorM2,area:t.area}}
 function draw(){[...box.children].forEach((d,i)=>{d.querySelector(".ono").textContent=i+1;d.querySelector(".rm").hidden=box.children.length<2});
   const o=build(),multi=o.itens.length>1;
   $("#o-tab tbody").innerHTML=o.itens.map((it,k)=>(multi?`<tr class="grp"><td colspan="6">${esc(it.nome||"Projeto "+(k+1))} — ${num(it.area)} m²</td></tr>`:"")+(it.disciplinas.map(x=>`<tr><td>${x.item}</td><td>${x.nome}</td><td>${cf(x.coef)}</td><td>${num(x.areaProjeto)}</td><td>${brl(x.preco)}</td><td>${brl(x.total)}</td></tr>`).join("")||'<tr><td colspan="6">Selecione ao menos uma disciplina.</td></tr>')+(multi?`<tr class="sub"><td colspan="5">Subtotal</td><td>${brl(it.subtotal)}</td></tr>`:"")).join("");
@@ -17,6 +17,9 @@ function numero(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomV
 $("#o-form").addEventListener("input",draw);$("#o-add").onclick=addItem;addItem();
 // ---- conta (Firebase Auth) + Meus orçamentos ----
 let FBM=null,USER=null,PERFIL=null,ADMIN=false,EDIT=null,MEUS=[];const ADM="leyfps@gmail.com";
+// dados de pagamento padrão: aplicados só quando o administrador está logado
+const PAG_ADM={pix:"leyfps@gmail.com",banco:"Banco Inter",tit:"Francirley Pereira Santos"};
+function pagAdm(on){for(const k in PAG_ADM){const e=$("#o-"+k);if(on){if(!e.value)e.value=PAG_ADM[k]}else if(e.value===PAG_ADM[k])e.value=""}draw()}
 async function fb(){if(FBM)return FBM;const [cfg,A,F]=await Promise.all([import("./firebase-config.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js")]);return FBM={...cfg,A,F}}
 const am=(t,ok)=>{const m=$("#oa-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t},mm=(t,ok)=>{const m=$("#om-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t};
 const errTxt=e=>({"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"Conta não encontrada.","auth/email-already-in-use":"Este e-mail já tem conta; use Entrar.","auth/weak-password":"A senha precisa ter ao menos 6 caracteres.","auth/invalid-email":"E-mail inválido.","auth/popup-closed-by-user":"Login cancelado.","auth/operation-not-allowed":"Login por e-mail ainda não habilitado no Firebase."}[e.code]||("Erro: "+(e.code||e.message)));
@@ -34,7 +37,7 @@ $("#oa-sair").onclick=async()=>{const {auth,A}=await fb();fimEdit();await A.sign
 function fill(u){if(EDIT)return;if(!$("#o-nome").value)$("#o-nome").value=PERFIL?.nome||u.displayName||"";if(!$("#o-tel").value)$("#o-tel").value=PERFIL?.telefone||"";if(!$("#o-email").value)$("#o-email").value=u.email||"";draw()}
 const QS=new URLSearchParams(location.search);
 (async()=>{try{const {auth,A,db,F}=await fb();A.onAuthStateChanged(auth,async u=>{USER=u;ADMIN=!!(u&&u.email===ADM&&u.emailVerified);$("#oa-out").hidden=!!u;$("#oa-in").hidden=!u;$("#o-meus").hidden=!u;$("#oa-msg").textContent="";
-  if(!u){PERFIL=null;MEUS=[];return}$("#oa-who").textContent=u.email||u.displayName;
+  if(!u){PERFIL=null;MEUS=[];pagAdm(false);return}if(!EDIT&&!QS.get("edit")&&!QS.get("abrir"))pagAdm(ADMIN);$("#oa-who").textContent=u.email||u.displayName;
   try{const s=await F.getDoc(F.doc(db,"users",u.uid));PERFIL=s.exists()?s.data():null;if(!PERFIL)await salvarPerfil(u,u.displayName,"")}catch(e){console.error(e)}
   fill(u);await meus();
   const id=QS.get("edit")||QS.get("abrir");if(id){try{const s=await F.getDoc(F.doc(db,"orcamentos",id));if(!s.exists())throw new Error("não encontrado");const o={id:s.id,...s.data()};
@@ -58,7 +61,7 @@ function carregar(o,editar){box.innerHTML="";const its=o.itens?.length?o.itens:[
   its.forEach(it=>{addItem();const d=box.lastElementChild;d.querySelector(".i-nome").value=it.nome||"";d.querySelector(".i-area").value=it.area!=null?String(it.area).replace(".",","):"";
     const sel=Array.isArray(it.sel)?it.sel:(it.disciplinas||[]).map(x=>C.disciplinas.findIndex(c=>c.item===x.item)).filter(i=>i>=0);
     d.querySelectorAll(".disc input").forEach(c=>c.checked=sel.includes(+c.value))});
-  $("#o-nome").value=o.cliente?.nome||"";$("#o-tel").value=o.cliente?.telefone||"";$("#o-email").value=o.cliente?.email||"";$("#o-proj").value=o.projeto||"";$("#o-cid").value=o.cidade||"";$("#o-art").value=o.artPct!=null?o.artPct:0;
+  $("#o-nome").value=o.cliente?.nome||"";$("#o-tel").value=o.cliente?.telefone||"";$("#o-email").value=o.cliente?.email||"";$("#o-proj").value=o.projeto||"";$("#o-cid").value=o.cidade||"";$("#o-art").value=o.artPct!=null?o.artPct:0;$("#o-pix").value=o.pagamento?.pix||"";$("#o-banco").value=o.pagamento?.banco||"";$("#o-tit").value=o.pagamento?.titular||"";
   const r=draw();let av="";if(Math.abs((r.total||0)-(o.total||0))>0.05)av=` Atenção: com a tabela de preços atual o total é ${brl(r.total)} (salvo: ${brl(o.total)}). "Gerar proposta" na lista usa os valores salvos.`;
   if(editar){EDIT={id:o.id,numero:o.numero,uid:o.uid};$("#om-edt").textContent=`Editando ${o.numero}${USER&&o.uid!==USER.uid?" (orçamento de outro usuário — modo administrador)":""} — ao gerar a proposta as alterações serão salvas neste mesmo orçamento.`;$("#om-ed").hidden=false;$("#o-gerar").textContent="Salvar alterações e gerar proposta"}else fimEdit();
   mm(`Orçamento ${o.numero} carregado${editar?" para edição":""}.`+av,!av);$("#o-form").scrollIntoView({behavior:"smooth"})}
@@ -73,7 +76,7 @@ $("#o-gerar").onclick=async()=>{const o=draw();msg.className="omsg";
     renderProposta({...o,data:new Date()});return}
   const btn=$("#o-gerar"),ed=!!EDIT;btn.disabled=true;btn.textContent="Salvando…";o.numero=ed?EDIT.numero:numero();
   try{const {db,F}=await fb();const {area,...doc}=o;let op;
-    if(ed){op=F.updateDoc(F.doc(db,"orcamentos",EDIT.id),{...doc,uid:EDIT.uid,updatedAt:F.serverTimestamp()})}
+    if(ed){op=F.updateDoc(F.doc(db,"orcamentos",EDIT.id),{...doc,...(doc.pagamento?{}:{pagamento:F.deleteField()}),uid:EDIT.uid,updatedAt:F.serverTimestamp()})}
     else op=F.addDoc(F.collection(db,"orcamentos"),{...doc,uid:USER.uid,status:"novo",createdAt:F.serverTimestamp()});
     await Promise.race([op,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
     msg.textContent=ed?`Orçamento ${o.numero} atualizado.`:`Orçamento ${o.numero} salvo em Meus orçamentos. Entraremos em contato.`;msg.classList.add("ok");if(ed)fimEdit();meus()}

@@ -69,3 +69,8 @@ body.guia[data-only]:not([data-only=""]) .gch{display:none}}
 .pp-t .ftr td,.pp-t .ftr th{border:1px solid #bbb}
 .fres dt:has(+dd .ftr),.fres dd:has(.ftr){grid-column:1/-1}.fres dd:has(.ftr){font-weight:400;overflow-x:auto}.ftr td:not(:first-child),.ftr th:not(:first-child){text-align:right;white-space:nowrap}
 .ftrw{overflow-x:auto;margin:.6rem 0}.ftrh{margin:.8rem 0 .2rem;color:var(--gold)}
+/* evita que tabelas/SVG largos estiquem a coluna e causem rolagem horizontal da página */
+.fcols>*,.fres,.fpanel,.fwrap>*{min-width:0}
+.fcols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media(max-width:900px){.fcols{grid-template-columns:minmax(0,1fr)}}
+.fres dl>*{min-width:0}.fpanel svg{max-width:100%;height:auto}

@@ -21,8 +21,17 @@ service cloud.firestore {
         && str(c.email, 0, 120);
     }
 
+    function validPagamento(d) {
+      return !('pagamento' in d) || (d.pagamento is map
+        && d.pagamento.keys().hasOnly(['pix', 'banco', 'titular'])
+        && (!('pix' in d.pagamento) || str(d.pagamento.pix, 0, 120))
+        && (!('banco' in d.pagamento) || str(d.pagamento.banco, 0, 120))
+        && (!('titular' in d.pagamento) || str(d.pagamento.titular, 0, 120)));
+    }
+
     function validOrcBase(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'notas', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'status', 'notas', 'createdAt', 'updatedAt'])
+        && validPagamento(d)
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
@@ -47,7 +56,8 @@ service cloud.firestore {
 
     // Lead: proposta gerada SEM login (visitante). Só criação pública; sem uid.
     function validLead(d) {
-      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'semLogin', 'createdAt'])
+      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'status', 'semLogin', 'createdAt'])
+        && validPagamento(d)
         && d.keys().hasAll(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'semLogin', 'createdAt'])
         && d.semLogin == true
         && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
@@ -68,7 +78,7 @@ service cloud.firestore {
       return validOrcBase(d)
         && old.uid == request.auth.uid
         && d.uid == old.uid
-        && d.diff(old).affectedKeys().hasOnly(['cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'updatedAt'])
+        && d.diff(old).affectedKeys().hasOnly(['cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'updatedAt'])
         && d.updatedAt == request.time;
     }
 
