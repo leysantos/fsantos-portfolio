@@ -5,6 +5,88 @@ const E_ACO=200000; // MPa
 const PERFIS_W=[["W150x13,0",13,16.6,635,96.4,6.18,2.22],["W150x18,0",18,23.4,939,139.4,6.34,2.32],["W200x15,0",15,19.4,1305,147.9,8.2,2.12],["W250x17,9",17.9,23.1,2291,211,9.96,1.99],["W200x19,3",19.3,25.1,1686,190.6,8.19,2.18],["W310x21,0",21,27.2,3776,291.9,11.77,1.9],["W150x22,5",22.5,29,1229,179.6,6.51,3.65],["W200x22,5",22.5,29,2029,225.5,8.37,2.22],["W250x25,3",25.3,32.6,3473,317.3,10.31,2.22],["W200x26,6",26.6,34.2,2611,282.3,8.73,3.1],["W150x29,8",29.8,38.5,1739,247.5,6.72,3.8],["W250x32,7",32.7,42.1,4937,428.5,10.83,3.35],["W310x32,7",32.7,42.1,6570,485.3,12.49,1.94],["W360x32,9",32.9,42.1,8358,547.6,14.09,2.63],["W200x35,9",35.9,45.7,3437,379.2,8.67,3.69],["W310x38,7",38.7,49.7,8581,615.4,13.14,3.82],["W410x38,8",38.8,50.3,12777,736.8,15.94,2.83],["W360x44,0",44,57.7,12258,784.3,14.58,3.77],["W250x44,8",44.8,57.6,7158,622.1,11.15,3.86],["W200x46,1",46.1,58.6,4543,495.3,8.81,5.12],["W310x52,0",52,67,11909,842.5,13.33,4.95],["W460x52,0",52,66.6,21370,1095.9,17.91,3.96],["W410x53,0",53,68.4,18734,1052.2,16.55,3.84],["W460x68,0",68,87.6,29851,1495.4,18.46,4.06],["W250x73,0",73,92.7,11257,983,11.02,6.48]].map(([n,kg,A,Ix,Zx,rx,ry])=>({n,kg,A,Ix,Zx,rx,ry})).sort((a,b)=>a.kg-b.kg);
 // Tubos quadrados (aprox.): A cm², r cm, kg/m
 const TUBOS=[["□50x50x3",4.4,5.61,1.91],["□60x60x3",5.3,6.81,2.31],["□70x70x4",8.2,10.4,2.68],["□80x80x4",9.4,12.0,3.07],["□100x100x4",11.9,15.2,3.88],["□100x100x6,3",18.2,23.2,3.80],["□150x150x6,3",28.1,35.8,5.85]].map(([n,kg,A,r])=>({n,kg,A,r}));
+// Perfis U simples formados a frio (NBR 6355): bw × bf × t (mm). Propriedades calculadas (cantos vivos, linha média aproximada).
+const fmm=x=>String(x).replace(".",",");
+function secU(bw,bf,t){const A=bw*t+2*(bf-t)*t,xc=(bw*t*t/2+2*(bf-t)*t*(t+(bf-t)/2))/A;
+ const Iy=bw*t**3/12+bw*t*(t/2-xc)**2+2*(t*(bf-t)**3/12+(bf-t)*t*((t+bf)/2-xc)**2),Ix=t*bw**3/12+2*((bf-t)*t**3/12+(bf-t)*t*((bw-t)/2)**2);
+ return{tipo:"U",n:`U ${bw}x${bf}x${t.toFixed(2).replace(".",",")}`,bw,bf,t,w:bw,A:A/100,Ix:Ix/1e4,Iy:Iy/1e4,xc,rx:Math.sqrt(Ix/A)/10,ry:Math.sqrt(Iy/A)/10,r:Math.sqrt(Math.min(Ix,Iy)/A)/10,kg:A*0.00785,open:bw-2*t}}
+const PERFIS_U=[[50,25],[68,30],[75,40],[92,30],[100,40],[100,50],[127,50],[150,50],[200,50]].flatMap(([bw,bf])=>[1.2,1.5,2,2.25,2.65,3].map(t=>secU(bw,bf,t))).sort((a,b)=>a.kg-b.kg);
+// Tubos quadrados formados a frio p/ diagonais e montantes dentro do U (propriedades calculadas)
+function secTQ(b,t){const A=b*b-(b-2*t)**2,I=(b**4-(b-2*t)**4)/12;return{tipo:"T",n:`□${b}x${b}x${t.toFixed(2).replace(".",",")}`,b,t,w:b,A:A/100,I:I/1e4,r:Math.sqrt(I/A)/10,kg:A*0.00785,xc:b/2}}
+const TUBOS_W=[[20,1.2],[20,1.5],[25,1.2],[25,1.5],[30,1.5],[30,2],[40,1.5],[40,2],[40,3],[50,2],[50,3],[60,2],[60,3],[70,3],[80,3],[90,3],[100,3]].map(([b,t])=>secTQ(b,t));
+const ALMA=[...TUBOS_W,...PERFIS_U].sort((a,b)=>a.kg-b.kg);
+// Q (flambagem local, NBR 8800 Anexo F) para U: mesas AL (grupo 4) e alma AA; tubos: alma AA nas 4 faces
+function Qsec(p,fy){const e=Math.sqrt(E_ACO/fy),AA=(b,t)=>{const bt=b/t;if(bt<=1.40*e)return b;const bef=1.92*t*e*(1-0.34/bt*e);return Math.min(b,Math.max(0,bef))};
+ if(p.tipo=="T"){const b=p.b-2*p.t,be=AA(b,p.t);return(p.A*100-4*(b-be)*p.t)/(p.A*100)}
+ const bt=(p.bf-p.t)/p.t,Qs=bt<=0.45*e?1:bt<=0.91*e?1.34-0.76*bt/e:0.53*E_ACO/(fy*bt*bt),b=p.bw-2*p.t,be=AA(b,p.t),Qa=(p.A*100-(b-be)*p.t)/(p.A*100);return Qs*Qa}
+// resistência de cálculo (kN): tração (N>0 só escoamento bruto) ou compressão com Lc (m)
+function NRd(p,fy,Lc){if(!Lc)return p.A*fy/10/1.1;const es=Lc*100/p.r;if(es>200)return 0;const Q=p.tipo?Qsec(p,fy):1,l0=es/Math.PI*Math.sqrt(Q*fy/E_ACO);return chi(l0)*Q*p.A*fy/10/1.1}
+
+// ---- Treliça: geometria por forma, esforços pelo método dos nós (sistema linear), dimensionamento tubo / U simples ----
+function solveLin(A,b){const n=b.length;for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;if(Math.abs(A[p][c])<1e-10)return null;[A[c],A[p]]=[A[p],A[c]];[b[c],b[p]]=[b[p],b[c]];
+ for(let r=0;r<n;r++){if(r==c)continue;const k=A[r][c]/A[c][c];if(!k)continue;for(let j=c;j<n;j++)A[r][j]-=k*A[c][j];b[r]-=k*b[c]}}return b.map((x,i)=>x/A[i][i])}
+// faces externas (m) do banzo inferior (yb) e superior (yt) na abscissa x
+function trelForma(v){const fo=v.forma||"Plana horizontal",duas=(v.aguas||"").startsWith("Duas"),s=(v.inc??10)/100,L=v.L,rr=parseInt(v.r.slice(2)),h=L/rr,hm=v.hmin??0.5;
+ const a=x=>duas?Math.min(x,L-x):x;
+ if(fo.startsWith("Plana inclinada"))return{yb:x=>s*a(x),yt:x=>s*a(x)+h,tag:"plana inclinada",duas,h};
+ if(fo.startsWith("Banzo superior"))return{yb:x=>0,yt:x=>hm+s*a(x),tag:"banzo superior inclinado",duas,h:hm};
+ return{yb:x=>0,yt:x=>h,tag:"plana horizontal",duas:false,h}}
+// monta e resolve: off = {xs,xi,ts,ti} em mm (U) para eixos/cortes
+function trelSolve(v,off){const F=trelForma(v),L=v.L;let np=Math.ceil(L/v.p);if(F.duas&&np%2)np++;const dx=L/np,n1=np+1,o=off||{xs:0,xi:0,ts:0,ti:0};
+ const sl=(f,x)=>(f(Math.min(L,x+1e-4))-f(Math.max(0,x-1e-4)))/(Math.min(L,x+1e-4)-Math.max(0,x-1e-4)),cs=(f,x)=>1/Math.sqrt(1+sl(f,x)**2);
+ const N=[];for(let i=0;i<n1;i++){const x=i*dx;N.push([x,F.yb(x)+o.xi/1000/cs(F.yb,x)])}for(let i=0;i<n1;i++){const x=i*dx;N.push([x,F.yt(x)-o.xs/1000/cs(F.yt,x)])}
+ const B=i=>i,T=i=>n1+i,M=[];for(let i=0;i<np;i++)M.push({a:B(i),b:B(i+1),g:"inf"});for(let i=0;i<np;i++)M.push({a:T(i),b:T(i+1),g:"sup"});
+ for(let i=0;i<n1;i++)M.push({a:B(i),b:T(i),g:"mon"});for(let i=0;i<np;i++){const mid=(i+0.5)*dx<L/2||(!F.duas&&!F.tag.startsWith("plana h")&&false);M.push(mid?{a:T(i),b:B(i+1),g:"dia"}:{a:B(i),b:T(i+1),g:"dia"})}
+ M.forEach(m=>{const[xa,ya]=N[m.a],[xb,yb]=N[m.b];m.l=Math.hypot(xb-xa,yb-ya);m.c=(xb-xa)/m.l;m.s=(yb-ya)/m.l});
+ const nu=M.length+3,ne=2*N.length;if(nu!=ne)return null;const A=Array.from({length:ne},()=>new Array(nu).fill(0)),f=new Array(ne).fill(0);
+ M.forEach((m,k)=>{A[2*m.a][k]+=m.c;A[2*m.a+1][k]+=m.s;A[2*m.b][k]-=m.c;A[2*m.b+1][k]-=m.s});
+ const R0=M.length;A[0][R0]=1;A[1][R0+1]=1;A[2*B(np)+1][R0+2]=1;
+ const P=[];let Pt=0;for(let i=0;i<n1;i++){const w=1.4*v.q*(i==0||i==np?dx/2:dx);P.push(w);Pt+=w;f[2*T(i)+1]=w}// A·u = f  (carga para baixo)
+ const u=solveLin(A.map(r=>r.slice()),f.slice());if(!u)return null;M.forEach((m,k)=>m.N=u[k]);const Rx=u[R0],Ra=u[R0+1],Rb=u[R0+2];
+ let res=0;for(let r=0;r<ne;r++){let s=0;for(let k=0;k<nu;k++)s+=A[r][k]*u[k];res=Math.max(res,Math.abs(s-f[r]))}
+ // comprimentos de corte (entre faces internas das almas do U) para montantes e diagonais
+ M.forEach(m=>{if(m.g=="mon"||m.g=="dia"){const[xa]=N[m.a],[xb]=N[m.b],cl=x=>(F.yt(x)-o.ts/1000/cs(F.yt,x))-(F.yb(x)+o.ti/1000/cs(F.yb,x)),ax=x=>(F.yt(x)-o.xs/1000/cs(F.yt,x))-(F.yb(x)+o.xi/1000/cs(F.yb,x));
+  const k=(cl(xa)+cl(xb))/(ax(xa)+ax(xb));m.lc=m.l*k}else m.lc=m.l});
+ const hs=N.slice(0,n1).map((p,i)=>F.yt(p[0])-F.yb(p[0]));
+ return{F,N,M,np,dx,n1,Rx,Ra,Rb,Pt,res,hmin:Math.min(...hs),hmax:Math.max(...hs)}}
+const GN={sup:"Banzo superior",inf:"Banzo inferior",dia:"Diagonais",mon:"Montantes"};
+// envoltória de um grupo: maior compressão (com Lc do próprio membro) e maior tração
+const passa=(p,fy,ms,useLc)=>ms.every(m=>m.N>=0?NRd(p,fy,0)>=m.N:NRd(p,fy,useLc?m.lc:m.l)>=-m.N);
+const uso=(p,fy,ms,useLc)=>Math.max(...ms.map(m=>m.N>=0?m.N/NRd(p,fy,0):(-m.N)/(NRd(p,fy,useLc?m.lc:m.l)||1e-9)));
+function trelica(v){const fy=parseInt(v.fy),U=!!(v.sec&&v.sec.startsWith("Perfil U")),fo=v.fo??2,warn=[];
+ const manU=U&&v.ub&&v.ub!="Automático"?PERFIS_U.find(x=>x.n==v.ub):null,manW=U&&v.wm&&v.wm!="Automático"?ALMA.find(x=>x.n==v.wm):null;
+ let off={xs:0,xi:0,ts:0,ti:0},G,s,i,w,op=1e9,wAuto=null;
+ for(let it=0;it<4;it++){G=trelSolve(v,off);if(!G)return{steps:[],res:[["Resultado","Geometria inválida (verifique altura/inclinação)"]],warn:["Geometria inválida."]};
+  const grp=g=>G.M.filter(m=>m.g==g),web=[...grp("dia"),...grp("mon")];
+  if(!U){const pk=(ms)=>TUBOS.find(t=>passa(t,fy,ms,false));s=pk(grp("sup"));i=pk(grp("inf"));w=pk(web);break}
+  const sL=manU?[manU]:PERFIS_U.filter(p=>passa(p,fy,grp("sup"),false)),iL=manU?[manU]:PERFIS_U.filter(p=>passa(p,fy,grp("inf"),false));
+  let best=null;const Ltot=g=>grp(g).reduce((a,m)=>a+m.l,0),Lw=web.reduce((a,m)=>a+m.lc,0);
+  for(const a of sL.slice(0,40))for(const b of iL.slice(0,40)){const o2=Math.min(a.open,b.open),ww=ALMA.find(x=>x.w<=o2-fo&&passa(x,fy,web,true));const tot=a.kg*Ltot("sup")+b.kg*Ltot("inf")+(ww?ww.kg*Lw:1e9);if(!best||tot<best.tot)best={a,b,ww,o2,tot}}
+  if(!best){const strong=(ms)=>PERFIS_U.reduce((x,y)=>uso(y,fy,ms,false)<uso(x,fy,ms,false)?y:x);const a=strong(grp("sup")),b=strong(grp("inf")),o2=Math.min(a.open,b.open);best={a,b,o2,ww:ALMA.find(x=>x.w<=o2-fo&&passa(x,fy,web,true))};best.fail=1}
+  const prev=s;s=best.a;i=best.b;op=best.o2;wAuto=best.ww;w=manW||wAuto;const no={xs:s.xc,xi:i.xc,ts:s.t,ti:i.t};const same=prev===s&&off.xs==no.xs&&off.xi==no.xi;off=no;if(best.fail&&it==3)warn.push("Nenhum perfil U simples da tabela atende aos banzos: exibido o mais resistente — reduzir o painel, aumentar a altura ou reduzir vão/carga.");if(same){if(best.fail)warn.push("Nenhum perfil U simples da tabela atende aos banzos: exibido o mais resistente — reduzir o painel, aumentar a altura ou reduzir vão/carga.");break}}
+ const grp=g=>G.M.filter(m=>m.g==g),web=[...grp("dia"),...grp("mon")],fit=U&&w?w.w<=op-fo:true;
+ if(!U&&[s,i,w].some(x=>!x))warn.push("Algum elemento excede a tabela de tubos: aumentar a altura ou usar perfis maiores.");
+ if(U&&manW){if(!fit)warn.push(`${manW.n} (largura ${fmm(manW.w)} mm) não cabe no U: abertura livre ${f(op,1)} mm − folga ${f(fo,1)} mm = ${f(op-fo,1)} mm disponíveis.${wAuto?` Sugestão que cabe e atende: <b>${wAuto.n}</b>.`:" Nenhum perfil da tabela cabe e atende: usar banzo com alma maior."}`);else if(!passa(manW,fy,web,true))warn.push(`${manW.n} cabe no U, mas não atende aos esforços.${wAuto?` Sugestão: <b>${wAuto.n}</b>.`:""}`)}
+ if(U&&!w)warn.push("Nenhum perfil de diagonal/montante da tabela cabe na abertura do U e atende aos esforços: usar banzo com alma maior.");
+ if(U&&manU){if(!passa(s,fy,grp("sup"),false))warn.push(`Banzo superior ${s.n} não atende aos esforços.`);if(!passa(i,fy,grp("inf"),false))warn.push(`Banzo inferior ${i.n} não atende aos esforços.`)}
+ const prof={sup:s,inf:i,dia:w,mon:w},useLc=g=>U&&(g=="dia"||g=="mon");
+ const crit=g=>{const ms=grp(g),c=ms.filter(m=>m.N<0).sort((a,b)=>a.N-b.N)[0],t=ms.filter(m=>m.N>0).sort((a,b)=>b.N-a.N)[0];return{c,t}};
+ const rows=["sup","inf","dia","mon"].map(g=>{const p=prof[g],{c,t}=crit(g),Lc=c?(useLc(g)?c.lc:c.l):0,Rc=p&&c?NRd(p,fy,Lc):0,Rt=p?NRd(p,fy,0):0,u=p?uso(p,fy,grp(g),useLc(g)):0;
+  return`<tr><td>${GN[g]}</td><td>${p?p.n:"—"}</td><td>${p?f(p.A,2):"—"}</td><td>${p?f(p.kg,2):"—"}</td><td>${c?f(-c.N,2):"—"}</td><td>${c?f(Lc,2):"—"}</td><td>${c?f(Rc,2):"—"}</td><td>${t?f(t.N,2):"—"}</td><td>${p?f(Rt,2):"—"}</td><td>${p?f(u*100,0)+"%":"—"}</td>${U?`<td>${g=="dia"||g=="mon"?(p?(fit?"✔ ":"✖ ")+f(p.w,1)+" ≤ "+f(op-fo,1):"—"):"abertura "+(p?f(p.open,1):"—")}</td>`:""}</tr>`}).join("");
+ const lab=m=>{const k=G.M.filter(x=>x.g==m.g).indexOf(m)+1;return({sup:"S",inf:"I",dia:"D",mon:"M"})[m.g]+k};
+ const html=`<h4 class="ftrh">Verificação por grupo (envoltória — método dos nós)</h4><div class="ftrw"><table class="ftr"><thead><tr><th>Grupo</th><th>Perfil</th><th>A (cm²)</th><th>kg/m</th><th>Nc,Sd (kN)</th><th>Lc (m)</th><th>Nc,Rd (kN)</th><th>Nt,Sd (kN)</th><th>Nt,Rd (kN)</th><th>Uso</th>${U?"<th>Encaixe (mm)</th>":""}</tr></thead><tbody>${rows}</tbody></table></div>
+ <details><summary>Esforços em todas as barras (+ tração / − compressão)</summary><div class="ftrw"><table class="ftr"><thead><tr><th>Barra</th><th>Nó i → j</th><th>Compr. eixo (m)</th>${U?"<th>Corte (m)</th>":""}<th>N (kN)</th></tr></thead><tbody>${G.M.map(m=>`<tr><td>${lab(m)}</td><td>${m.a+1} → ${m.b+1}</td><td>${f(m.l,3)}</td>${U?`<td>${f(m.lc,3)}</td>`:""}<td>${f(m.N,2)}</td></tr>`).join("")}</tbody></table></div></details>`;
+ const Lg=g=>grp(g).reduce((a,m)=>a+(useLc(g)?m.lc:m.l),0),peso=["sup","inf","dia","mon"].reduce((a,g)=>a+(prof[g]?prof[g].kg*Lg(g):0),0);
+ const eq=Math.abs(G.Ra+G.Rb-G.Pt);if(eq>1e-6*G.Pt||G.res>1e-6*G.Pt)warn.push("Verificação de equilíbrio não fechou — revisar geometria.");
+ const dmax=grp("dia").reduce((a,m)=>m.lc>a.lc?m:a),mmax=grp("mon").reduce((a,m)=>m.lc>a.lc?m:a);
+ const __={U,s,i,w,F:G.F,G,op,fo,fit,np:G.np,p:G.dx,H:G.hmax,hef:Math.max(...grp("mon").map(m=>m.l)),cl:mmax.lc,lc:dmax.lc};
+ const st=[["Forma",G.F.tag+(G.F.duas?" — duas águas":G.F.tag.startsWith("plana h")?"":" — uma água"),`${G.np} painéis de ${f(G.dx,3)} m${G.F.tag.startsWith("plana h")?"":` · inclinação ${f(v.inc,2)}% (${f(Math.atan(v.inc/100)*180/Math.PI,2)}°)`}`],
+  ["Alturas",U?"face externa a face externa":"entre eixos dos banzos",`mín. ${f(G.hmin,3)} m · máx. ${f(G.hmax,3)} m`],["Cargas nodais (banzo sup.)","P = 1,4·q·p (meio painel nos apoios)",`${f(1.4*v.q*G.dx,2)} kN ; total ΣP = ${f(G.Pt,2)} kN`],
+  ["Método dos nós","ΣFx = 0 e ΣFy = 0 em cada nó (2·nós equações = barras + 3 reações)",`${G.N.length} nós, ${G.M.length} barras`],["Reações","apoio fixo esq. + móvel dir.",`RA = ${f(G.Ra,2)} kN ; RB = ${f(G.Rb,2)} kN ; HA = ${f(Math.abs(G.Rx)<1e-9?0:G.Rx,2)} kN`],
+  ["Equilíbrio global","RA + RB = ΣP",`${f(G.Ra+G.Rb,2)} = ${f(G.Pt,2)} kN ✔ (resíduo máx. nos nós ${G.res.toExponential(1).replace(".",",")} kN)`],
+  ...["sup","inf","dia","mon"].map(g=>{const{c,t}=crit(g);return[`${GN[g]} — envoltória`,"N máx (tração) / N mín (compressão)",`${t?f(t.N,2):"0,00"} kN / ${c?f(c.N,2):"0,00"} kN`]})];
+ if(U)st.push(["Abertura livre do U","a = bw − 2t (menor dos banzos)",`${f(op,1)} mm ; largura máx. da alma = ${f(op-fo,1)} mm`],["Cortes","entre as faces internas das almas",`maior montante ${f(mmax.lc,3)} m ; maior diagonal ${f(dmax.lc,3)} m`]);
+ return{__,html,steps:st,res:[["Forma",G.F.tag+(G.F.duas?" (duas águas)":G.F.tag.startsWith("plana h")?"":" (uma água)")],["Altura mín. / máx.",`${f(G.hmin,2)} m / ${f(G.hmax,2)} m`],["Banzo superior",s?s.n:"acima da tabela"],["Banzo inferior",i?i.n:"acima da tabela"],["Diagonais e montantes",w?`${w.n}${U?(fit?" — cabe no U":" — NÃO cabe no U"):""}`:"acima da tabela"],["Peso da treliça (perfis)",`${f(peso,2)} kg`]],warn}}
 // Estacas: capacidade admissível típica (kN) — editável
 const ESTACAS={"Strauss Ø25 cm":[25,200],"Strauss Ø32 cm":[32,300],"Escavada Ø30 cm":[30,250],"Hélice contínua Ø30 cm":[30,400],"Hélice contínua Ø40 cm":[40,700],"Pré-moldada 20×20 cm":[20,300],"Pré-moldada 25×25 cm":[25,450]};
 // Laje treliçada: vão máximo (m) por sobrecarga (kN/m²) — indicativo, confirmar com fabricante
@@ -74,14 +156,15 @@ const TOOLS=[
  calc(v){const fy=parseInt(v.fy),M=1.4*v.q*v.L*v.L/8,Zr=M*100*1.1/(fy/10),dl=v.L*1000/350,Ir=5*v.q*Math.pow(v.L*1000,4)/(384*E_ACO*dl)/1e4,p=PERFIS_W.find(p=>p.Zx>=Zr&&p.Ix>=Ir),de=p?5*v.q*Math.pow(v.L*1000,4)/(384*E_ACO*p.Ix*1e4):0;
   return{steps:[["Momento de cálculo","Msd = 1,4·q·L²/8",`${f(M,2)} kN·m`],["Módulo plástico necessário","Zx ≥ Msd·γa1/fy",`${f(Zr,1)} cm³`],["Flecha limite","δlim = L/350",`${f(dl,1)} mm`],["Inércia necessária","Ix ≥ 5qL⁴/(384·E·δlim)",`${f(Ir,0)} cm⁴`],...(p?[["Perfil adotado",p.n,`Zx = ${f(p.Zx,1)} cm³ ; Ix = ${f(p.Ix,0)} cm⁴`],["Flecha do perfil","δ = 5qL⁴/(384EI)",`${f(de,1)} mm ≤ ${f(dl,1)} mm`]]:[])],
   res:[["Mmax (cálculo)",`${f(M,1)} kN·m`],["Zx necessário",`${f(Zr,0)} cm³`],["Ix necessário",`${f(Ir,0)} cm⁴`],["Perfil sugerido",p?`${p.n} (${f(p.kg,1)} kg/m)`:"Nenhum perfil da tabela atende"]],warn:p?[]:["Vão/carga acima da tabela."]}}},
-{id:"trelica",g:"Estrutura metálica",t:"Treliça metálica",refs:["ABNT NBR 8800:2008 — tração (5.2) e compressão (5.3)","Regra prática de altura h ≈ L/10 a L/15"],
- inp:[["L","Vão","m",15],["q","Carga distribuída (característica)","kN/m",6],["r","Relação altura/vão","","L/12",null,null,["L/10","L/12","L/15"]],["p","Comprimento do painel (entre nós)","m",1.5],["fy","Aço fy","MPa","300 (tubos)",null,null,["250 (ASTM A36)","300 (tubos)","345 (ASTM A572 Gr.50)"]]],
- hip:["Treliça biapoiada (banzos paralelos), carga uniforme; esforços de cálculo γf = 1,4.","Força nos banzos ≈ Msd/h; diagonal mais solicitada ≈ Vsd/sen θ.","Banzo superior e diagonal comprimidos com comprimento de flambagem = painel / diagonal; χ NBR 8800, Q = 1.","Seções em tubo quadrado (propriedades aproximadas)."],
- calc(v){const fy=parseInt(v.fy),rr=parseInt(v.r.slice(2)),h=v.L/rr,M=1.4*v.q*v.L*v.L/8,F=M/h,V=1.4*v.q*v.L/2,ld=Math.hypot(h,v.p),D=V*ld/h;
-  const pick=(N,Lc)=>TUBOS.find(t=>{if(!Lc)return t.A*fy/10/1.1>=N;const es=Lc*100/t.r;if(es>200)return false;const l0=es/Math.PI*Math.sqrt(fy/E_ACO);return chi(l0)*t.A*fy/10/1.1>=N});
-  const bs=pick(F,v.p),bi=pick(F,0),dg=pick(D,ld);
-  return{steps:[["Altura da treliça",`h = L/${rr}`,`${f(h,2)} m`],["Momento máximo","Msd = 1,4·q·L²/8",`${f(M,1)} kN·m`],["Força nos banzos","F = Msd/h",`${f(F,1)} kN (sup. compressão / inf. tração)`],["Cortante no apoio","Vsd = 1,4·q·L/2",`${f(V,1)} kN`],["Diagonal","D = Vsd·ℓd/h ; ℓd = √(h² + p²)",`ℓd = ${f(ld,2)} m ; D = ${f(D,1)} kN`]],
-  res:[["Altura",`${f(h,2)} m`],["Banzo superior (comp.)",bs?bs.n:"acima da tabela"],["Banzo inferior (tração)",bi?bi.n:"acima da tabela"],["Diagonal de apoio (comp.)",dg?dg.n:"acima da tabela"]],warn:[bs,bi,dg].some(x=>!x)?["Algum elemento excede a tabela de tubos: aumentar a altura ou usar perfis maiores."]:[]}}}
+{id:"trelica",g:"Estrutura metálica",t:"Treliça metálica",refs:["ABNT NBR 8800:2008 — tração (5.2) e compressão (5.3), Anexo F (flambagem local)","ABNT NBR 6355:2012 — perfis estruturais de aço formados a frio (U simples)","ABNT NBR 14762:2010 — estruturas de aço com perfis formados a frio","Método dos nós (equilíbrio de nós, treliça isostática)","Regra prática de altura h ≈ L/10 a L/15"],
+ inp:[["forma","Forma da treliça","","Plana horizontal",null,null,["Plana horizontal","Plana inclinada (banzos paralelos)","Banzo superior inclinado"]],["aguas","Caimento","","Uma água",null,null,["Uma água","Duas águas"]],["inc","Inclinação","%",10,0,100],["hmin","Altura mínima no apoio","m",0.5,0.1,10],
+  ["L","Vão","m",15],["q","Carga distribuída (característica, projeção horizontal)","kN/m",6],["r","Relação altura/vão","","L/12",null,null,["L/10","L/12","L/15"]],["p","Comprimento do painel (entre nós)","m",1.5],["fy","Aço fy","MPa","300 (tubos)",null,null,["250 (ASTM A36)","300 (tubos)","345 (ASTM A572 Gr.50)"]],
+  ["sec","Seção dos banzos","","Tubo quadrado",null,null,["Tubo quadrado","Perfil U simples (NBR 6355)"]],
+  ["ub","Perfil U dos banzos","","Automático",null,null,["Automático",...PERFIS_U.slice().sort((a,b)=>a.bw-b.bw||a.bf-b.bf||a.t-b.t).map(p=>p.n)]],
+  ["wm","Diagonais e montantes (encaixados no U)","","Automático",null,null,["Automático",...ALMA.slice().sort((a,b)=>a.w-b.w||a.tipo.localeCompare(b.tipo)||a.kg-b.kg).map(p=>p.n)]],
+  ["fo","Folga lateral total no encaixe","mm",2,0,10]],
+ hip:["Treliça biapoiada (apoio fixo à esquerda e móvel à direita, ambos no banzo inferior), carga uniforme em projeção horizontal concentrada nos nós do banzo superior; γf = 1,4.","Esforços pelo método dos nós: sistema de equilíbrio ΣFx = ΣFy = 0 em todos os nós (treliça isostática: barras + 3 reações = 2 × nós), com verificação do equilíbrio global (RA + RB = ΣP).","Montantes em todos os nós; diagonais descendo do banzo superior para o centro do vão (padrão Pratt — diagonais tracionadas sob carga gravitacional). Duas águas: número de painéis par (cumeeira em nó).","Plana horizontal e plana inclinada: altura vertical = L/r constante. Banzo superior inclinado: altura mínima no apoio + inclinação (uma água: cresce até o apoio direito; duas águas: máxima no centro).","Cada grupo (banzo sup., banzo inf., diagonais + montantes) usa um único perfil verificado à envoltória: compressão com Lc = comprimento da barra (χ NBR 8800) e tração por escoamento da seção bruta; esbeltez ≤ 200.","Tubos: propriedades aproximadas, Q = 1. Perfil U simples: alma no plano horizontal, mesas voltadas para dentro; diagonais e montantes entram entre as mesas (abertura = bw − 2t − folga); nós nos eixos (centroide x̄); cortes entre as faces internas das almas; flambagem local pelo Anexo F; banzo travado fora do plano em todos os nós; flexo-torção e distorção (NBR 14762) não verificadas.","Não considera sucção de vento (inversão de esforços), cargas concentradas nem excentricidades das ligações."],
+ calc:v=>trelica(v)}
 ,
 {id:"muro",g:"Contenções e pavimentos",t:"Muro de contenção / cortina de concreto",refs:["ABNT NBR 11682:2009 — Estabilidade de encostas (contenções)","ABNT NBR 6122:2019 — fundações profundas (estacas)","ABNT NBR 6118:2023 — concreto armado","Rankine (1857) — empuxo ativo; Marchetti (1980) — estacas sob carga horizontal (referência)"],
  inp:[["H","Altura de terra contida (acima do topo da sapata)","m",3,0.5,8],["gs","Peso específico do solo γ","kN/m³",18,12,23],["phi","Ângulo de atrito do solo φ","°",30,15,45],["q","Sobrecarga no terrapleno","kPa",10,0,100],["tt","Espessura da cortina no topo (≥ 20 cm)","cm",20,20,60],
@@ -211,8 +294,8 @@ mat("trelicada",[fckI,["B","Largura da laje (perpendicular às vigotas)","m",4,0
  tela:[[`Tela soldada ${v.tela.split(" ")[0]} (painel 2,45×6,00 m, +10% transpasse)`,`${paineis*n}`,"painéis"],["Peso da tela",f(A*1.1*tk*n,1),"kg"]],nota:"Consumo de concreto (capa + nervuras) indicativo por altura — confirmar com o fabricante. Fôrma substituída por escoramento + enchimento."}});
 mat("pilar-aco",[["nel","Quantidade de pilares iguais","un",1,1,500]],(v,r)=>r._?{perfis:[["Pilar",r._[0],v.L,1]]}:null);
 mat("viga-aco",[["nel","Quantidade de vigas iguais","un",1,1,500]],(v,r)=>r._?{perfis:[["Viga",r._[0],v.L,1]]}:null);
-mat("trelica",[["nel","Quantidade de treliças iguais","un",1,1,500]],(v,r)=>{const g=r._;if(!g||!g[0]||!g[1]||!g[2])return null;const np=Math.ceil(v.L/v.p);
- return{perfis:[["Banzo superior",g[0],v.L,1],["Banzo inferior",g[1],v.L,1],["Diagonais",g[2],+Math.hypot(g[3],v.L/np).toFixed(2),np],["Montantes",g[2],+g[3].toFixed(2),np+1]]}});
+mat("trelica",[["nel","Quantidade de treliças iguais","un",1,1,500]],(v,r)=>{const u=r.__;if(!u||!u.s||!u.i||!u.w)return null;const ms=g=>u.G.M.filter(m=>m.g==g),sum=(g,c)=>+ms(g).reduce((a,m)=>a+(c?m.lc:m.l),0).toFixed(3);
+ return{perfis:[["Banzo superior (soma dos trechos)",u.s,sum("sup"),1],["Banzo inferior (soma dos trechos)",u.i,sum("inf"),1],[`Diagonais (${ms("dia").length} un${u.U?", corte entre almas":""})`,u.w,sum("dia",u.U),1],[`Montantes (${ms("mon").length} un${u.U?", corte entre almas":""})`,u.w,sum("mon",u.U),1]]}});
 mat("muro",[fckI,["Lm","Comprimento do muro","m",20,1,1000],["Le","Comprimento de cada estaca","m",10,2,40],["te","Taxa de aço das estacas","kg/m³",25,0,150],["taxa","Taxa de aço (cortina + sapata)","kg/m³",90,1,400],["traco","Traço do concreto (cimento:areia:brita, em massa)","","1:2:3"],["ac","Relação água/cimento","—",0.55,0.3,0.8]],(v,r)=>{const g=r._;if(!g)return null;const Lm=v.Lm,Vc=(g.tt+g.tb)/2*v.H*Lm,Vs=g.B*g.h*Lm,ne=(g.r2?2:1)*(Math.floor(Lm/v.s)+1),ve=ne*Math.PI/4*Math.pow(v.d/100,2)*v.Le,kg=v.taxa*(Vc+Vs);
  return{V:Vc+Vs+ve,Vaco:Vc+Vs,taxa2:v.te*ve,F:2*v.H*Lm+2*g.h*Lm,extra:[["  · concreto da cortina",f(Vc,3),"m³"],["  · concreto da sapata corrida",f(Vs,3),"m³"],[`  · concreto das estacas (${ne} un × ${f(v.Le,1)} m)`,f(ve,3),"m³"],["Lastro de concreto magro (5 cm)",f(g.B*Lm*0.05,3),"m³"],["Brita drenante (faixa 30 cm)",f(0.30*v.H*Lm,2),"m³"],["Manta geotêxtil",f((v.H+0.6)*Lm*1.1,1),"m²"],["Tubo dreno PVC perfurado Ø100",f(Lm*1.05,1),"m"],["Barbacãs PVC Ø75 (1 a cada 2 m², alt. alternada)",`${Math.ceil(v.H*Lm/2)}`,"un"],["Impermeabilização da face em contato com o solo",f(v.H*Lm,1),"m²"]],
  bars:[["Cortina — vertical face do aterro (tracionada)",malha(kg*0.40,Lm,v.H+g.h+0.6,BIT.slice(3))],["Cortina — vertical face externa",malha(kg*0.12,Lm,v.H+0.3,BIT.slice(2))],["Cortina — horizontal (2 faces)",malha(kg*0.12,v.H*2,Lm,BIT.slice(2))],["Sapata — transversal (inferior + superior)",malha(kg*0.24,Lm*2,g.B-0.10+0.6,BIT.slice(3))],["Sapata — longitudinal",malha(kg*0.12,g.B*2,Lm,BIT.slice(2))],["Estacas — longitudinais (arranque)",longit(v.te*ve/ne*0.8,6*ne,Math.min(v.Le,4))]],
@@ -234,7 +317,7 @@ mat("pavimento",[["fck","fck do concreto (≈ fctM,k × 7)","MPa",35,20,90],["Wf
  const pf=n=>PERFIS_W.find(p=>p.n==n),tb=n=>TUBOS.find(p=>p.n==n);
  W("pilar-aco",(v,r)=>{const m=r.res[0][1].match(/^(W\S+)/);return m?[pf(m[1])]:null});
  W("viga-aco",(v,r)=>{const m=r.res[3][1].match(/^(W\S+)/);return m?[pf(m[1])]:null});
- W("trelica",(v,r)=>[tb(r.res[1][1]),tb(r.res[2][1]),tb(r.res[3][1]),v.L/parseInt(v.r.slice(2))])})();
+ W("trelica",(v,r)=>r.__?[r.__.s,r.__.i,r.__.w,r.__.hef]:null)})();
 
 // ---------------- UI ----------------
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
@@ -260,9 +343,9 @@ function matHTML(M,cls=""){if(!M)return"";return `<h3>Tabela resumo de aço e ma
  <table class="${cls}"><thead><tr><th>Item</th><th>Quantidade</th><th>Unid.</th></tr></thead><tbody>${M.rows.map(([a,b,c])=>`<tr><td>${a}</td><td class="n">${b}</td><td>${c}</td></tr>`).join("")}</tbody></table>
  ${M.bars.length?`<h4>Lista de barras sugerida (NBR 7480)</h4><table class="${cls}"><thead><tr><th>Posição</th><th>Ø (mm)</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th><th>Espaç.</th></tr></thead><tbody>${M.bars.map(([a,b,q,l,m,kg,s])=>`<tr><td>${a}</td><td>${b}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,3)}</td><td class="n">${f(kg,1)}</td><td>${s?"c/ "+f(s*100,0)+" cm":"—"}</td></tr>`).join("")}<tr><td colspan="5"><b>Total</b></td><td class="n"><b>${f(M.bars.reduce((s,x)=>s+x[5],0),1)}</b></td><td></td></tr></tbody></table>
  <h4>Resumo por bitola</h4><table class="${cls}"><thead><tr><th>Ø (mm)</th><th>Comprimento total (m)</th><th>Barras de 12 m (+10%)</th><th>Peso (kg)</th></tr></thead><tbody>${M.porBitola.map(([b,L,n12,kg])=>`<tr><td>${b}</td><td class="n">${f(L,1)}</td><td class="n">${n12}</td><td class="n">${f(kg,1)}</td></tr>`).join("")}</tbody></table>`:""}
- ${M.perfis.length?`<h4>Lista de perfis</h4><table class="${cls}"><thead><tr><th>Elemento</th><th>Perfil</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th></tr></thead><tbody>${M.perfis.map(([a,p,q,l,m,kg])=>`<tr><td>${a}</td><td>${p}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,1)}</td><td class="n">${f(kg,1)}</td></tr>`).join("")}</tbody></table>`:""}
+ ${M.perfis.length?`<h4>Lista de perfis</h4><table class="${cls}"><thead><tr><th>Elemento</th><th>Perfil</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th></tr></thead><tbody>${M.perfis.map(([a,p,q,l,m,kg])=>`<tr><td>${a}</td><td>${p}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,2)}</td><td class="n">${f(kg,2)}</td></tr>`).join("")}</tbody></table>`:""}
  <p class="fnote">Estimativa de quantitativos para orçamento preliminar. ${M.notas.join(" ")}</p>`}
-function run(){const t=cur,{v,err}=readVals(t),box=$("#fres"),mo=$("#fmatout");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;mo.innerHTML="";return}
+function run(){if(cur.id=="trelica"){const u=$("#i-sec").value.startsWith("Perfil U"),fm=$("#i-forma").value,hz=fm.startsWith("Plana h"),bs=fm.startsWith("Banzo");["ub","wm","fo"].forEach(k=>$("#i-"+k).closest("label").hidden=!u);["aguas","inc"].forEach(k=>$("#i-"+k).closest("label").hidden=hz);$("#i-hmin").closest("label").hidden=!bs;$("#i-r").closest("label").hidden=bs}const t=cur,{v,err}=readVals(t),box=$("#fres"),mo=$("#fmatout");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;mo.innerHTML="";return}
   const r=t.calc({...v}),M=MAT(t,{...v},r);last={t,v,r,M};
   box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${r.html||""}${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
   <details open><summary>Passo a passo</summary><ol>${r.steps.map(([a,b,c])=>`<li><b>${a}</b><br><code>${b}</code><br>${c}</li>`).join("")}</ol></details>

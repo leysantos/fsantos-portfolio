@@ -68,13 +68,40 @@ D["pilar-aco"]=(v,r)=>{const p=r._&&r._[0];if(!p)return"";let s=ttl(20,28,"SEÇ�
 D["viga-aco"]=(v,r)=>{const p=r._&&r._[0];if(!p)return"";const X=40,W=380,Y=120;
  let s=ttl(20,26,"ELEVAÇÃO")+LOADS(X,X+W,Y,9,`q = ${fm(v.q,1)} kN/m`)+R(X,Y,W,8,"#7f8c9b",N)+R(X,Y+8,W,20,"#aeb7c2",N)+R(X,Y+28,W,8,"#7f8c9b",N)+SUP(X+6,Y+36)+SUP(X+W-6,Y+36)+DH(X+6,X+W-6,Y+80,`L = ${fm(v.L,2)} m`,40)+PL([[X+6,Y+40],[X+W/2,Y+62],[X+W-6,Y+40]],"#2e86c1",1.5,'stroke-dasharray="5 3"')+T(X+W/2,Y+76,`δ ≤ L/350 = ${fm(v.L*1000/350,1)} mm`,11,"middle","#2e86c1");
  s+=ttl(450,26,"SEÇÃO")+WSEC(530,170,p,150);return SV(640,320,s,"Esquema da viga metálica")};
-D.trelica=(v,r)=>{const g=r._;if(!g||!g[3])return"";const hm=g[3],np=Math.ceil(v.L/v.p),X=40,W=560,k=W/v.L,H=Math.max(40,hm*k),Y=90;
- let s=ttl(20,26,"ELEVAÇÃO — banzos paralelos")+LOADS(X,X+W,Y,np+1,`q = ${fm(v.q,1)} kN/m`);const dx=W/np;
- for(let i=0;i<np;i++){const x=X+i*dx;s+=L(x,Y,x,Y+H,"#2e86c1",2)+(i<np/2?L(x,Y,x+dx,Y+H,"#27ae60",2):L(x,Y+H,x+dx,Y,"#27ae60",2))}
- s+=L(X+W,Y,X+W,Y+H,"#2e86c1",2)+L(X,Y,X+W,Y,"#c0392b",4)+L(X,Y+H,X+W,Y+H,"#e67e22",4);for(let i=0;i<=np;i++){s+=C(X+i*dx,Y,2.8,N)+C(X+i*dx,Y+H,2.8,N)}
- s+=SUP(X,Y+H)+SUP(X+W,Y+H)+DH(X,X+W,Y+H+50,`L = ${fm(v.L,2)} m`,36)+DV(Y,Y+H,X-16,`h = ${fm(hm,2)} m`,10)+DH(X+dx,X+2*dx,Y-40,`p = ${fm(v.L/np,2)} m`,4,11)
- +LD(X+W*0.62,Y,X+W*0.66,Y+H+86,`banzo superior (comp.): ${g[0]?g[0].n:"—"}`)+LD(X+W*0.3,Y+H,X+W*0.06,Y+H+86,`banzo inferior (tração): ${g[1]?g[1].n:"—"}`)+LD(X+dx*0.5,Y+H*0.5,X+30,Y+H+110,`diagonais (verde): ${g[2]?g[2].n:"—"}`)+LD(X+dx*2,Y+H*0.6,X+W*0.55,Y+H+110,"montantes (azul)");
- return SV(640,Y+H+125,s,"Esquema da treliça")};
+D.trelica=(v,r)=>{const u=r.__;if(!u||!u.G)return"";const G=u.G,Nn=G.N,Lv=v.L,X=50,W=540,ymax=Math.max(...Nn.map(p=>p[1])),ymin=Math.min(0,...Nn.map(p=>p[1])),k=Math.min(W/Lv,170/Math.max(.3,ymax-ymin)),Y0=60+(ymax-ymin)*k+20;
+ const P2=([x,y])=>[+(X+x*k).toFixed(1),+(Y0-(y-ymin)*k).toFixed(1)],Nmax=Math.max(...G.M.map(m=>Math.abs(m.N)))||1;
+ let s=ttl(20,26,`ELEVAÇÃO — ${G.F.tag}${G.F.duas?" (duas águas)":G.F.tag.startsWith("plana h")?"":" (uma água)"}`);
+ // cargas nos nós superiores
+ for(let i=0;i<G.n1;i++){const[x,y]=P2(Nn[G.n1+i]);s+=ARW(x,y-24,x,y-3,"#c0392b",1.4)}s+=T(X+W/2,40,`q = ${fm(v.q,2)} kN/m (proj. horizontal) · P = ${fm(1.4*v.q*G.dx,2)} kN/nó`,11,"middle","#c0392b");
+ G.M.forEach(m=>{const[a1,b1]=P2(Nn[m.a]),[a2,b2]=P2(Nn[m.b]),c=m.N<-1e-6?"#c0392b":m.N>1e-6?"#2e86c1":"#95a5a6",w=(m.g=="sup"||m.g=="inf"?3:1.6)+2*Math.abs(m.N)/Nmax;s+=L(a1,b1,a2,b2,c,w.toFixed(1))});
+ Nn.forEach(p=>{const[x,y]=P2(p);s+=C(x,y,2.6,N)});
+ const A0=P2(Nn[0]),B0=P2(Nn[G.n1-1]);s+=SUP(A0[0],A0[1])+SUP(B0[0],B0[1]);
+ const yb=Math.max(A0[1],B0[1])+60;s+=DH(A0[0],B0[0],yb,`L = ${fm(Lv,2)} m (${G.np} × ${fm(G.dx,3)} m)`,40);
+ const t0=P2(Nn[G.n1]),tN=P2(Nn[2*G.n1-1]);s+=DV(t0[1],A0[1],A0[0]-18,`${fm(G.N[G.n1][1]-G.N[0][1],2)} m`,8,10);
+ const im=G.M.filter(m=>m.g=="mon").reduce((a,m)=>m.l>a.l?m:a),pm=P2(Nn[im.a]),pt=P2(Nn[im.b]);if(Math.abs(im.l-(G.N[G.n1][1]-G.N[0][1]))>0.01)s+=DV(pt[1],pm[1],pm[0]+(pm[0]>X+W/2?16:-16),`${fm(im.l,2)} m`,0,10);
+ if(!G.F.tag.startsWith("plana h"))s+=T(625,26,`inclinação ${fm(v.inc,2)}% (${fm(Math.atan(v.inc/100)*180/Math.PI,2)}°)`,12,"end",N,700);
+ s+=L(X,yb+28,X+24,yb+28,"#c0392b",3)+T(X+30,yb+32,"compressão",11,"start")+L(X+120,yb+28,X+144,yb+28,"#2e86c1",3)+T(X+150,yb+32,"tração (espessura ∝ |N|)",11,"start")
+  +T(X,yb+52,`banzo sup.: ${u.s?u.s.n:"—"} · banzo inf.: ${u.i?u.i.n:"—"} · diagonais/montantes: ${u.w?u.w.n:"—"}`,11,"start");
+ const out=SV(640,yb+66,s,"Esquema da treliça");return u.U?out+NOU(u):out};
+// Detalhe do nó — banzos em U simples com diagonais/montantes encaixados entre as mesas
+function NOU(u){const{s:S,i:I,w:Wm}=u,bw=Math.max(S.bw,I.bw),k=Math.min(2.4,150/bw),cx=185,gap=120,G=c=>Math.max(1.6,c*k);
+ const yS=72,yI=yS+S.bf*k+gap+I.bf*k,inS=yS+G(S.t),inI=yI-G(I.t);
+ const U=(p,y0,up)=>{const B=p.bw*k,F=p.bf*k,t=G(p.t),x0=cx-B/2,sg=up?-1:1,yb=y0+sg*F,yi=y0+sg*t;return P([[x0,y0],[x0+B,y0],[x0+B,yb],[x0+B-t,yb],[x0+B-t,yi],[x0+t,yi],[x0+t,yb],[x0,yb]],"#7f8c9b",N,1.2)};
+ let g=ttl(14,24,"DETALHE DO NÓ — SEÇÃO")+T(14,40,"(altura fora de escala)",10,"start","#55627a",400)+U(S,yS,false)+U(I,yI,true);
+ g+=T(cx,yS-22,`banzo sup. ${S.n}`,11,"middle",N,700)+T(cx,yI+28,`banzo inf. ${I.n}`,11,"middle",N,700);
+ if(Wm){const ww=Wm.w*k,xw=cx-ww/2,ym=(inS+inI)/2,cg=u.fit?"#1e8449":"#c0392b",cf=u.fit?"#27ae6055":"#c0392b44";
+  g+=R(xw,inS,ww,ym-6-inS,cf,cg,1.4)+R(xw,ym+6,ww,inI-ym-6,cf,cg,1.4)+PL([[xw-5,ym-6],[xw+ww*0.3,ym-11],[xw+ww*0.7,ym-1],[xw+ww+5,ym-6]],cg,1.2)+PL([[xw-5,ym+6],[xw+ww*0.3,ym+1],[xw+ww*0.7,ym+11],[xw+ww+5,ym+6]],cg,1.2);
+  if(Wm.tipo=="T"){const tw=G(Wm.t);[[inS,ym-7],[ym+7,inI]].forEach(([a,b])=>{g+=L(xw+tw,a,xw+tw,b,cg,.8)+L(xw+ww-tw,a,xw+ww-tw,b,cg,.8)})}
+  g+=DH(xw,xw+ww,ym+34,`${fm(Wm.w,0)} mm`,0,10)+T(cx,ym+58,`${u.fit?"":"⚠ NÃO CABE · "}${Wm.n}`,11,"middle",cg,700)}
+ const t=G(S.t);g+=DH(cx-S.bw*k/2,cx+S.bw*k/2,yS-6,`bw ${fm(S.bw,0)}`,0,10)+DH(cx-S.bw*k/2+t,cx+S.bw*k/2-t,yS+S.bf*k+14,`abertura ${fm(S.open,1)} mm`,0,10)+DV(yS,yS+S.bf*k,cx+S.bw*k/2+14,`bf ${fm(S.bf,0)}`,6,10);
+ const ecS=yS+S.xc*k,ecI=yI-I.xc*k,xl=cx-bw*k/2;g+=L(xl-50,ecS,cx+bw*k/2+60,ecS,"#c0392b",.9,'stroke-dasharray="6 3"')+L(xl-50,ecI,cx+bw*k/2+60,ecI,"#c0392b",.9,'stroke-dasharray="6 3"')
+  +DV(ecS,ecI,xl-18,`h eixos ${fm(u.hef,3)} m`,0,10)+DV(yS,yI,xl-46,`H ext ${fm(u.H,2)} m`,6,10)+T(cx+bw*k/2+60,ecS-4,"eixo (x̄)",9,"end","#c0392b")+T(cx+bw*k/2+60,ecI-4,"eixo (x̄)",9,"end","#c0392b");
+ const X0=410,Y0=60,h2=230,a=55;g+=ttl(350,24,"VISTA LATERAL DO NÓ")+R(X0-50,Y0,200,10,"#7f8c9b",N)+R(X0-50,Y0+h2,200,10,"#7f8c9b",N)
+  +L(X0-50,Y0+22,X0+150,Y0+22,"#55627a",.8,'stroke-dasharray="3 3"')+L(X0-50,Y0+h2-12,X0+150,Y0+h2-12,"#55627a",.8,'stroke-dasharray="3 3"')
+  +R(X0-6,Y0+10,12,h2-10,"#2e86c155","#2e86c1",1.4)+P([[X0+6,Y0+h2],[X0+22,Y0+h2],[X0+a*2+16,Y0+10],[X0+a*2,Y0+10]],"#27ae6055","#1e8449",1.4)
+  +CO(X0-24,Y0+h2*0.45,1)+CO(X0+a+36,Y0+h2*0.5,2)
+  +T(350,Y0+h2+34,`① montante — corte ${fm(u.cl,3)} m`,11,"start")+T(350,Y0+h2+50,`② diagonal — corte ${fm(u.lc,3)} m`,11,"start")+T(350,Y0+h2+66,`Tracejado: borda das mesas do U · folga total ${fm(u.fo,1)} mm`,10,"start","#55627a",400);
+ return SV(640,Math.max(yI+44,Y0+h2+80),g,"Detalhe do nó com perfil U")}
 D.muro=(v,r)=>{const g=r._;if(!g)return"";const tot=v.H+g.h+2.2,k=Math.min(300/tot,230/(g.B+1.6)),X=200,Gf=40+v.H*k,yb=Gf+g.h*k,Bp=g.B*k,xt=X+g.toe*k,tbp=g.tb*k,ttp=g.tt*k,xf=xt+tbp,lp=Math.min(140,(v.Le||10)*12),phip=Math.max(10,g.phi*k);
  let s=R(0,Gf-0,X+g.toe*k+tbp-ttp,0)+R(0,Gf,640,yb-Gf+lp+40,"soil","none")+R(xf,40,640-xf,Gf-40,"soil","none")+L(xf,40,640,40,"#5b3a1c",2)+L(0,Gf,xt,Gf,"#5b3a1c",2);
  s+=R(xf,40,16,Gf-40,"grav",N,.6)+LD(xf+8,80,xf+60,64,"brita + geotêxtil")+C(xf+10,Gf-8,5,"#f6f2e9",N)+LD(xf+10,Gf-8,xf+70,Gf-30,"dreno Ø100");
