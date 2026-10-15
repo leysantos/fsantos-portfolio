@@ -60,3 +60,5 @@ body.guia .gcat:not(.open){display:none}body.guia .gsec:not(.open){display:none}
 body.guia[data-only]:not([data-only=""]) .gch{display:none}}
 @media(max-width:640px){.gcat>.gcb>.gcbi{padding:0 .35rem}.gbody .gin{padding:0 .3rem .5rem}.gcat .gstep{padding:.5rem}.gch{padding:.8rem .9rem;font-size:1.05rem}}
 .gtiles{grid-template-columns:repeat(3,1fr)}@media(max-width:640px){.gtiles{grid-template-columns:repeat(2,1fr)}}
+
+@media print{body.guia[data-only=rufo] #rufo,body.guia[data-only=calhas] #calhas,body.guia[data-only=telhado] #telhado,body.guia[data-only=locacao] #locacao,body.guia[data-only=seguranca] #seguranca,body.guia[data-only=alvenaria] #alvenaria,body.guia[data-only=verga] #verga,body.guia[data-only=reboco] #reboco,body.guia[data-only=instalacoes] #instalacoes,body.guia[data-only=contrapiso] #contrapiso,body.guia[data-only=ceramica] #ceramica,body.guia[data-only=junta] #junta,body.guia[data-only=drenagem] #drenagem,body.guia[data-only=impermeabilizacao-fundacoes] #impermeabilizacao-fundacoes{display:block!important;break-before:auto}}
