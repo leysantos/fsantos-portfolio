@@ -41,13 +41,13 @@ service cloud.firestore {
     }
 
     function validNovoOrcamentoObra(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'total', 'totalPorM2', 'status', 'createdAt'])
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'regime', 'bdi', 'sinapiRef', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.uid == request.auth.uid
         && d.numero is string && d.numero.matches('^OBR-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
         && str(d.cidade, 0, 100)
-        && d.tipo in ['baixo', 'medio', 'alto', 'galpao']
+        && d.tipo in ['baixo', 'medio', 'alto', 'galpao', 'galpao_ind', 'galpao_com']
         && d.pavimentos is int && d.pavimentos >= 1 && d.pavimentos <= 4
         && d.regime in ['d', 'nd']
         && num(d.bdi, 0, 60)
@@ -56,6 +56,9 @@ service cloud.firestore {
         && (!('muro' in d) || (d.muro is map && d.muro.size() <= 3))
         && (!('entradas' in d) || (d.entradas is map && d.entradas.size() <= 5))
         && (!('peDireito' in d) || num(d.peDireito, 0, 30))
+        && (!('cobertura' in d) || d.cobertura in ['simples', 'completa'])
+        && (!('telha' in d) || d.telha in ['simples', 'termo'])
+        && (!('mezanino' in d) || num(d.mezanino, 0, 100000))
         && (!('ajusteCub' in d) || num(d.ajusteCub, -1000000000, 1000000000))
         && d.ambientes is list && d.ambientes.size() >= 1 && d.ambientes.size() <= 40
         && d.etapas is list && d.etapas.size() >= 1 && d.etapas.size() <= 19

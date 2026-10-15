@@ -2,7 +2,7 @@ import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js";
 import {brl,num,esc} from "./orcamento.js";
 const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {collection,getDocs,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
-const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"],TIPO={baixo:"Casa baixo padrão",medio:"Casa médio padrão",alto:"Casa alto padrão",galpao:"Galpão"};let all=[],loaded=false;
+const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"],TIPO={baixo:"Casa baixo padrão",medio:"Casa médio padrão",alto:"Casa alto padrão",galpao:"Galpão (modelo anterior)",galpao_ind:"Galpão industrial",galpao_com:"Galpão comercial"};let all=[],loaded=false;
 STATUS.forEach(s=>$("#o-fst").insertAdjacentHTML("beforeend",`<option>${s}</option>`));
 document.querySelectorAll(".ptabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".ptabs button").forEach(x=>x.classList.toggle("on",x===b));$("#tab-proj").hidden=b.dataset.tab!=="proj";$("#tab-obra").hidden=b.dataset.tab!=="obra";if(b.dataset.tab==="obra"&&!loaded)load()});
 const cls=s=>"st st-"+String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
