@@ -1,8 +1,20 @@
-(()=>{const m=document.getElementById("gmain"),ix=document.getElementById("gidx");
-m.innerHTML=GUIA.S.map(s=>GUIA.html(s)).join("");
-ix.innerHTML=`<b>Seções:</b> `+GUIA.S.map((s,i)=>`<a href="#${s.id}">${i+1}. ${s.t.replace(/ \(.*\)/,"")}</a>`).join("");
-const pr=id=>{document.body.dataset.only=id||"";setTimeout(()=>{print();document.body.dataset.only=""},50)};
-document.getElementById("gpdf").onclick=()=>pr("");
-m.querySelectorAll(".gpr").forEach(b=>b.onclick=()=>pr(b.dataset.sec));
+(()=>{const CATS=[["fundacoes","Fundações","🏗️",["sapata","radier","estacas"]],["concreto","Estrutura de concreto","🧱",["pilar","viga"]],["lajes","Lajes","▦",["laje","trelicada"]],["metalica-cat","Estrutura metálica","🔩",["metalica"]],["contencoes","Contenções e pavimentos","⛰️",["muro","pavimento"]],["impermeabilizacao-cat","Impermeabilização","💧",["impermeabilizacao","impermeabilizacao-laje"]]];
+const m=document.getElementById("gmain"),ix=document.getElementById("gidx"),S=id=>GUIA.S.find(s=>s.id==id);
+ix.innerHTML=`<div class="gtiles">${CATS.map(([id,t,ic,ss])=>`<button class="gtile" data-cat="${id}" type="button"><span class="gti">${ic}</span><b>${t}</b><small>${ss.length} ${ss.length>1?"seções":"seção"}</small></button>`).join("")}</div>`;
+m.innerHTML=CATS.map(([id,t,ic,ss])=>`<div class="gcat" id="${id}"><button class="gch" type="button" aria-expanded="false"><span class="gti">${ic}</span>${t}<small>${ss.length} ${ss.length>1?"seções":"seção"}</small><i>▾</i></button><div class="gcb"><div class="gcbi">${ss.map(sid=>{const s=S(sid);return`<section class="gsec" id="${sid}"><button class="gsh" type="button" aria-expanded="false">${s.t}<small>${s.steps.length} etapas</small><i>▾</i></button><div class="gcb"><div class="gcbi gbody"></div></div></section>`}).join("")}</div></div></div>`).join("");
+const render=sec=>{const b=sec.querySelector(".gbody");if(!b.dataset.ok){b.innerHTML=GUIA.html(S(sec.id)).replace(/^<section class="gsec" id="[^"]+">/,'<div class="gin">').replace(/<\/section>$/,"</div>");b.dataset.ok=1;b.querySelectorAll(".gpr").forEach(x=>x.onclick=()=>pr(sec.id))}};
+const setOpen=(el,o)=>{el.classList.toggle("open",o);el.querySelector(":scope>button").setAttribute("aria-expanded",o)};
+const openCat=(c,only=true)=>{if(only)m.querySelectorAll(".gcat.open").forEach(x=>x!=c&&setOpen(x,false));setOpen(c,true)};
+const openSec=s=>{render(s);openCat(s.closest(".gcat"));setOpen(s,true)};
+const go=(el,hash)=>{history.replaceState(null,"","#"+hash);setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),320)};
+m.querySelectorAll(".gch").forEach(b=>b.onclick=()=>{const c=b.parentElement,o=!c.classList.contains("open");if(o){openCat(c);go(c,c.id)}else{setOpen(c,false);history.replaceState(null,"",location.pathname)}});
+m.querySelectorAll(".gsh").forEach(b=>b.onclick=()=>{const s=b.parentElement;if(s.classList.contains("open"))setOpen(s,false);else{openSec(s);go(s,s.id)}});
+ix.querySelectorAll(".gtile").forEach(b=>b.onclick=()=>{const c=document.getElementById(b.dataset.cat);openCat(c);go(c,c.id)});
+const deep=()=>{const h=decodeURIComponent(location.hash.slice(1));if(!h)return;const el=document.getElementById(h);if(!el)return;if(el.classList.contains("gsec"))openSec(el);else if(el.classList.contains("gcat"))openCat(el);else return;setTimeout(()=>el.scrollIntoView({block:"start"}),350)};
+let snap=null;const pr=id=>{snap=[...m.querySelectorAll(".open")];if(id){openSec(document.getElementById(id))}else{m.querySelectorAll(".gsec").forEach(s=>{render(s);s.classList.add("open")});m.querySelectorAll(".gcat").forEach(c=>c.classList.add("open"))}
+ document.body.dataset.only=id||"";document.body.classList.add("gprint");setTimeout(()=>print(),120)};
+addEventListener("afterprint",()=>{if(!snap)return;document.body.dataset.only="";document.body.classList.remove("gprint");m.querySelectorAll(".open").forEach(x=>snap.includes(x)||x.classList.remove("open"));snap=null});
+window.__guiaPrint=pr;document.getElementById("gpdf").onclick=()=>pr("");
 const b=document.querySelector(".burger"),n=document.getElementById("menu");if(b)b.onclick=()=>{const o=n.classList.toggle("open");b.setAttribute("aria-expanded",o)};
-if(location.hash){const e=document.querySelector(location.hash);if(e)setTimeout(()=>e.scrollIntoView(),50)}})();
+n&&n.querySelectorAll('a[href^="guia-execucao.html#"]').forEach(a=>a.addEventListener("click",()=>setTimeout(deep,10)));
+addEventListener("hashchange",deep);deep()})();
