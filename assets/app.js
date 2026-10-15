@@ -4,7 +4,10 @@ Object.entries(C).forEach(([k,v])=>{const b=document.createElement("button");b.t
 function card(p,extra){const d=document.createElement("article");d.className="card";d.innerHTML=`<img loading="lazy" decoding="async" src="${p.img[0]}" alt="${p.t}"><div class="b"><h3>${p.t}</h3>${extra}</div>`;d.querySelector("img").onclick=()=>abrirLb(p.img,p.t);return d}
 const LIM=15;let mais=null;
 function render(k,all){grid.innerHTML="";mais&&mais.remove();const F=PROJ.filter(p=>k=="all"||p.c==k);F.forEach((p,n)=>{const d=card(p,`<p>${p.s}</p><div class="row"><span class="badge">${C[p.c]}</span><span class="badge">${p.img.length} imagem${p.img.length>1?"s":""}</span></div>`);d.onclick=()=>abrirLb(p.img,p.t);if(!all&&n>=LIM)d.hidden=true;grid.append(d)});
-if(!all&&F.length>LIM){mais=document.createElement("button");mais.type="button";mais.className="btn ghost vermais";mais.textContent=`Ver mais obras (${F.length-LIM})`;mais.onclick=()=>{grid.querySelectorAll(".card[hidden]").forEach(c=>c.hidden=false);mais.remove();mais=null};grid.after(mais)}}
+if(!all&&F.length>LIM){mais=document.createElement("button");mais.type="button";mais.className="btn ghost vermais";mais.textContent=`Ver mais obras (${F.length-LIM})`;mais.onclick=()=>{grid.querySelectorAll(".card[hidden]").forEach(c=>c.hidden=false);mais.remove();mais=null;fecha()};grid.after(mais)}fecha()}
+// completa a última linha em 2 colunas: o último card visível ocupa a linha inteira quando sobra 1
+function fecha(){const v=[...grid.children].filter(c=>!c.hidden);v.forEach(c=>{c.style.gridColumn="";const i=c.querySelector("img");if(i)i.style.aspectRatio=""});const n=getComputedStyle(grid).gridTemplateColumns.split(" ").length;if(n===2&&v.length%2){const c=v[v.length-1];c.style.gridColumn="1 / -1";const i=c.querySelector("img");if(i)i.style.aspectRatio="32/10"}}
+addEventListener("resize",()=>fecha());
 SW.forEach(s=>{const d=card(s,`<p>${s.d}</p><a class="btn" href="${s.u}" target="_blank" rel="noopener">Acessar ${s.t}</a>`);d.classList.add("sw");$("#sw").append(d)});
 function abrirLb(g,t){G=g;T=t;i=0;show();lb.hidden=false}function show(){li.src=G[i];lc.textContent=`${T} — ${i+1}/${G.length}`}
 lb.querySelector(".x").onclick=()=>lb.hidden=true;lb.querySelector(".pv").onclick=e=>{i=(i-1+G.length)%G.length;show()};lb.querySelector(".nx").onclick=()=>{i=(i+1)%G.length;show()};
