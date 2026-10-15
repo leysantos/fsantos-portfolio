@@ -1,5 +1,5 @@
 import {orcar,PRESETS,TIPOS,TAMB,REGRAS,REGRAS_CONT,CONT_SIS,CUB,SINAPI,defCob} from "./obra-modelo.js";
-import {esc} from "./orcamento.js";
+import {esc} from "./orcamento.js?v=20261015c";
 import {enviarPDF} from "./share-pdf.js";
 const F2={minimumFractionDigits:2,maximumFractionDigits:2},num=v=>(+v||0).toLocaleString("pt-BR",F2),brl=v=>"R$ "+num(v);
 const $=s=>document.querySelector(s),tb=$("#amb"),msg=$("#ob-msg"),pf=v=>parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."))||0;
@@ -130,14 +130,14 @@ $("#b-xlsx").onclick=async()=>{if(!R)return;try{baixar(await xlsxBlob(),nomeArq(
 function numero(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(4));return`OBR-${new Date().getFullYear()}-`+[...r].map(b=>a[b%a.length]).join("")}
 // ---- conta (Firebase Auth) ----
 let FBM=null,USER=null,PERFIL=null;
-async function fb(){if(FBM)return FBM;const [cfg,A,F]=await Promise.all([import("./firebase-config.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js")]);return FBM={...cfg,A,F}}
+async function fb(){if(FBM)return FBM;const [cfg,A,F]=await Promise.all([import("./firebase-config.js?v=20261015c"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js")]);return FBM={...cfg,A,F}}
 const am=(t,ok)=>{const m=$("#au-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t};
 const errTxt=e=>({"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"Conta não encontrada.","auth/email-already-in-use":"Este e-mail já tem conta; use Entrar.","auth/weak-password":"A senha precisa ter ao menos 6 caracteres.","auth/invalid-email":"E-mail inválido.","auth/popup-closed-by-user":"Login cancelado.","auth/operation-not-allowed":"Login por e-mail ainda não habilitado no Firebase."}[e.code]||("Erro: "+(e.code||e.message)));
 let modo="login";document.querySelectorAll(".autabs button").forEach(b=>b.onclick=()=>{modo=b.dataset.m;document.querySelectorAll(".autabs button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".au-cad").forEach(x=>x.hidden=modo!=="cad");$("#au-go").textContent=modo==="cad"?"Criar conta":"Entrar";$("#au-pass").autocomplete=modo==="cad"?"new-password":"current-password"});
 async function salvarPerfil(u,nome,tel){const {db,F}=await fb();const ref=F.doc(db,"users",u.uid),ex=await F.getDoc(ref);
   const d={nome:String(nome||u.displayName||"").slice(0,120),telefone:String(tel||"").slice(0,40),email:String(u.email||"").slice(0,120),updatedAt:F.serverTimestamp()};
   if(!ex.exists())await F.setDoc(ref,{...d,createdAt:F.serverTimestamp()});else await F.updateDoc(ref,d);PERFIL={...(ex.exists()?ex.data():{}),...d}}
-$("#au-google").onclick=async()=>{try{const {auth,A}=await fb();await A.signInWithPopup(auth,new A.GoogleAuthProvider())}catch(e){am(errTxt(e))}};
+$("#au-google").onclick=async()=>{try{const {googleLogin}=await fb();await googleLogin(e=>am(errTxt(e)))}catch(e){am(errTxt(e))}};
 $("#au-go").onclick=async()=>{const em=$("#au-email").value.trim(),pw=$("#au-pass").value;try{const {auth,A}=await fb();
   if(modo==="cad"){const nome=$("#au-nome").value.trim(),tel=$("#au-tel").value.trim();if(!nome||!tel)return am("Informe nome e telefone.");
     const c=await A.createUserWithEmailAndPassword(auth,em,pw);await A.updateProfile(c.user,{displayName:nome});await salvarPerfil(c.user,nome,tel);fill(c.user)}

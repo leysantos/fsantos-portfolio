@@ -21,6 +21,11 @@ service cloud.firestore {
         && str(c.email, 0, 120);
     }
 
+    function validDesconto(d) {
+      return (!('descPct' in d) || (d.descPct is number && d.descPct >= 0 && d.descPct <= 50))
+        && (!('desc' in d) || (d.desc is number && d.desc >= 0 && d.desc <= 50000000));
+    }
+
     function validPagamento(d) {
       return !('pagamento' in d) || (d.pagamento is map
         && d.pagamento.keys().hasOnly(['pix', 'banco', 'titular'])
@@ -30,8 +35,9 @@ service cloud.firestore {
     }
 
     function validOrcBase(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'status', 'notas', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'descPct', 'desc', 'status', 'notas', 'createdAt', 'updatedAt'])
         && validPagamento(d)
+        && validDesconto(d)
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
@@ -56,8 +62,9 @@ service cloud.firestore {
 
     // Lead: proposta gerada SEM login (visitante). Só criação pública; sem uid.
     function validLead(d) {
-      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'status', 'semLogin', 'createdAt'])
+      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'descPct', 'desc', 'status', 'semLogin', 'createdAt'])
         && validPagamento(d)
+        && validDesconto(d)
         && d.keys().hasAll(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'semLogin', 'createdAt'])
         && d.semLogin == true
         && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
@@ -78,7 +85,7 @@ service cloud.firestore {
       return validOrcBase(d)
         && old.uid == request.auth.uid
         && d.uid == old.uid
-        && d.diff(old).affectedKeys().hasOnly(['cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'updatedAt'])
+        && d.diff(old).affectedKeys().hasOnly(['cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'pagamento', 'descPct', 'desc', 'updatedAt'])
         && d.updatedAt == request.time;
     }
 
@@ -203,6 +210,32 @@ service cloud.firestore {
       allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
       allow create, update: if request.auth != null && request.auth.uid == uid && validPerfil(request.resource.data);
       allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Configurações do site (calculadora de honorários / proposta): leitura pública, escrita só do administrador
+    function validConfig(d) {
+      return d.keys().hasOnly(['artPct', 'descPct', 'descMax', 'validade', 'prazo', 'obs', 'whatsapp', 'fone', 'email', 'pagAdm', 'precos', 'updatedAt'])
+        && d.keys().hasAll(['artPct', 'descPct', 'descMax', 'validade', 'prazo', 'whatsapp', 'precos', 'updatedAt'])
+        && num(d.artPct, 0, 20)
+        && num(d.descPct, 0, 50) && num(d.descMax, 0, 50) && d.descPct <= d.descMax
+        && d.validade is int && d.validade >= 1 && d.validade <= 365
+        && d.prazo is int && d.prazo >= 1 && d.prazo <= 365
+        && (!('obs' in d) || str(d.obs, 0, 2000))
+        && d.whatsapp is string && d.whatsapp.matches('^[0-9]{10,15}$')
+        && (!('fone' in d) || str(d.fone, 0, 40))
+        && (!('email' in d) || str(d.email, 0, 120))
+        && (!('pagAdm' in d) || (d.pagAdm is map
+              && d.pagAdm.keys().hasOnly(['pix', 'banco', 'titular'])
+              && (!('pix' in d.pagAdm) || str(d.pagAdm.pix, 0, 120))
+              && (!('banco' in d.pagAdm) || str(d.pagAdm.banco, 0, 120))
+              && (!('titular' in d.pagAdm) || str(d.pagAdm.titular, 0, 120))))
+        && d.precos is map && d.precos.size() <= 20
+        && d.updatedAt == request.time;
+    }
+
+    match /config/{docId} {
+      allow read: if docId == 'site';
+      allow write: if isAdmin() && docId == 'site' && validConfig(request.resource.data);
     }
 
     // Todo o resto fica fechado.

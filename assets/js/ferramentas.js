@@ -518,14 +518,14 @@ DRAW.eletrico=(v,r)=>{const s=r._sp;if(!s)return"";const W=560,Hh=Math.max(200,M
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
 const tabs=$("#ftabs"),panel=$("#fpanel");let cur=null,last=null;
 [...new Set(TOOLS.map(t=>t.g))].forEach(g=>{tabs.insertAdjacentHTML("beforeend",`<div class="fgrp"><span>${g}</span>${TOOLS.filter(t=>t.g==g).map(t=>`<button data-id="${t.id}">${t.t}</button>`).join("")}</div>`)});
-tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{open(b.dataset.id);history.replaceState(null,"","#"+b.dataset.id)});
+tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{abrirTool(b.dataset.id);history.replaceState(null,"","#"+b.dataset.id)});
 const allInp=t=>[...t.inp,...(t.mi||[])];
 const field=([id,lab,un,def,mn,mx,opts])=>`<label>${lab}${un&&un!="—"?` (${un})`:""}${opts?`<select id="i-${id}">${opts.map(o=>`<option ${o==def?"selected":""}>${o}</option>`).join("")}</select>`:`<input id="i-${id}" ${id=="traco"?"":'inputmode="decimal"'} value="${String(def).replace(".",",")}">`}</label>`;
 function readVals(t){const v={},err=[];if(t.circ){v.circ=ECIRC.map(c=>({...c}));ECIRC.forEach((c,i)=>["P","fp","L","ag","T"].forEach(k=>{const x=c[k];const ok=isFinite(x)&&(k=="fp"?x>0&&x<=1:k=="T"?x>=10&&x<=60:k=="ag"?x>=1&&x<=30:x>0);const el=document.querySelector(`[data-ci="${i}"][data-ck="${k}"]`);if(el)el.classList.toggle("bad",!ok);if(!ok)err.push(`Circuito ${i+1}: valor inválido em ${({P:"potência",fp:"FP (0 a 1)",L:"comprimento",ag:"agrupamento (1 a 30)",T:"temperatura (10 a 60 °C)"})[k]}`)}))}allInp(t).forEach(([id,lab,un,def,mn,mx,opts])=>{const el=$("#i-"+id);if(opts){v[id]=el.value;return}
   if(id=="traco"){if(!traco(el.value)){err.push("Traço inválido (use 1:a:b, ex.: 1:2:3)");el.classList.add("bad")}else{el.classList.remove("bad");v[id]=el.value}return}
   const x=parseFloat(String(el.value).replace(",","."));const lo=mn??1e-9,hi=mx??1e7;
   if(!isFinite(x)||x<lo||x>hi){err.push(`${lab}: valor inválido${mn!=null||mx!=null?` (${mn??"…"} a ${mx??"…"})`:" (deve ser > 0)"}`);el.classList.add("bad")}else{el.classList.remove("bad");v[id]=x}});return{v,err}}
-function open(id){cur=TOOLS.find(t=>t.id==id)||TOOLS[0];tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id==cur.id));const t=cur;
+function abrirTool(id){cur=TOOLS.find(t=>t.id==id)||TOOLS[0];tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id==cur.id));const t=cur;
   panel.innerHTML=`<h2>${t.t}</h2><p class="fg">${t.g}</p><div class="fcols"><form class="oform" id="fform" onsubmit="return false"><div class="ogrid">${t.inp.map(field).join("")}</div>${t.circ?`<fieldset class="fmat ecirc"><legend>Circuitos terminais</legend><div id="ecl"></div><button type="button" class="btn ghost" id="eadd">+ Adicionar circuito</button></fieldset>`:""}
   ${t.mi?`<fieldset class="fmat"><legend>Materiais (estimativa)</legend><div class="ogrid">${t.mi.map(field).join("")}</div></fieldset>`:""}
   ${t.table?`<details class="ftab"><summary>Tabela de vãos máximos (editável)</summary><table><thead><tr><th>Laje</th>${TRELICADA.cargas.map(c=>`<th>q ≤ ${f(c,1)}</th>`).join("")}</tr></thead><tbody>${TRELICADA.linhas.map((r,i)=>`<tr><td>${r[0]}</td>${r.slice(1).map((x,j)=>`<td><input data-r="${i}" data-c="${j+1}" value="${f(x,1)}"></td>`).join("")}</tr>`).join("")}</tbody></table></details>`:""}
@@ -577,6 +577,6 @@ function memorial(){if(!last)return;const {t,v,r,M}=last,el=$("#proposta"),hoje=
   <div class="pp-sig"><div class="pp-sb"><div class="pp-sl"><img src="assets/img/logo-fsantos.png" alt=""></div><div class="pp-line"></div><div class="pp-st"><b>ENG. CIVIL FRANCIRLEY PEREIRA SANTOS</b><br>CREA: 31.410-AM<br>Santos Projetos & Orçamentos<br>Fone: (92) 99226-2786</div></div></div>
   <div class="pp-act noprint"><button class="btn" data-a="p">Imprimir / salvar PDF</button><button class="btn ghost" data-a="c">Fechar</button></div>`;
   el.querySelector('[data-a="p"]').onclick=()=>print();el.querySelector('[data-a="c"]').onclick=()=>document.body.classList.remove("pp-open");document.body.classList.add("pp-open");scrollTo(0,0)}
-open(location.hash.slice(1));
+abrirTool(location.hash.slice(1));
 (()=>{const b=document.querySelector(".burger"),n=document.getElementById("menu");if(b)b.onclick=()=>{const o=n.classList.toggle("open");b.setAttribute("aria-expanded",o)}})();
 window.__TOOLS=TOOLS;window.__MAT=MAT;

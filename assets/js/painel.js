@@ -1,28 +1,28 @@
-import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js";
-import {renderProposta,brl,num,esc} from "./orcamento.js";
+import {auth,db,ADMIN_EMAIL,FB,googleLogin} from "./firebase-config.js?v=20261015c";
+import {renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261015c";
 const {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}=await import(FB+"firebase-auth.js");
-const {collection,getDocs,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
+const {collection,getDocs,getDoc,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"];let all=[];
 STATUS.forEach(s=>$("#fst").insertAdjacentHTML("beforeend",`<option>${s}</option>`));
 const cls=s=>"st st-"+String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
 const dt=o=>o.createdAt?.toDate?o.createdAt.toDate():null,fd=o=>dt(o)?.toLocaleDateString("pt-BR")??"—";
 const areaOf=o=>(o.itens||[]).reduce((s,i)=>s+(+i.area||0),0);
 const isAdmin=u=>u&&u.email===ADMIN_EMAIL&&u.emailVerified;
-$("#btn-login").onclick=async()=>{$("#lmsg").textContent="";try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){$("#lmsg").className="omsg err";$("#lmsg").textContent=location.protocol==="file:"?"Login não funciona via file://. Abra por http://localhost (veja README).":"Falha no login: "+(e.code||e.message)}};
+$("#btn-login").onclick=async()=>{$("#lmsg").textContent="";await googleLogin(e=>{$("#lmsg").className="omsg err";$("#lmsg").textContent=location.protocol==="file:"?"Login não funciona via file://. Abra por http://localhost (veja README).":"Falha no login: "+(e.code||e.message)})};
 onAuthStateChanged(auth,async u=>{
   if(u&&!isAdmin(u)){await signOut(auth);$("#lmsg").className="omsg err";$("#lmsg").textContent=`Acesso negado para ${u.email}.`;return}
   $("#login").hidden=!!u;$("#app").hidden=!u;
-  $("#who").innerHTML=u?`<span>${esc(u.email)}</span><button id="out">Sair</button>`:"";if(u){$("#out").onclick=()=>signOut(auth);load()}});
+  $("#who").innerHTML=u?`<span>${esc(u.email)}</span><button id="out">Sair</button>`:"";if(u){$("#out").onclick=()=>signOut(auth);carregarConfig(db,{getDoc,doc}).finally(load)}});
 async function load(){$("#cnt").textContent="Carregando…";try{const s=await getDocs(query(collection(db,"orcamentos"),orderBy("createdAt","desc")));all=s.docs.map(d=>({id:d.id,...d.data()}));list()}catch(e){$("#cnt").textContent="Erro ao carregar: "+(e.code||e.message)}}
 function filtered(){const q=$("#q").value.toLowerCase().trim(),st=$("#fst").value;return all.filter(o=>(!st||o.status===st)&&(!q||[o.numero,o.cliente?.nome,o.cliente?.telefone,o.cliente?.email,o.projeto,o.cidade,o.notas].join(" ").toLowerCase().includes(q)))}
 function list(){const f=filtered();$("#cnt").textContent=`${f.length} de ${all.length} orçamento(s)`;
-  $("#rows").innerHTML=f.map(o=>`<tr data-id="${o.id}"><td>${fd(o)}</td><td>${esc(o.numero)}</td><td>${esc(o.cliente?.nome)}${o.uid?"":` <span class="st st-semlogin">Sem login</span>`}</td><td>${esc(o.projeto)}</td><td>${num(areaOf(o))}</td><td>${brl(o.total)}</td><td><span class="${cls(o.status)}">${esc(o.status)}</span></td></tr>`).join("")||'<tr><td colspan="7">Nenhum orçamento.</td></tr>';
+  $("#rows").innerHTML=f.map(o=>`<tr data-id="${o.id}"><td>${fd(o)}</td><td>${esc(o.numero)}</td><td>${esc(o.cliente?.nome)}${o.uid?"":` <span class="st st-semlogin">Sem login</span>`}</td><td>${esc(descProjeto(o))}</td><td>${num(areaOf(o))}</td><td>${brl(o.total)}</td><td><span class="${cls(o.status)}">${esc(o.status)}</span></td></tr>`).join("")||'<tr><td colspan="7">Nenhum orçamento.</td></tr>';
   $("#rows").querySelectorAll("tr[data-id]").forEach(r=>r.onclick=()=>open(r.dataset.id))}
 $("#q").oninput=list;$("#fst").onchange=list;$("#reload").onclick=load;
 const wa=t=>{let d=String(t||"").replace(/\D/g,"");if(!d)return"";if(d.length<=11)d="55"+d;return"https://wa.me/"+d};
 function open(id){const o=all.find(x=>x.id===id);if(!o)return;const w=wa(o.cliente?.telefone);
-  $("#dbody").innerHTML=`<h2>${esc(o.numero)}${o.uid?"":` <span class="st st-semlogin">Sem login</span>`}</h2><dl><dt>Origem</dt><dd>${o.uid?"Conta do usuário (Meus orçamentos)":o.semLogin?"Visitante sem login (lead)":"Visitante sem login (registro antigo)"}</dd><dt>Data</dt><dd>${dt(o)?.toLocaleString("pt-BR")??"—"}</dd><dt>Cliente</dt><dd>${esc(o.cliente?.nome)}</dd><dt>Telefone</dt><dd>${esc(o.cliente?.telefone||"—")}</dd><dt>E-mail</dt><dd>${esc(o.cliente?.email||"—")}</dd><dt>Projeto</dt><dd>${esc(o.projeto||"—")}</dd><dt>Cidade</dt><dd>${esc(o.cidade||"—")}</dd>
-  <dt>Itens</dt><dd>${(o.itens||[]).map(i=>`<b>${esc(i.nome||"Projeto")}</b> — ${num(i.area)} m² — ${brl(i.subtotal)}<br><small>${(i.disciplinas||[]).map(x=>esc(x.nome)).join(", ")}</small>`).join("<br>")}</dd>
+  $("#dbody").innerHTML=`<h2>${esc(o.numero)}${o.uid?"":` <span class="st st-semlogin">Sem login</span>`}</h2><dl><dt>Origem</dt><dd>${o.uid?"Conta do usuário (Meus orçamentos)":o.semLogin?"Visitante sem login (lead)":"Visitante sem login (registro antigo)"}</dd><dt>Data</dt><dd>${dt(o)?.toLocaleString("pt-BR")??"—"}</dd><dt>Cliente</dt><dd>${esc(o.cliente?.nome)}</dd><dt>Telefone</dt><dd>${esc(o.cliente?.telefone||"—")}</dd><dt>E-mail</dt><dd>${esc(o.cliente?.email||"—")}</dd><dt>Projeto</dt><dd>${esc(descProjeto(o)||"—")}</dd><dt>Cidade</dt><dd>${esc(o.cidade||"—")}</dd>
+  <dt>Itens</dt><dd>${(o.itens||[]).map(i=>`<b>${esc(i.nome||"Projeto")}</b> — ${num(i.area)} m² — ${brl(i.subtotal)}<br><small>${(i.disciplinas||[]).map(x=>esc(nomeDisc(x))).join(", ")}</small>`).join("<br>")}</dd>
   ${o.art!=null?`<dt>Subtotal</dt><dd>${brl(o.subtotal)}</dd><dt>ART</dt><dd>${num(o.artPct)}% — ${brl(o.art)}</dd>`:""}${o.pagamento?`<dt>Pagamento</dt><dd>${[o.pagamento.pix&&"Pix: "+esc(o.pagamento.pix),o.pagamento.banco&&esc(o.pagamento.banco),o.pagamento.titular&&esc(o.pagamento.titular)].filter(Boolean).join(" · ")}</dd>`:""}<dt>Total</dt><dd><b>${brl(o.total)}</b> (${brl(o.totalPorM2)}/m²)</dd></dl>
   <p><label>Status <select id="d-st">${STATUS.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></label></p>
   <p><label>Notas internas<textarea id="d-notas" maxlength="5000">${esc(o.notas||"")}</textarea></label></p><p class="omsg" id="d-msg"></p>
@@ -33,5 +33,5 @@ function open(id){const o=all.find(x=>x.id===id);if(!o)return;const w=wa(o.clien
   $("#d-del").onclick=async()=>{if(!confirm(`Excluir o orçamento ${o.numero} de ${o.cliente?.nome}? Esta ação não pode ser desfeita.`))return;try{await deleteDoc(doc(db,"orcamentos",id));all=all.filter(x=>x.id!==id);$("#dlg").hidden=true;list()}catch(e){$("#d-msg").className="omsg err";$("#d-msg").textContent="Erro: "+(e.code||e.message)}}}
 $("#dx").onclick=()=>$("#dlg").hidden=true;$("#dlg").onclick=e=>{if(e.target.id==="dlg")$("#dlg").hidden=true};
 $("#csv").onclick=()=>{const c=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const h=["data","numero","cliente","telefone","email","projeto","cidade","area_m2","itens","subtotal","art_pct","art","total","total_por_m2","status","notas","origem"];
-  const L=filtered().map(o=>[fd(o),o.numero,o.cliente?.nome,o.cliente?.telefone,o.cliente?.email,o.projeto,o.cidade,String(areaOf(o)).replace(".",","),(o.itens||[]).map(i=>`${i.nome||"Projeto"} (${i.area} m²): ${(i.disciplinas||[]).map(x=>x.nome).join("/")}`).join(" | "),o.subtotal!=null?String(o.subtotal).replace(".",","):"",o.artPct!=null?String(o.artPct).replace(".",","):"",o.art!=null?String(o.art).replace(".",","):"",String(o.total).replace(".",","),String(o.totalPorM2).replace(".",","),o.status,o.notas,o.uid?"conta":"sem login"].map(c).join(";"));
+  const L=filtered().map(o=>[fd(o),o.numero,o.cliente?.nome,o.cliente?.telefone,o.cliente?.email,descProjeto(o),o.cidade,String(areaOf(o)).replace(".",","),(o.itens||[]).map(i=>`${i.nome||"Projeto"} (${i.area} m²): ${(i.disciplinas||[]).map(x=>x.nome).join("/")}`).join(" | "),o.subtotal!=null?String(o.subtotal).replace(".",","):"",o.artPct!=null?String(o.artPct).replace(".",","):"",o.art!=null?String(o.art).replace(".",","):"",String(o.total).replace(".",","),String(o.totalPorM2).replace(".",","),o.status,o.notas,o.uid?"conta":"sem login"].map(c).join(";"));
   const b=new Blob(["\ufeff"+[h.join(";"),...L].join("\r\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`orcamentos-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
