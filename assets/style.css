@@ -72,3 +72,24 @@ footer a.restrito{color:var(--mut);opacity:.6;font-size:.8rem;text-decoration:no
 @keyframes opulse{0%{box-shadow:0 0 0 0 rgba(132,227,59,.55),0 6px 24px rgba(22,163,74,.4)}70%{box-shadow:0 0 0 14px rgba(132,227,59,0),0 6px 24px rgba(22,163,74,.4)}100%{box-shadow:0 0 0 0 rgba(132,227,59,0),0 6px 24px rgba(22,163,74,.4)}}
 @media(max-width:640px){.tcta-row{flex-direction:column;align-items:center}.tcta-row .tcta{margin:0;width:min(300px,90vw);max-width:none}}
 @media(prefers-reduced-motion:reduce){.tcta.tcta-obra{animation:none}}
+/* hero CTAs v2 */
+.hero .cta,.hero .tcta-row{display:grid;gap:.75rem;width:min(720px,100%);margin-left:auto;margin-right:auto}
+.hero .cta{grid-template-columns:repeat(3,1fr)}
+.hero .cta .btn{margin:0;max-width:none;height:52px;display:flex;align-items:center;justify-content:center;padding:0 1rem;border-radius:10px;box-sizing:border-box;white-space:nowrap}
+.hero .tcta-row{grid-template-columns:1fr 1fr;margin-top:.9rem}
+.hero .tcta-row .tcta,.hero .tcta-row .tcta.tcta-obra{display:flex;align-items:center;gap:.75rem;max-width:none;width:100%;margin:0;height:76px;padding:0 1rem;border-radius:10px;text-align:left;font-size:.92rem;font-weight:700;line-height:1.25;color:var(--txt);text-decoration:none;
+  background:linear-gradient(160deg,rgba(19,40,74,.82),rgba(11,26,48,.72));backdrop-filter:blur(8px);border:1px solid rgba(242,182,50,.55);box-shadow:0 6px 20px rgba(0,0,0,.35);animation:none;transition:transform .2s,border-color .2s,box-shadow .2s;box-sizing:border-box}
+.hero .tcta-row .tcta.tcta-obra{border-color:rgba(46,196,182,.6)}
+.hero .tcta-row .tcta:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.hero .tcta-row .tcta.tcta-obra:hover{border-color:#2ec4b6}
+.hero .tcta .tic{flex:0 0 40px;height:40px;border-radius:9px;display:grid;place-items:center;background:rgba(242,182,50,.14);color:var(--gold)}
+.hero .tcta-obra .tic{background:rgba(46,196,182,.14);color:#2ec4b6}
+.hero .tcta .tic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hero .tcta .ttx{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;min-width:0}
+.hero .tcta .tbadge,.hero .tcta.tcta-obra .tbadge{background:var(--gold);color:var(--navy);font-size:.62rem;font-weight:800;letter-spacing:.08em;padding:.1rem .45rem;border-radius:999px;animation:bpulse 2.4s ease-out infinite}
+.hero .tcta.tcta-obra .tbadge{background:#2ec4b6;color:#062a27;animation-name:bpulse2}
+.hero .tcta .tar{color:var(--gold);font-size:1.1rem}.hero .tcta-obra .tar{color:#2ec4b6}
+@keyframes bpulse{0%{box-shadow:0 0 0 0 rgba(242,182,50,.6)}70%{box-shadow:0 0 0 7px rgba(242,182,50,0)}100%{box-shadow:0 0 0 0 rgba(242,182,50,0)}}
+@keyframes bpulse2{0%{box-shadow:0 0 0 0 rgba(46,196,182,.6)}70%{box-shadow:0 0 0 7px rgba(46,196,182,0)}100%{box-shadow:0 0 0 0 rgba(46,196,182,0)}}
+@media(max-width:700px){.hero .cta,.hero .tcta-row{grid-template-columns:1fr;width:min(360px,100%)}.hero .cta .btn{width:100%}.hero .tcta-row .tcta,.hero .tcta-row .tcta.tcta-obra{height:72px}}
+@media(prefers-reduced-motion:reduce){.hero .tcta .tbadge{animation:none!important}.hero .tcta-row .tcta:hover{transform:none}}
