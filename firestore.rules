@@ -41,12 +41,14 @@ service cloud.firestore {
     }
 
     function validObraBase(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'areaAlvo', 'contencao', 'total', 'totalPorM2', 'status', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'areaAlvo', 'contencao', 'obra', 'clienteObra', 'total', 'totalPorM2', 'status', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'regime', 'bdi', 'sinapiRef', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.uid == request.auth.uid
         && d.numero is string && d.numero.matches('^OBR-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
         && str(d.cidade, 0, 100)
+        && (!('obra' in d) || str(d.obra, 0, 160))
+        && (!('clienteObra' in d) || str(d.clienteObra, 0, 120))
         && d.tipo in ['baixo', 'medio', 'alto', 'galpao', 'galpao_ind', 'galpao_com', 'muro_contencao']
         && d.pavimentos is int && d.pavimentos >= 1 && d.pavimentos <= 4
         && d.regime in ['d', 'nd']

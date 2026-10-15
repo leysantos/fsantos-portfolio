@@ -53,3 +53,5 @@ body.obra #proposta .pb-f{display:flex;justify-content:space-between;gap:8px;bor
 @media(max-width:560px){#au-out{max-width:none}#au-out>p:has(#au-go){flex-direction:column;align-items:stretch;gap:.4rem}#au-go{width:100%}#au-reset{line-height:2}}
 
 .ob.cont .nc{display:none!important}.ob:not(.cont) .cont-only{display:none!important}
+
+.oid{margin:.2rem 0 .8rem;padding:.55rem .8rem;border-left:3px solid #f2b632;background:rgba(242,182,50,.08);border-radius:8px}
