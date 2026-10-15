@@ -1,0 +1,33 @@
+import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js";
+import {brl,num,esc} from "./orcamento.js";
+const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
+const {collection,getDocs,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
+const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"],TIPO={baixo:"Casa baixo padrão",medio:"Casa médio padrão",alto:"Casa alto padrão",galpao:"Galpão"};let all=[],loaded=false;
+STATUS.forEach(s=>$("#o-fst").insertAdjacentHTML("beforeend",`<option>${s}</option>`));
+document.querySelectorAll(".ptabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".ptabs button").forEach(x=>x.classList.toggle("on",x===b));$("#tab-proj").hidden=b.dataset.tab!=="proj";$("#tab-obra").hidden=b.dataset.tab!=="obra";if(b.dataset.tab==="obra"&&!loaded)load()});
+const cls=s=>"st st-"+String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
+const dt=o=>o.createdAt?.toDate?o.createdAt.toDate():null,fd=o=>dt(o)?.toLocaleDateString("pt-BR")??"—";
+onAuthStateChanged(auth,u=>{if(!(u&&u.email===ADMIN_EMAIL&&u.emailVerified)){all=[];loaded=false}});
+async function load(){$("#o-cnt").textContent="Carregando…";try{const s=await getDocs(query(collection(db,"orcamentos_obra"),orderBy("createdAt","desc")));all=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;list()}catch(e){$("#o-cnt").textContent="Erro ao carregar: "+(e.code||e.message)+(e.code==="permission-denied"?" — publique as novas regras do Firestore (coleção orcamentos_obra).":"")}}
+function filtered(){const q=$("#o-q").value.toLowerCase().trim(),st=$("#o-fst").value;return all.filter(o=>(!st||o.status===st)&&(!q||[o.numero,o.cliente?.nome,o.cliente?.telefone,o.cliente?.email,TIPO[o.tipo],o.cidade,o.notas].join(" ").toLowerCase().includes(q)))}
+function list(){const f=filtered();$("#o-cnt").textContent=`${f.length} de ${all.length} orçamento(s) de obra`;
+  $("#o-rows").innerHTML=f.map(o=>`<tr data-id="${o.id}"><td>${fd(o)}</td><td>${esc(o.numero)}</td><td>${esc(o.cliente?.nome)}</td><td>${esc(TIPO[o.tipo]||o.tipo)}</td><td>${num(o.areaConstruida)}</td><td>${brl(o.total)}</td><td>${brl(o.totalPorM2)}</td><td><span class="${cls(o.status)}">${esc(o.status)}</span></td></tr>`).join("")||'<tr><td colspan="8">Nenhum orçamento de obra.</td></tr>';
+  $("#o-rows").querySelectorAll("tr[data-id]").forEach(r=>r.onclick=()=>open(r.dataset.id))}
+$("#o-q").oninput=list;$("#o-fst").onchange=list;$("#o-reload").onclick=load;
+const wa=t=>{let d=String(t||"").replace(/\D/g,"");if(!d)return"";if(d.length<=11)d="55"+d;return"https://wa.me/"+d};
+function open(id){const o=all.find(x=>x.id===id);if(!o)return;const w=wa(o.cliente?.telefone);
+  $("#dbody").innerHTML=`<h2>${esc(o.numero)}</h2><dl><dt>Data</dt><dd>${dt(o)?.toLocaleString("pt-BR")??"—"}</dd><dt>Cliente</dt><dd>${esc(o.cliente?.nome)}</dd><dt>Telefone</dt><dd>${esc(o.cliente?.telefone||"—")}</dd><dt>E-mail</dt><dd>${esc(o.cliente?.email||"—")}</dd><dt>Cidade</dt><dd>${esc(o.cidade||"—")}</dd>
+  <dt>Obra</dt><dd>${esc(TIPO[o.tipo]||o.tipo)} · ${o.pavimentos} pav. · pé-direito ${num(o.peDireito)} m · ${num(o.areaConstruida)} m²</dd><dt>Terreno / muro</dt><dd>${num(o.terreno?.largura)} × ${num(o.terreno?.comprimento)} m · muro ${o.muro?.ativo?num(o.muro.comprimento)+" m × "+num(o.muro.altura)+" m":"não"}</dd>
+  <dt>Ambientes</dt><dd><small>${(o.ambientes||[]).map(a=>`${esc(a.nome)} ${num(a.largura)}×${num(a.comprimento)}`).join(" · ")}</small></dd>
+  <dt>SINAPI</dt><dd>${esc(o.sinapiRef)} · ${o.regime==="d"?"desonerado":"não desonerado"} · BDI ${num(o.bdi)}%</dd>
+  <dt>Etapas</dt><dd><small>${(o.etapas||[]).map(e=>`${e.n}. ${esc(e.nome)}: ${brl(e.subtotal)}`).join("<br>")}</small></dd>
+  <dt>Total</dt><dd>Custo direto ${brl(o.custoDireto)} · <b>Total ${brl(o.total)}</b> (${brl(o.totalPorM2)}/m²)</dd></dl>
+  <p><label>Status <select id="d-st">${STATUS.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></label></p>
+  <p><label>Notas internas<textarea id="d-notas" maxlength="5000">${esc(o.notas||"")}</textarea></label></p><p class="omsg" id="d-msg"></p>
+  <div class="pdbtn"><button class="btn" id="d-save">Salvar</button>${w?`<a class="btn ghost" href="${w}" target="_blank" rel="noopener">WhatsApp do cliente</a>`:""}<button class="btn danger" id="d-del">Excluir</button></div>`;
+  $("#dlg").hidden=false;
+  $("#d-save").onclick=async()=>{const m=$("#d-msg");try{const ch={status:$("#d-st").value,notas:$("#d-notas").value,updatedAt:serverTimestamp()};await updateDoc(doc(db,"orcamentos_obra",id),ch);Object.assign(o,ch);m.className="omsg ok";m.textContent="Salvo.";list()}catch(e){m.className="omsg err";m.textContent="Erro: "+(e.code||e.message)}};
+  $("#d-del").onclick=async()=>{if(!confirm(`Excluir o orçamento ${o.numero} de ${o.cliente?.nome}? Esta ação não pode ser desfeita.`))return;try{await deleteDoc(doc(db,"orcamentos_obra",id));all=all.filter(x=>x.id!==id);$("#dlg").hidden=true;list()}catch(e){$("#d-msg").className="omsg err";$("#d-msg").textContent="Erro: "+(e.code||e.message)}}}
+$("#o-csv").onclick=()=>{const c=v=>'"'+String(v??"").replace(/"/g,'""')+'"',n=v=>String(v??"").replace(".",",");const h=["data","numero","cliente","telefone","email","cidade","tipo","pavimentos","area_m2","sinapi","regime","bdi","custo_direto","total","total_por_m2","status","notas"];
+  const L=filtered().map(o=>[fd(o),o.numero,o.cliente?.nome,o.cliente?.telefone,o.cliente?.email,o.cidade,TIPO[o.tipo]||o.tipo,o.pavimentos,n(o.areaConstruida),o.sinapiRef,o.regime,n(o.bdi),n(o.custoDireto),n(o.total),n(o.totalPorM2),o.status,o.notas].map(c).join(";"));
+  const b=new Blob(["\ufeff"+[h.join(";"),...L].join("\r\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`orcamentos-obra-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
