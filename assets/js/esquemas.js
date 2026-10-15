@@ -99,21 +99,94 @@ D.pavimento=(v,r)=>{const g=r._;if(!g)return"";const h=g.h,hp=h*260,hs=(v.hs??15
  for(let i=1;i<3;i++)for(let x=PX+6;x<PX+2*lw;x+=10)s+=L(x,PY+i*cw-4,x,PY+i*cw+4,STL,1.6);for(let y=PY+10;y<PY+3*cw;y+=16)s+=L(PX+lw-5,y,PX+lw+5,y,"#2e86c1",2);
  s+=DV(PY,PY+cw,PX-10,`J = ${fm(J,2)} m`,4,11)+DH(PX,PX+lw,PY+3*cw+18,`${fm(lw/k,2)} m`,12,11)+LD(PX+lw+3,PY+cw*2.5,PX+2*lw+10,PY+cw*2.6,"ligação")+LD(PX+lw*0.5,PY+cw,PX+2*lw+10,PY+cw*0.8,g.dw?"transferência":"junta serrada")+T(PX+lw,PY+3*cw+44,"tráfego ↕",11);
  return SV(640,Math.max(PY+3*cw+60,Y+hp+hs+110),s,"Esquema do pavimento rígido")};
-D.traco=(v,r)=>{const sel=v.prep[0],AM="#f2b632",hl=k=>sel===k?AM:"#9aa6b2",sw=k=>sel===k?3:1.4;let s="";
- // lata 18 L
- const lx=40,ly=70;s+=R(lx-8,ly-14,96,170,sel==="L"?"#fff7e0":"none",hl("L"),sw("L"),'rx="10"');
- s+=P([[lx+6,ly+10],[lx+74,ly+10],[lx+70,ly+120],[lx+10,ly+120]],"#c9d1da",N,1.4)+R(lx+2,ly+4,76,8,"#aeb8c4",N,1.2,'rx="3"')+PL([[lx+14,ly+4],[lx+40,ly-10],[lx+66,ly+4]],N,1.6)+L(lx+12,ly+40,lx+68,ly+40,"#8a96a3",1)+L(lx+12,ly+75,lx+68,ly+75,"#8a96a3",1);
- s+=T(lx+40,ly+70,"18 L",15,"middle",N,800)+T(lx+40,ly+142,"Lata 18 L",12,"middle",N,700)+T(lx+40,ly+156,"medida rasa",10,"middle","#556",500);
- // padiola
- const px=170,py=70;s+=R(px-8,py-14,200,170,sel==="P"?"#fff7e0":"none",hl("P"),sw("P"),'rx="10"');
- s+=L(px,py+60,px+184,py+60,"#7a5a30",5)+L(px,py+72,px+184,py+72,"#7a5a30",5);
- s+=P([[px+42,py+30],[px+142,py+30],[px+150,py+20],[px+50,py+20]],"#e2c48f",N,1.2)+R(px+42,py+30,100,48,"#d4b07a",N,1.4)+P([[px+142,py+30],[px+150,py+20],[px+150,py+68],[px+142,py+78]],"#c29a60",N,1.2);
- s+=T(px+92,py+58,"36,23 L",14,"middle",N,800)+T(px+92,py+100,"35 × 45 cm (interno)",11,"middle",N,600)+T(px+92,py+114,"altura 23 cm",11,"middle",N,600)+T(px+92,py+142,"Padiola",12,"middle",N,700)+T(px+92,py+156,"medida rasa",10,"middle","#556",500);
- // betoneira
- const bx=400,by=70,cap=v.bet;s+=R(bx-8,by-14,220,170,sel==="B"?"#fff7e0":"none",hl("B"),sw("B"),'rx="10"');
- s+=P([[bx+40,by+20],[bx+120,by+5],[bx+150,by+60],[bx+70,by+95]],"#e67e22",N,1.5)+P([[bx+120,by+5],[bx+140,by-5],[bx+165,by+45],[bx+150,by+60]],"#c0601a",N,1.3)+C(bx+95,by+50,6,N);
- s+=L(bx+95,by+50,bx+95,by+118,N,3)+L(bx+60,by+118,bx+170,by+118,N,3)+L(bx+70,by+118,bx+55,by+132,N,2)+L(bx+160,by+118,bx+175,by+132,N,2)+C(bx+55,by+134,7,"#555")+C(bx+175,by+134,7,"#555")+R(bx+150,by+80,30,24,"#566573",N,1.2)+T(bx+165,by+96,"M",10,"middle","#fff",700);
- s+=T(bx+102,by+142,"Betoneira "+cap,12,"middle",N,700)+T(bx+102,by+156,"carga seca ≈ 62% do tambor",10,"middle","#556",500);
- s+=T(320,22,"Equipamento de medida/mistura selecionado em destaque",12,"middle",N,700);
- return SV(640,250,s,"Lata, padiola e betoneira")};
+D.traco=(v,r)=>{const sel=v.prep[0],AM="#f2b632",cap=parseInt(v.bet)||400,on=k=>sel===k;
+ const card=(x,w,k)=>`<rect x="${x}" y="34" width="${w}" height="214" rx="12" fill="${on(k)?"#fff7e0":"#f7f9fb"}" stroke="${on(k)?AM:"#c3ccd6"}" stroke-width="${on(k)?3:1.2}"/>`+(on(k)&&w<150?`<circle cx="${x+w-14}" cy="49" r="10" fill="${AM}"/><text x="${x+w-14}" y="54" font-size="13" text-anchor="middle" font-weight="900" fill="#1b2633">✓</text>`:on(k)?`<rect x="${x+w-78}" y="40" width="70" height="18" rx="9" fill="${AM}"/><text x="${x+w-43}" y="53" font-size="10" text-anchor="middle" font-weight="800" fill="#1b2633">SELECIONADO</text>`:"");
+ const IMG="assets/img/traco/",bg=k=>on(k)?"#fff7e0":"#f7f9fb";
+ // Fotos reais (CC0) sobre o desenho vetorial — se a foto não carregar, o desenho SVG fica visível (fallback).
+ // Lata: "Zinc Bucket Front Flash", qubodup, CC0 — flickr.com/photos/21051491@N02/6964741805
+ // Betoneira: "Orange concrete mixer machine", rawpixel, CC0 — rawpixel.com/image/6015943
+ const PH=(x,y,w,h,f,k,cr,ex="")=>`<g class="trph"><clipPath id="trc${k}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8"/></clipPath><image href="${IMG+f}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" clip-path="url(#trc${k})" onerror="var g=this.parentNode;g.style.display='none';g.previousElementSibling.style.display=''"><title>${cr}</title></image><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="none" stroke="${on(k)?AM:"#c3ccd6"}" stroke-width="${on(k)?2:1}"/><text x="${x+w-4}" y="${y+h-4}" font-size="7.5" text-anchor="end" fill="#fff" stroke="#000" stroke-width="2" paint-order="stroke" opacity=".9">${cr}</text>${ex}</g>`;
+ const WR=(s,s0)=>s.slice(0,s0)+'<g class="trvec" style="display:none">'+s.slice(s0)+"</g>";
+ const g=`<defs>
+ <linearGradient id="trTin" x1="0" x2="1"><stop offset="0" stop-color="#7d8792"/><stop offset=".18" stop-color="#e9eef2"/><stop offset=".32" stop-color="#ffffff"/><stop offset=".55" stop-color="#b9c2ca"/><stop offset=".82" stop-color="#8a949e"/><stop offset="1" stop-color="#5e6770"/></linearGradient>
+ <linearGradient id="trTinIn" x1="0" x2="1"><stop offset="0" stop-color="#4f5861"/><stop offset=".5" stop-color="#9aa4ad"/><stop offset="1" stop-color="#3f474f"/></linearGradient>
+ <linearGradient id="trWood" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e2b27a"/><stop offset=".5" stop-color="#c98f52"/><stop offset="1" stop-color="#a86f38"/></linearGradient>
+ <linearGradient id="trWoodS" x1="0" x2="1"><stop offset="0" stop-color="#9a6330"/><stop offset="1" stop-color="#c48a4e"/></linearGradient>
+ <linearGradient id="trDrum" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffd24a"/><stop offset=".3" stop-color="#ffb21a"/><stop offset=".7" stop-color="#e98a0c"/><stop offset="1" stop-color="#a95e05"/></linearGradient>
+ <linearGradient id="trSteel" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6b7580"/><stop offset=".5" stop-color="#3a424b"/><stop offset="1" stop-color="#22282e"/></linearGradient>
+ <radialGradient id="trTire"><stop offset=".55" stop-color="#3a3a3a"/><stop offset=".85" stop-color="#1c1c1c"/><stop offset="1" stop-color="#000"/></radialGradient>
+ <radialGradient id="trHub"><stop offset="0" stop-color="#f1f3f5"/><stop offset="1" stop-color="#8a939c"/></radialGradient>
+ <radialGradient id="trShadow"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+ </defs>`;
+ let s=g+`<text x="320" y="22" font-size="12" text-anchor="middle" font-weight="700" fill="#1b2633">Equipamento de medida/mistura — selecionado em destaque</text>`;
+ const lab=(x,a,b,c)=>`<text x="${x}" y="214" font-size="12.5" text-anchor="middle" font-weight="800" fill="#1b2633">${a}</text><text x="${x}" y="229" font-size="10" text-anchor="middle" fill="#556">${b}</text>`+(c?`<text x="${x}" y="242" font-size="10" text-anchor="middle" fill="#556">${c}</text>`:"");
+ // ===== LATA 18 L (lata metálica tipo tinta) =====
+ s+=card(16,138,"L");{const s0=s.length;const cx=85,t=88,b=190,w=74;
+  s+=`<ellipse cx="${cx}" cy="${b+4}" rx="46" ry="6" fill="url(#trShadow)"/>
+  <path d="M${cx-w/2} ${t} L${cx-w/2} ${b-4} Q${cx} ${b+6} ${cx+w/2} ${b-4} L${cx+w/2} ${t} Z" fill="url(#trTin)" stroke="#3d454d" stroke-width="1.2"/>`;
+  [t+26,t+52,t+78].forEach(y=>{s+=`<path d="M${cx-w/2} ${y} Q${cx} ${y+7} ${cx+w/2} ${y}" fill="none" stroke="#5c656e" stroke-width="2.2" opacity=".7"/><path d="M${cx-w/2} ${y+3} Q${cx} ${y+10} ${cx+w/2} ${y+3}" fill="none" stroke="#fff" stroke-width="1.2" opacity=".7"/>`});
+  s+=`<rect x="${cx-w/2+8}" y="${t+33}" width="${w-16}" height="13" rx="2" fill="#fff" opacity=".0"/>
+  <ellipse cx="${cx}" cy="${t}" rx="${w/2}" ry="8" fill="url(#trTinIn)" stroke="#3d454d" stroke-width="1.2"/>
+  <ellipse cx="${cx}" cy="${t}" rx="${w/2+2.5}" ry="9" fill="none" stroke="#c7cfd6" stroke-width="3"/>
+  <ellipse cx="${cx}" cy="${t+1}" rx="${w/2-5}" ry="5.2" fill="#d7d2c8" stroke="#8b8478" stroke-width=".8"/>
+  <circle cx="${cx-w/2-1}" cy="${t+12}" r="3.2" fill="#9aa4ad" stroke="#3d454d"/><circle cx="${cx+w/2+1}" cy="${t+12}" r="3.2" fill="#9aa4ad" stroke="#3d454d"/>
+  <path d="M${cx-w/2-1} ${t+12} C${cx-w/2-6} ${t-46} ${cx+w/2+6} ${t-46} ${cx+w/2+1} ${t+12}" fill="none" stroke="#444c54" stroke-width="2.4"/>
+  <rect x="${cx-12}" y="${t-38}" width="24" height="8" rx="4" fill="#2b2f33"/>
+  <text x="${cx}" y="${t+48}" font-size="17" text-anchor="middle" font-weight="900" fill="#1b2633">18 L</text>`;
+  s=WR(s,s0)+PH(26,64,118,127,"lata-18l.webp","L","Foto: qubodup · CC0",`<rect x="${cx-24}" y="150" width="48" height="20" rx="5" fill="#1b2633"/><text x="${cx}" y="165" font-size="13" text-anchor="middle" font-weight="900" fill="${AM}">18 L</text>`);
+  s+=lab(cx,"Lata 18 L","medida rasa","Ø ≈ 24 × 35 cm")}
+ // ===== PADIOLA 35×45×23 (caixa de madeira com 4 pegas) =====
+ s+=card(164,196,"P");{const x0=200,y0=118,W=110,H=46,dx=22,dy=-16;
+  s+=`<ellipse cx="262" cy="${y0+H+18}" rx="92" ry="7" fill="url(#trShadow)"/>`;
+  // varas (pegas) — atrás
+  s+=`<path d="M${x0-28+dx} ${y0+12+dy} L${x0+W+30+dx} ${y0+12+dy}" stroke="#8d5a2a" stroke-width="7" stroke-linecap="round"/>`;
+  // interior
+  s+=`<path d="M${x0} ${y0} L${x0+dx} ${y0+dy} L${x0+W+dx} ${y0+dy} L${x0+W} ${y0} Z" fill="#7b4f25"/>`;
+  s+=`<path d="M${x0+3} ${y0+2} L${x0+dx+2} ${y0+dy+3} L${x0+W+dx-3} ${y0+dy+3} L${x0+W-2} ${y0+2} Z" fill="#c9c0ae"/>`; // areia rasa
+  s+=`<path d="M${x0+8} ${y0-2} q20-5 40 0 t40 -2" stroke="#b0a690" fill="none"/>`;
+  // lateral direita
+  s+=`<path d="M${x0+W} ${y0} L${x0+W+dx} ${y0+dy} L${x0+W+dx} ${y0+H+dy} L${x0+W} ${y0+H} Z" fill="url(#trWoodS)" stroke="#5a3814"/>`;
+  // frente com tábuas
+  s+=`<rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="url(#trWood)" stroke="#5a3814" stroke-width="1.2"/>`;
+  [15,31].forEach(o=>{s+=`<line x1="${x0}" y1="${y0+o}" x2="${x0+W}" y2="${y0+o}" stroke="#7d4d1f" stroke-width="1"/>`});
+  [[30,7],[72,24],[50,38]].forEach(([a,b])=>{s+=`<path d="M${x0+a} ${y0+b} q8-3 16 0" stroke="#9a6431" fill="none" stroke-width=".8"/>`});
+  [[4,4],[W-4,4],[4,H-4],[W-4,H-4]].forEach(([a,b])=>{s+=`<circle cx="${x0+a}" cy="${y0+b}" r="1.6" fill="#333"/>`});
+  // varas frente (2 pegas de cada lado)
+  s+=`<path d="M${x0-34} ${y0+30} L${x0+W+34} ${y0+30}" stroke="#a46c35" stroke-width="7.5" stroke-linecap="round"/><path d="M${x0-34} ${y0+28.5} L${x0+W+34} ${y0+28.5}" stroke="#d9a56a" stroke-width="2" stroke-linecap="round"/>`;
+  s+=`<text x="${x0+W/2}" y="${y0+20}" font-size="14" text-anchor="middle" font-weight="900" fill="#2a1a08">36,23 L</text>`;
+  s+=`<text x="${x0+W/2}" y="${y0+H+14}" font-size="9.5" text-anchor="middle" fill="#556">35 × 45 cm int. · h 23 cm</text>`;
+  s+=lab(262,"Padiola","medida rasa","4 pegas (2 operários)")}
+ // ===== BETONEIRA =====
+ s+=card(370,254,"B");{const k=({250:.84,400:.96,600:1.08})[cap]||1,cx=490,cy=186;
+  const tr=`translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})`;
+  let b=`<ellipse cx="${cx+8}" cy="190" rx="${100}" ry="7" fill="url(#trShadow)"/>`;
+  // barra de reboque
+  b+=`<path d="M${cx+40} 168 L${cx+110} 176" stroke="url(#trSteel)" stroke-width="5" stroke-linecap="round"/><circle cx="${cx+112}" cy="176" r="5" fill="none" stroke="#2b3138" stroke-width="3"/>`;
+  // chassi / cavalete
+  b+=`<path d="M${cx-62} 170 L${cx+44} 170" stroke="#2f363d" stroke-width="6" stroke-linecap="round"/>`;
+  b+=`<path d="M${cx-20} 170 L${cx-6} 108 M${cx+22} 170 L${cx+8} 108" stroke="#3a424b" stroke-width="5" stroke-linecap="round"/>`;
+  b+=`<path d="M${cx-58} 170 L${cx-58} 186 M${cx-64} 186 L${cx-52} 186" stroke="#3a424b" stroke-width="4"/>`;
+  // caixa do motor
+  b+=`<rect x="${cx+18}" y="130" width="40" height="32" rx="3" fill="#3f6f9a" stroke="#1d3550"/><g stroke="#264a6b" stroke-width="1.4">${[0,1,2,3].map(i=>`<line x1="${cx+24}" y1="${136+i*6}" x2="${cx+52}" y2="${136+i*6}"/>`).join("")}</g><text x="${cx+38}" y="158" font-size="6.5" text-anchor="middle" fill="#cfe1f2" font-weight="700">MOTOR</text>`;
+  // tambor (corpo + boca cônica), inclinado
+  b+=`<g transform="rotate(24 ${cx} 104)">
+   <path d="M${cx-46} 68 L${cx+28} 68 Q${cx+40} 100 ${cx+28} 132 L${cx-46} 132 Q${cx-58} 100 ${cx-46} 68 Z" fill="url(#trDrum)" stroke="#7a4304" stroke-width="1.4"/>
+   <path d="M${cx-46} 68 L${cx-82} 82 L${cx-82} 118 L${cx-46} 132 Z" fill="url(#trDrum)" stroke="#7a4304" stroke-width="1.4"/>
+   <ellipse cx="${cx-82}" cy="100" rx="7" ry="18" fill="#3b2a12" stroke="#7a4304" stroke-width="2"/>
+   <ellipse cx="${cx-82}" cy="100" rx="8.5" ry="19.5" fill="none" stroke="#ffd860" stroke-width="2"/>
+   ${[-30,-12,6].map(o=>`<path d="M${cx+o} 68 Q${cx+o-10} 100 ${cx+o} 132" fill="none" stroke="#b86506" stroke-width="2.4"/><path d="M${cx+o+2.5} 69 Q${cx+o-7.5} 100 ${cx+o+2.5} 131" fill="none" stroke="#ffe08a" stroke-width="1"/>`).join("")}
+   <path d="M${cx+18} 68 Q${cx+30} 100 ${cx+18} 132" fill="none" stroke="#555" stroke-width="7"/>
+   <path d="M${cx+18} 68 Q${cx+30} 100 ${cx+18} 132" fill="none" stroke="#9aa3ab" stroke-width="7" stroke-dasharray="2 2.2"/>
+   <path d="M${cx-40} 74 L${cx+20} 74" stroke="#fff3c4" stroke-width="3" opacity=".55" stroke-linecap="round"/>
+  </g>`;
+  b+=`<circle cx="${cx}" cy="108" r="5" fill="url(#trHub)" stroke="#222"/>`;
+  // volante
+  b+=`<g><circle cx="${cx-30}" cy="150" r="13" fill="none" stroke="#c0392b" stroke-width="3"/>${[0,60,120].map(a=>`<line x1="${cx-30-13*Math.cos(a*Math.PI/180)}" y1="${150-13*Math.sin(a*Math.PI/180)}" x2="${cx-30+13*Math.cos(a*Math.PI/180)}" y2="${150+13*Math.sin(a*Math.PI/180)}" stroke="#c0392b" stroke-width="1.8"/>`).join("")}<circle cx="${cx-30}" cy="150" r="3" fill="#333"/><line x1="${cx-30}" y1="150" x2="${cx-12}" y2="158" stroke="#3a424b" stroke-width="3"/></g>`;
+  // rodas
+  [cx+30,cx+48].forEach((wx,i)=>{b+=`<circle cx="${wx}" cy="176" r="${i?13:13}" fill="url(#trTire)" stroke="#000"/><circle cx="${wx}" cy="176" r="6" fill="url(#trHub)" stroke="#333"/><circle cx="${wx}" cy="176" r="1.8" fill="#333"/>`});
+  s+=`<g class="trvec" style="display:none"><g transform="${tr}">${b}</g></g>`;
+  {const h=Math.round(132*k),w=Math.round(h*575/600);s+=PH(Math.round(cx-w/2),200-h,w,h,"betoneira.webp","B","Foto: rawpixel · CC0")}
+  s+=`<rect x="${cx+70}" y="66" width="62" height="24" rx="5" fill="#1b2633"/><text x="${cx+101}" y="83" font-size="14" text-anchor="middle" font-weight="900" fill="${AM}">${cap} L</text>`;
+  s+=lab(497,"Betoneira "+cap+" L","carga seca ≈ 62% do tambor","tamanho proporcional (250/400/600)")}
+ return SV(640,256,s,"Lata 18 L, padiola e betoneira")};
 return D})();

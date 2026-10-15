@@ -147,7 +147,9 @@ function fill(u){$("#c-nome").value=PERFIL?.nome||u.displayName||"";$("#c-tel").
 (async()=>{try{const {auth,A,db,F}=await fb();A.onAuthStateChanged(auth,async u=>{USER=u;$("#au-out").hidden=!!u;$("#au-in").hidden=!u;$("#meus").hidden=!u;$("#au-msg").textContent="";
   if(!u){PERFIL=null;return}$("#au-who").textContent=u.email||u.displayName;
   try{const s=await F.getDoc(F.doc(db,"users",u.uid));PERFIL=s.exists()?s.data():null;if(!PERFIL)await salvarPerfil(u,u.displayName,"")}catch(e){console.error(e)}
-  fill(u);meus()})}catch(e){console.error(e);am("Serviço de login indisponível no momento.")}})();
+  fill(u);meus();
+  const qs=new URLSearchParams(location.search),id=qs.get("edit")||qs.get("abrir");if(id){try{const s=await F.getDoc(F.doc(db,"orcamentos_obra",id));if(!s.exists())throw new Error("não encontrado");const o={id:s.id,...s.data()};
+    carregar(o,!!qs.get("edit"));if(qs.get("pdf")&&R)renderPDF(R,{...IN,cliente:o.cliente||IN.cliente},o.numero)}catch(e){mm("Não foi possível abrir o orçamento ("+(e.code||e.message)+").")}}})}catch(e){console.error(e);am("Serviço de login indisponível no momento.")}})();
 let MEUS=[];
 async function meus(){if(!USER)return;const {db,F}=await fb();try{const s=await F.getDocs(F.query(F.collection(db,"orcamentos_obra"),F.where("uid","==",USER.uid)));
   MEUS=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
@@ -165,7 +167,7 @@ function carregar(o,editar){const x=o.entradas||{},g=String(o.tipo).startsWith("
   $("#p-cob").value=o.cobertura||defCob(o.tipo);$("#p-telha").value=o.telha||"simples";
   $("#p-mez").value=o.mezanino>0?"1":"0";if(o.mezanino>0)$("#p-meza").value=num(o.mezanino);
   $("#p-pis").value=o.piscina?"1":"0";if(o.piscina){$("#p-pisc").value=num(o.piscina.comprimento);$("#p-pisl").value=num(o.piscina.largura);$("#p-pisp").value=num(o.piscina.profundidade)}
-  if(o.cidade)$("#c-cid").value=o.cidade;
+  if(o.cidade)$("#c-cid").value=o.cidade;if(editar&&USER&&o.uid&&o.uid!==USER.uid&&o.cliente){$("#c-nome").value=o.cliente.nome||"";$("#c-tel").value=o.cliente.telefone||"";$("#c-email").value=o.cliente.email||""}
   $("#p-obra").value=o.obra||"";$("#p-cli").value=o.clienteObra||"";
   if(o.contencao){$("#p-csis").value=o.contencao.sistema==="bloco"?"bloco":"cortina";$("#p-cl").value=num(o.contencao.comprimento);$("#p-ch").value=num(o.contencao.altura)}
   const simples=o.modo==="simples"&&(o.areaAlvo>0||!!o.contencao);MODE=simples?"simples":"avancado";
@@ -175,7 +177,7 @@ function carregar(o,editar){const x=o.entradas||{},g=String(o.tipo).startsWith("
   tipoUI();draw();
   let av=o.modo==="simples"&&!simples&&!o.contencao?" Orçamento antigo do modo simples sem área-alvo salva: aberto no modo avançado com os ambientes salvos.":"";
   const d=Math.abs((R?.total||0)-(o.total||0));if(d>0.05)av+=` Atenção: o total recalculado (${brl(R.total)}) difere do salvo (${brl(o.total)})${o.sinapiRef&&o.sinapiRef!==R.ref?` porque a base SINAPI mudou (${o.sinapiRef} → ${R.ref})`:" (composições ou regras do modelo atualizadas)"}.`;
-  if(editar){EDIT={id:o.id,numero:o.numero};$("#ed-txt").textContent=`Editando ${o.numero} — ao gerar o PDF as alterações serão salvas neste mesmo orçamento.`;$("#ed-bar").hidden=false;$("#b-pdf").textContent="Salvar alterações e gerar PDF"}else fimEdit();
+  if(editar){EDIT={id:o.id,numero:o.numero,uid:o.uid,cliente:o.cliente};$("#ed-txt").textContent=`Editando ${o.numero}${USER&&o.uid&&o.uid!==USER.uid?" (orçamento de outro usuário — modo administrador)":""} — ao gerar o PDF as alterações serão salvas neste mesmo orçamento.`;$("#ed-bar").hidden=false;$("#b-pdf").textContent="Salvar alterações e gerar PDF"}else fimEdit();
   mm(`Orçamento ${o.numero} carregado.`+av,!av);scrollTo({top:$("#res").offsetTop-80,behavior:"smooth"})}
 function montarDoc(no,ts){const r2=v=>Math.round(v*100)/100;
   const ct=IN.tipo==="muro_contencao";if(ct){const k=R.Q.cont;return {numero:no,uid:USER?.uid||"test",cliente:IN.cliente,cidade:IN.cidade,obra:IN.obra,clienteObra:IN.clienteObra,tipo:IN.tipo,modo:MODE==="simples"?"simples":"avancado",pavimentos:1,contencao:{sistema:k.sistema,comprimento:r2(k.L),altura:r2(k.H)},regime:IN.regime,bdi:r2(IN.bdi),sinapiRef:String(R.ref),entradas:{calibrar:false},ambientes:[],etapas:R.etapas.map(e=>({n:e.n,nome:e.nome,subtotal:r2(e.sub)})),areaConstruida:r2(R.Q.Ac),custoDireto:r2(R.direto),ajusteCub:0,total:r2(R.total),totalPorM2:r2(R.m2),status:"novo",createdAt:ts}}
@@ -185,9 +187,9 @@ function montarDoc(no,ts){const r2=v=>Math.round(v*100)/100;
     ambientes:IN.ambientes.filter(a=>a.l>0&&a.c>0).map(a=>({nome:a.nome,tipo:a.t,largura:r2(a.l),comprimento:r2(a.c),pavimento:a.p??1})),
     etapas:R.etapas.map(e=>({n:e.n,nome:e.nome,subtotal:r2(e.sub)})),areaConstruida:r2(R.Q.Ac),custoDireto:r2(R.direto),ajusteCub:r2(R.ajuste||0),total:r2(R.total),totalPorM2:r2(R.m2),status:"novo",createdAt:ts}}
 async function salvar(no){const {db,F}=await fb();const d=montarDoc(no,F.serverTimestamp());
-  let op;if(EDIT){delete d.createdAt;delete d.status;d.numero=EDIT.numero;d.updatedAt=F.serverTimestamp();op=F.updateDoc(F.doc(db,"orcamentos_obra",EDIT.id),{...d,...(MODE==="simples"?{}:{areaAlvo:F.deleteField()}),...(d.piscina?{}:{piscina:F.deleteField()}),...(d.contencao?{cobertura:F.deleteField(),telha:F.deleteField(),mezanino:F.deleteField(),terreno:F.deleteField(),muro:F.deleteField(),peDireito:F.deleteField(),areaAlvo:F.deleteField()}:{contencao:F.deleteField()})})}else op=F.addDoc(F.collection(db,"orcamentos_obra"),d);
+  const outro=EDIT&&EDIT.uid&&USER&&EDIT.uid!==USER.uid;let op;if(EDIT){delete d.createdAt;delete d.status;d.numero=EDIT.numero;if(outro){d.uid=EDIT.uid;if(EDIT.cliente)d.cliente=EDIT.cliente}d.updatedAt=F.serverTimestamp();op=F.updateDoc(F.doc(db,"orcamentos_obra",EDIT.id),{...d,...(MODE==="simples"?{}:{areaAlvo:F.deleteField()}),...(d.piscina?{}:{piscina:F.deleteField()}),...(d.contencao?{cobertura:F.deleteField(),telha:F.deleteField(),mezanino:F.deleteField(),terreno:F.deleteField(),muro:F.deleteField(),peDireito:F.deleteField(),areaAlvo:F.deleteField()}:{contencao:F.deleteField()})})}else op=F.addDoc(F.collection(db,"orcamentos_obra"),d);
   await Promise.race([op,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);if(EDIT)fimEdit();
-  try{await salvarPerfil(USER,IN.cliente.nome,IN.cliente.telefone)}catch(e){}}
+  if(!outro)try{await salvarPerfil(USER,IN.cliente.nome,IN.cliente.telefone)}catch(e){}}
 const SITE="leysantos.github.io/fsantos-portfolio",WHATS="(92) 99226-2786",MAIL="leyfps@gmail.com";
 export function renderPDF(r,inp,no,el=document.getElementById("proposta")){const c=inp.cliente,Q=r.Q,hoje=new Date().toLocaleDateString("pt-BR"),bl="________________";
   const HDR=`<div class="pb-h"><img src="assets/img/logo-fsantos@2x.png" alt=""><div class="pb-ht"><strong>FSantos Engenharia — Projetos e Orçamentos</strong><span>Eng. Civil Francirley Pereira Santos — CREA 31.410-AM</span></div><div class="pb-hm">${no?`<b>Nº ${esc(no)}</b><br>`:""}${inp.obra?esc(inp.obra.slice(0,60))+"<br>":""}${hoje}<br>SINAPI ${esc(r.ref)} · AM</div></div>`,

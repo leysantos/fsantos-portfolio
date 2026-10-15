@@ -21,29 +21,95 @@ service cloud.firestore {
         && str(c.email, 0, 120);
     }
 
-    function validNovoOrcamento(d) {
-      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'total', 'totalPorM2', 'status', 'createdAt'])
-        && d.keys().hasAll(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'total', 'totalPorM2', 'status', 'createdAt'])
+    function validOrcBase(d) {
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'notas', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['numero', 'uid', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'createdAt'])
         && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
         && str(d.projeto, 0, 160)
         && str(d.cidade, 0, 100)
         && d.itens is list && d.itens.size() >= 1 && d.itens.size() <= 10
+        && d.subtotal is number && d.subtotal >= 0 && d.subtotal <= 100000000
+        && d.artPct is number && d.artPct >= 0 && d.artPct <= 20
+        && d.art is number && d.art >= 0 && d.art <= 20000000
+        && d.total is number && d.total >= 0 && d.total <= 100000000
+        && d.totalPorM2 is number && d.totalPorM2 >= 0 && d.totalPorM2 <= 100000;
+    }
+
+    function validNovoOrcamento(d) {
+      return validOrcBase(d)
+        && d.uid == request.auth.uid
+        && d.status == 'novo'
+        && d.createdAt == request.time
+        && !('notas' in d)
+        && !('updatedAt' in d);
+    }
+
+    // Lead: proposta gerada SEM login (visitante). Só criação pública; sem uid.
+    function validLead(d) {
+      return d.keys().hasOnly(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'semLogin', 'createdAt'])
+        && d.keys().hasAll(['numero', 'cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'status', 'semLogin', 'createdAt'])
+        && d.semLogin == true
+        && d.numero is string && d.numero.matches('^ORC-[0-9]{4}-[A-Z0-9]{4}$')
+        && validCliente(d.cliente)
+        && str(d.projeto, 0, 160)
+        && str(d.cidade, 0, 100)
+        && d.itens is list && d.itens.size() >= 1 && d.itens.size() <= 10
+        && d.subtotal is number && d.subtotal >= 0 && d.subtotal <= 100000000
+        && d.artPct is number && d.artPct >= 0 && d.artPct <= 20
+        && d.art is number && d.art >= 0 && d.art <= 20000000
         && d.total is number && d.total >= 0 && d.total <= 100000000
         && d.totalPorM2 is number && d.totalPorM2 >= 0 && d.totalPorM2 <= 100000
         && d.status == 'novo'
         && d.createdAt == request.time;
     }
 
+    function validEdicaoOrcamento(d, old) {
+      return validOrcBase(d)
+        && old.uid == request.auth.uid
+        && d.uid == old.uid
+        && d.diff(old).affectedKeys().hasOnly(['cliente', 'projeto', 'cidade', 'itens', 'subtotal', 'artPct', 'art', 'total', 'totalPorM2', 'updatedAt'])
+        && d.updatedAt == request.time;
+    }
+
+    // Admin: muda só status/notas (inclusive em orçamentos antigos anônimos, sem uid)
+    // ou edita o orçamento completo mantendo uid, numero e createdAt.
+    function adminStatusNotas(d, old) {
+      return d.diff(old).affectedKeys().hasOnly(['status', 'notas', 'updatedAt'])
+        && d.status in ['novo', 'em análise', 'enviado', 'aprovado', 'recusado']
+        && (!('notas' in d) || str(d.notas, 0, 5000))
+        && d.updatedAt == request.time;
+    }
+
+    function validAdminOrcamento(d, old) {
+      return adminStatusNotas(d, old)
+        || (validOrcBase(d)
+            && d.uid == old.get('uid', '')
+            && d.status in ['novo', 'em análise', 'enviado', 'aprovado', 'recusado']
+            && (!('notas' in d) || str(d.notas, 0, 5000))
+            && d.numero == old.numero
+            && d.createdAt == old.createdAt
+            && d.updatedAt == request.time);
+    }
+
+    function validAdminOrcamentoObra(d, old) {
+      return adminStatusNotas(d, old)
+        || (validObraBase(d)
+            && d.uid == old.uid
+            && d.status in ['novo', 'em análise', 'enviado', 'aprovado', 'recusado']
+            && (!('notas' in d) || str(d.notas, 0, 5000))
+            && d.numero == old.numero
+            && d.createdAt == old.createdAt
+            && d.updatedAt == request.time);
+    }
 
     function num(v, mn, mx) {
       return v is number && v >= mn && v <= mx;
     }
 
     function validObraBase(d) {
-      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'areaAlvo', 'contencao', 'obra', 'clienteObra', 'total', 'totalPorM2', 'status', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'peDireito', 'regime', 'bdi', 'sinapiRef', 'terreno', 'muro', 'entradas', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'ajusteCub', 'cobertura', 'telha', 'mezanino', 'piscina', 'modo', 'areaAlvo', 'contencao', 'obra', 'clienteObra', 'total', 'totalPorM2', 'status', 'notas', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['numero', 'uid', 'cliente', 'cidade', 'tipo', 'pavimentos', 'regime', 'bdi', 'sinapiRef', 'ambientes', 'etapas', 'areaConstruida', 'custoDireto', 'total', 'totalPorM2', 'status', 'createdAt'])
-        && d.uid == request.auth.uid
         && d.numero is string && d.numero.matches('^OBR-[0-9]{4}-[A-Z0-9]{4}$')
         && validCliente(d.cliente)
         && str(d.cidade, 0, 100)
@@ -84,19 +150,18 @@ service cloud.firestore {
 
     function validNovoOrcamentoObra(d) {
       return validObraBase(d)
+        && d.uid == request.auth.uid
+        && !('notas' in d)
         && d.status == 'novo'
         && d.createdAt == request.time
         && !('updatedAt' in d);
     }
 
     function validEdicaoOrcamentoObra(d, old) {
-      return validObraBase(d)
+      return !d.diff(old).affectedKeys().hasAny(['uid', 'numero', 'createdAt', 'status', 'notas'])
         && old.uid == request.auth.uid
-        && d.uid == old.uid
-        && d.numero == old.numero
-        && d.createdAt == old.createdAt
-        && d.status == old.status
-        && d.updatedAt == request.time;
+        && d.updatedAt == request.time
+        && validObraBase(d);
     }
 
     function validPerfil(d) {
@@ -106,15 +171,21 @@ service cloud.firestore {
     }
 
     match /orcamentos/{orcamentoId} {
-      allow create: if validNovoOrcamento(request.resource.data);
-      allow read, update, delete: if isAdmin();
+      allow create: if (request.auth != null && validNovoOrcamento(request.resource.data))
+        || validLead(request.resource.data);
+      allow read: if isAdmin() || (request.auth != null && resource.data.get('uid', '') == request.auth.uid);
+      allow update: if (request.auth != null && resource.data.get('uid', '') == request.auth.uid
+            && validEdicaoOrcamento(request.resource.data, resource.data))
+        || (isAdmin() && validAdminOrcamento(request.resource.data, resource.data));
+      allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
     }
 
     match /orcamentos_obra/{orcamentoId} {
       allow create: if request.auth != null && validNovoOrcamentoObra(request.resource.data);
       allow read: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
-      allow update: if isAdmin()
-        || (request.auth != null && validEdicaoOrcamentoObra(request.resource.data, resource.data));
+      allow update: if (request.auth != null && resource.data.get('uid', '') == request.auth.uid
+            && validEdicaoOrcamentoObra(request.resource.data, resource.data))
+        || (isAdmin() && validAdminOrcamentoObra(request.resource.data, resource.data));
       allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
     }
 

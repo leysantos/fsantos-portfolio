@@ -111,3 +111,12 @@ footer a.restrito{color:var(--mut);opacity:.6;font-size:.8rem;text-decoration:no
 @media(min-width:1181px){.nav nav{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;column-gap:1.2rem;row-gap:.3rem;margin-left:auto}.nav nav a{margin-left:0;white-space:nowrap}}
 @media(max-width:1180px){.nav nav{align-items:flex-end}.burger{margin-left:auto}}
 @media(min-width:1181px) and (max-width:1480px){.nav nav{column-gap:.85rem}.nav nav a{font-size:.86rem}}
+/* Orçamento de projetos: conta + Meus orçamentos */
+.oauth{border:1px solid #ffffff22;border-radius:12px;padding:1rem 1.1rem;margin:0 0 1rem;background:#0f2241}.oauth legend{color:var(--gold);padding:0 .4rem;font-weight:600}
+#oa-out{max-width:520px}#oa-out .onote{margin:0 0 .8rem}#oa-out>p{margin:0 0 .8rem}#oa-google{width:100%;height:46px;margin:0}
+.oa-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid #f2b63266;border-radius:10px;overflow:hidden;margin:0 0 .8rem}.oa-tabs button{border:0;height:42px;background:transparent;color:var(--txt);font:inherit;font-weight:600;cursor:pointer}.oa-tabs button+button{border-left:1px solid #f2b63266}.oa-tabs button.on{background:#f2b632;color:#0b1a30}
+#oa-out .ogrid{grid-template-columns:1fr;gap:.6rem;margin:0 0 .8rem}.oa-row{display:flex;align-items:center;gap:1rem}#oa-go{min-width:140px}
+.linkbtn{background:none;border:0;color:var(--gold);text-decoration:underline;cursor:pointer;font:inherit}
+.omeus{margin:1.6rem 0 0}.omeus h3{color:var(--gold);margin:0 0 .5rem}.omt{width:100%;border-collapse:collapse;font-size:.92rem}.omt th,.omt td{padding:.5rem;border-bottom:1px solid #ffffff1a;text-align:left}.omt tbody tr{cursor:pointer}.omt tbody tr:hover{background:#ffffff08}.omt tr.ed{background:#f2b6321a}
+.om-act{white-space:nowrap}.om-act .btn{margin:.15rem .2rem .15rem 0;padding:.35rem .7rem;font-size:.82rem}.btn.danger{background:none;border:1px solid #ff9b8a;color:#ff9b8a}
+@media(max-width:640px){.oa-row{flex-direction:column;align-items:stretch;gap:.3rem}#oa-go{width:100%}.omt thead{display:none}.omt tr{display:block;padding:.5rem 0;border-bottom:1px solid #ffffff1a}.omt td{display:inline-block;border:0;padding:.15rem .5rem .15rem 0}.omt td.om-act{display:block}}
