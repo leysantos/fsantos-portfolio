@@ -15,7 +15,7 @@
 .obt td:nth-child(n+4){white-space:nowrap;text-align:right}.obt td:nth-child(4){text-align:center}.obt small{display:block;color:var(--mut)}.obt .grp td{background:#1b3256;font-weight:700;color:var(--gold)}.obt .sub td,.obt .tot td{font-weight:700;text-align:right}.obt .tot td{color:var(--gold);font-size:1rem}
 @media(max-width:700px){.obb{grid-template-columns:1fr 60px}.obb i{grid-column:1/-1;order:3}}
 /* PDF */
-body.obra.pp-open>*:not(#proposta){display:none!important}
+body.obra.pp-open>*:not(#proposta):not(.html2pdf__overlay):not(.html2pdf__container){display:none!important}
 body.obra #proposta{display:none}body.obra.pp-open #proposta{display:block;max-width:190mm;margin:auto;padding:12mm;color:#111;background:#fff;font-size:10pt}
 body.obra #proposta h2{border:0;padding:0;text-align:center;color:#0b1a30;margin:.6rem 0 0}body.obra #proposta h3{color:#0b1a30;border-bottom:2px solid #f2b632;margin:1.1rem 0 .4rem;font-size:11.5pt}
 body.obra #proposta .pp-head img{height:60px}body.obra #proposta .pp-t td,body.obra #proposta .pp-t th{border:1px solid #bbb;padding:.2rem .35rem}
@@ -64,3 +64,5 @@ body.obra #proposta .pb-f{display:flex;justify-content:space-between;gap:8px;bor
 .ob .ogrid>label.ck{justify-content:flex-end}
 .ob .ogrid>label.ck>span{min-height:44px;align-items:center}
 .ob .ogrid>label>input:not([type=checkbox]),.ob .ogrid>label>select{height:44px;box-sizing:border-box;margin-top:.3rem}
+
+.html2pdf__overlay,.html2pdf__container{display:block!important;visibility:visible!important}

@@ -1,4 +1,5 @@
 import {ORC_CONFIG as C,calcItem,calcTotal,renderProposta,brl,num,esc} from "./orcamento.js";
+import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
   d.innerHTML=`<legend>Projeto <span class="ono"></span></legend><div class="ogrid"><label>Descrição do projeto<input class="i-nome" maxlength="160" placeholder="Ex.: Residência térrea"></label><label>Área construída (m²)<input class="i-area" inputmode="decimal" value="100"></label></div>
@@ -12,7 +13,8 @@ function draw(){[...box.children].forEach((d,i)=>{d.querySelector(".ono").textCo
   $("#o-tab tbody").innerHTML=o.itens.map((it,k)=>(multi?`<tr class="grp"><td colspan="6">${esc(it.nome||"Projeto "+(k+1))} — ${num(it.area)} m²</td></tr>`:"")+(it.disciplinas.map(x=>`<tr><td>${x.item}</td><td>${x.nome}</td><td>${cf(x.coef)}</td><td>${num(x.areaProjeto)}</td><td>${brl(x.preco)}</td><td>${brl(x.total)}</td></tr>`).join("")||'<tr><td colspan="6">Selecione ao menos uma disciplina.</td></tr>')+(multi?`<tr class="sub"><td colspan="5">Subtotal</td><td>${brl(it.subtotal)}</td></tr>`:"")).join("");
   $("#o-sub").textContent=brl(o.subtotal);$("#o-artl").textContent=`Emissão das ART (${num(o.artPct)}% do subtotal)`;$("#o-artv").textContent=brl(o.art);$("#o-tot").textContent=brl(o.total);$("#o-med").textContent=brl(o.totalPorM2)+"/m²";
   const t=`Olá! Gostaria de um orçamento para ELABORAÇÃO DE PROJETOS (honorários técnicos — não inclui execução da obra, materiais ou mão de obra).\nCliente: ${o.cliente.nome||"-"}\nProjeto: ${o.projeto||"-"}\nCidade: ${o.cidade||"-"}\n`+o.itens.map((it,k)=>`• ${it.nome||"Projeto "+(k+1)} (${num(it.area)} m²): ${it.disciplinas.map(x=>x.nome).join(", ")}`).join("\n")+`\n${o.art?`Subtotal dos projetos: ${brl(o.subtotal)}\nEmissão das ART (${num(o.artPct)}%): ${brl(o.art)}\n`:""}Total estimado (honorários de projeto): ${brl(o.total)}`;
-  $("#o-wa").href=`https://wa.me/${C.whatsapp}?text=`+encodeURIComponent(t);return o}
+  WA_TXT=t;$("#o-wa").href=`https://wa.me/${C.whatsapp}?text=`+encodeURIComponent(t);return o}
+let WA_TXT="",ULT="";
 function numero(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(4));return`ORC-${new Date().getFullYear()}-`+[...r].map(b=>a[b%a.length]).join("")}
 $("#o-form").addEventListener("input",draw);$("#o-add").onclick=addItem;addItem();
 // ---- conta (Firebase Auth) + Meus orçamentos ----
@@ -73,7 +75,7 @@ $("#o-gerar").onclick=async()=>{const o=draw();msg.className="omsg";
       msg.textContent=`Orçamento ${o.numero} registrado; entraremos em contato. Entre na sua conta (acima) para salvar seus orçamentos em Meus orçamentos e gerar a proposta novamente depois.`;msg.classList.add("ok")}
     catch(e){console.error(e);o.numero="";msg.textContent="Não foi possível registrar o orçamento agora. A proposta foi gerada mesmo assim; envie pelo WhatsApp para confirmar.";msg.classList.add("err")}
     finally{btn.disabled=false;btn.textContent="Gerar proposta"}
-    renderProposta({...o,data:new Date()});return}
+    ULT=o.numero||"";renderProposta({...o,data:new Date()});return}
   const btn=$("#o-gerar"),ed=!!EDIT;btn.disabled=true;btn.textContent="Salvando…";o.numero=ed?EDIT.numero:numero();
   try{const {db,F}=await fb();const {area,...doc}=o;let op;
     if(ed){op=F.updateDoc(F.doc(db,"orcamentos",EDIT.id),{...doc,...(doc.pagamento?{}:{pagamento:F.deleteField()}),uid:EDIT.uid,updatedAt:F.serverTimestamp()})}
@@ -82,4 +84,15 @@ $("#o-gerar").onclick=async()=>{const o=draw();msg.className="omsg";
     msg.textContent=ed?`Orçamento ${o.numero} atualizado.`:`Orçamento ${o.numero} salvo em Meus orçamentos. Entraremos em contato.`;msg.classList.add("ok");if(ed)fimEdit();meus()}
   catch(e){console.error(e);if(!ed)o.numero="";msg.textContent="Não foi possível salvar o orçamento agora ("+(e.code||e.message)+"). A proposta foi gerada mesmo assim; envie pelo WhatsApp para confirmar.";msg.classList.add("err")}
   finally{btn.disabled=false;btn.textContent=EDIT?"Salvar alterações e gerar proposta":"Gerar proposta"}
-  renderProposta({...o,data:new Date()})};
+  ULT=o.numero||"";renderProposta({...o,data:new Date()})};
+// "Enviar pelo WhatsApp": gera o PDF da proposta e abre o menu de compartilhar com o arquivo anexado
+$("#o-wa").onclick=async ev=>{ev.preventDefault();const o=draw(),b=$("#o-wa");msg.className="omsg";
+  if(!o.itens.some(i=>i.disciplinas.length)){msg.textContent="Selecione ao menos uma disciplina.";msg.classList.add("err");return}
+  if(b.dataset.busy)return;b.dataset.busy=1;const lbl=b.textContent;b.textContent="Gerando PDF…";
+  const no=ULT||"",nome=`Proposta-${no||"FSantos"}.pdf`;renderProposta({...o,numero:no,data:new Date()});
+  const tx=`Proposta de honorários${no?" Nº "+no:""} — ${o.cliente.nome||"cliente"}. Total: ${brl(o.total)}.`;
+  try{const r=await enviarPDF({el:$("#proposta"),nome,titulo:"Proposta "+(no||"FSantos Engenharia"),texto:no?tx:WA_TXT,fone:C.whatsapp});
+    if(r.r==="fallback-link"){msg.innerHTML=`PDF baixado (${esc(nome)}). <a href="${esc(r.url)}" target="_blank" rel="noopener">Abrir o WhatsApp</a> e anexe o arquivo.`;msg.classList.add("ok")}
+    else if(r.r==="fallback"){msg.textContent=`PDF baixado (${nome}). Anexe-o na conversa do WhatsApp que foi aberta.`;msg.classList.add("ok")}}
+  catch(e){console.error(e);msg.textContent="Não foi possível gerar o PDF agora; use “Imprimir / salvar PDF” na proposta.";msg.classList.add("err")}
+  finally{delete b.dataset.busy;b.textContent=lbl}};

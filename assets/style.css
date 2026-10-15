@@ -33,7 +33,7 @@ a{color:var(--gold)}.nav{position:sticky;top:0;z-index:5;display:flex;justify-co
 fieldset{border:1px solid #ffffff22;border-radius:10px;margin:1rem 0}legend{color:var(--gold);padding:0 .4rem}.disc{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.3rem}.disc label{flex-direction:row!important;gap:.5rem;color:var(--txt)!important;align-items:center}
 .disc input{accent-color:var(--gold);width:18px;height:18px}.otab{overflow-x:auto}#o-tab{width:100%;border-collapse:collapse;font-size:.92rem}#o-tab th,#o-tab td{padding:.5rem;border-bottom:1px solid #ffffff18;text-align:left}#o-tab td:nth-child(n+3),#o-tab th:nth-child(n+3){text-align:right}
 #o-tab tfoot td{font-weight:700;color:var(--gold);text-align:right}.onote{color:var(--mut);font-size:.85rem}
-#proposta{display:none}body.pp-open>*:not(#proposta){display:none!important}body.pp-open{background:#fff}
+#proposta{display:none}body.pp-open>*:not(#proposta):not(.html2pdf__overlay):not(.html2pdf__container){display:none!important}body.pp-open{background:#fff}
 body.pp-open #proposta{display:block;max-width:820px;margin:0 auto;padding:2rem;background:#fff;color:#111;font-family:Georgia,serif;line-height:1.5}
 #proposta h2{border:0;padding:0;text-align:center;margin:.5rem 0 0}#proposta h3{color:#0b1a30;border-bottom:2px solid #f2b632;margin-top:1.4rem}.pp-sub{text-align:center;margin-top:0}
 .pp-head{display:flex;gap:1rem;align-items:center;border-bottom:3px solid #0b1a30;padding-bottom:.6rem}.pp-head img{height:70px}.pp-flag{text-align:center;color:#a14b00;font-weight:700;border:1px dashed #a14b00;padding:.3rem}
@@ -131,3 +131,5 @@ h1,h2,h3,p,li,dd,label,legend{overflow-wrap:break-word}
 @media(max-width:640px){.gtiles{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:340px){.gtiles{grid-template-columns:minmax(0,1fr)!important}}
 .opag{border:1px solid #ffffff22;border-radius:12px;padding:.8rem 1rem;margin:1rem 0}.opag legend{color:var(--gold);padding:0 .4rem}
+
+.html2pdf__overlay,.html2pdf__container{display:block!important;visibility:visible!important}

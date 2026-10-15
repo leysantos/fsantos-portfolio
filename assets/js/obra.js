@@ -1,5 +1,6 @@
 import {orcar,PRESETS,TIPOS,TAMB,REGRAS,REGRAS_CONT,CONT_SIS,CUB,SINAPI,defCob} from "./obra-modelo.js";
 import {esc} from "./orcamento.js";
+import {enviarPDF} from "./share-pdf.js";
 const F2={minimumFractionDigits:2,maximumFractionDigits:2},num=v=>(+v||0).toLocaleString("pt-BR",F2),brl=v=>"R$ "+num(v);
 const $=s=>document.querySelector(s),tb=$("#amb"),msg=$("#ob-msg"),pf=v=>parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."))||0;
 (()=>{const b=document.querySelector(".burger"),n=document.getElementById("menu");if(b)b.onclick=()=>{const o=n.classList.toggle("open");b.setAttribute("aria-expanded",o)}})();
@@ -39,7 +40,7 @@ function input(){const tipo=$("#p-tipo").value;return{tipo,pav:Math.min(4,Math.m
   terreno:{l:pf($("#t-l").value),c:pf($("#t-c").value)},muro:{on:$("#m-on").checked,h:pf($("#m-h").value)||2,frente:$("#m-frente").checked,fundos:$("#m-fundos").checked,esq:$("#m-esq").checked,dir:$("#m-dir").checked},
   ambientes:[...tb.children].slice(0,40).map(tr=>({nome:tr.querySelector(".a-n").value.trim().slice(0,60),t:tr.querySelector(".a-t").value,l:pf(tr.querySelector(".a-l").value),c:pf(tr.querySelector(".a-c").value),p:+tr.querySelector(".a-p").value})),
   cliente:{nome:$("#c-nome").value.trim().slice(0,120),telefone:$("#c-tel").value.trim().slice(0,40),email:$("#c-email").value.trim().slice(0,120)},cidade:$("#c-cid").value.trim().slice(0,100),obra:$("#p-obra").value.trim().slice(0,160),clienteObra:$("#p-cli").value.trim().slice(0,120),calibrar:$("#p-cal").checked,modo:MODE,cobertura:$("#p-cob").value,telha:$("#p-telha").value,mezanino:{on:$("#p-mez").value==="1",area:pf($("#p-meza").value)},piscina:{on:$("#p-pis").value==="1",c:pf($("#p-pisc").value),l:pf($("#p-pisl").value),p:pf($("#p-pisp").value)},contencao:{sistema:$("#p-csis").value,comprimento:pf($("#p-cl").value),altura:pf($("#p-ch").value)}}}
-let R=null,IN=null;
+let R=null,IN=null,WA_TXT="",ULT="";
 const pct=(a,b)=>b?(a/b*100):0;
 const idBox=()=>IN&&(IN.obra||IN.clienteObra)?`<p class="oid">${IN.obra?`<b>Obra:</b> ${esc(IN.obra)}`:""}${IN.obra&&IN.clienteObra?" · ":""}${IN.clienteObra?`<b>Cliente:</b> ${esc(IN.clienteObra)}`:""}</p>`:"";
 function cubBox(r){if(r.cont)return`<p class="onote">Muro de contenção: orçamento <b>sem calibração pelo CUB-AM</b> (o CUB não possui padrão para contenções); reflete apenas as composições SINAPI. Pré-dimensionamento automático pela altura — confirmar com sondagem e projeto.</p>`;if(!r.cub)return`<p class="onote">${r.Q.gc?`Galpão comercial: orçamento <b>não calibrado</b>. O CUB-AM comercial (CSL-8-N ${brl(CUB["CSL8-N"])}/m², CAL-8-N ${brl(CUB["CAL8-N"])}/m², ${CUB.ref}) é de edifício de 8 pavimentos e não representa galpão térreo; o valor reflete apenas as composições SINAPI.`:"Galpão: orçamento não calibrado; reflete apenas as composições SINAPI."}</p>`;
@@ -54,13 +55,13 @@ function draw(){if(MODE==="simples"){gerarSimples();PAVN=NPAV()}syncPav();[...tb
   ${cubBox(r)}<h3>Participação por etapa</h3><div class="obbars">${r.etapas.map(e=>`<div class="obb"><span>${e.n}. ${esc(e.nome)}</span><i style="--w:${pct(e.sub,r.direto).toFixed(2)}%"></i><b>${num(pct(e.sub,r.direto))}%</b></div>`).join("")}</div>`;
   $("#tab").innerHTML=`<h3>Planilha analítica — SINAPI ${esc(r.ref)} · ${r.regime}</h3>`+tabela(r);
   const t=`Olá! Fiz o orçamento estimativo de obra no site: ${TIPOS[IN.tipo].nome}, ${num(Q.Ac)} m², total estimado ${brl(r.total)} (${brl(r.m2)}/m², SINAPI ${r.ref}). Gostaria de conversar.`;
-  $("#b-wa").href="https://wa.me/5592992262786?text="+encodeURIComponent(t)}
+  WA_TXT=t;$("#b-wa").href="https://wa.me/5592992262786?text="+encodeURIComponent(t)}
 function drawCont(){R=orcar(IN);const r=R,Q=r.Q,k=Q.cont;
   $("#res").innerHTML=idBox()+`<div class="obcards"><div><span>Muro</span><b>${num(k.L)} m × ${num(k.H)} m</b><small>face ${num(Q.Ac)} m² · ${esc(CONT_SIS[k.sistema])}</small></div><div><span>Custo direto</span><b>${brl(r.direto)}</b><small>${brl(r.m2dir)}/m² de face</small></div><div><span>BDI ${num(IN.bdi)}%</span><b>${brl(r.bdi)}</b></div><div class="hi"><span>Total estimado</span><b>${brl(r.total)}</b><small>${brl(r.mlin)}/m linear · ${brl(r.m2)}/m² de face</small></div><div><span>Prazo estimado</span><b>${num(Q.dur)} meses</b></div></div>
   <p class="onote">Pré-dimensionamento: ${contTxt(k)}</p>${cubBox(r)}<h3>Participação por etapa</h3><div class="obbars">${r.etapas.map(e=>`<div class="obb"><span>${e.n}. ${esc(e.nome)}</span><i style="--w:${pct(e.sub,r.direto).toFixed(2)}%"></i><b>${num(pct(e.sub,r.direto))}%</b></div>`).join("")}</div>`;
   $("#tab").innerHTML=`<h3>Planilha analítica — SINAPI ${esc(r.ref)} · ${r.regime}</h3>`+tabela(r);
   const t=`Olá! Fiz o orçamento estimativo no site: muro de contenção (${CONT_SIS[k.sistema]}), ${num(k.L)} m × ${num(k.H)} m, total estimado ${brl(r.total)} (${brl(r.mlin)}/m, SINAPI ${r.ref}). Gostaria de conversar.`;
-  $("#b-wa").href="https://wa.me/5592992262786?text="+encodeURIComponent(t)}
+  WA_TXT=t;$("#b-wa").href="https://wa.me/5592992262786?text="+encodeURIComponent(t)}
 const contTxt=k=>`${k.sistema==="cortina"?`cortina ${num(k.tt*100)} → ${num(k.tb*100)} cm`:`blocos ${k.tt>.2?"parede dupla 29 cm":"14 cm"}`}; sapata corrida B = ${num(k.B)} m × h = ${num(k.h)} m (ponta ${num(k.toe)} m, talão ${num(k.heel)} m); ${k.ne} estacas Ø${num(k.d)} cm × ${num(k.Le)} m em ${k.fil} fila(s) a cada ${num(k.s)} m.`;
 function tabela(r,pdf){return`<div class="otab"><table class="obt"><thead><tr><th>Item</th><th>Código SINAPI</th><th>Descrição</th><th>Un.</th><th>Qtd.</th><th>Custo unit.</th><th>Total</th></tr></thead><tbody>${r.etapas.map(e=>`<tr class="grp"><td>${e.n}</td><td colspan="5">${esc(e.nome.toUpperCase())}</td><td>${brl(e.sub)}</td></tr>`+e.itens.map(x=>`<tr><td>${x.item}</td><td>${x.c.startsWith("VERBA")?"Verba":x.c}</td><td>${esc(x.desc)}${x.o&&!x.c.startsWith("VERBA")?`<small>${esc(x.o)}</small>`:""}</td><td>${esc(x.u)}</td><td>${num(x.q)}</td><td>${brl(x.pu)}</td><td>${brl(x.tot)}</td></tr>`).join("")).join("")}
 <tr class="sub"><td colspan="6">Custo direto</td><td>${brl(r.direto)}</td></tr><tr class="sub"><td colspan="6">BDI (${num(IN.bdi)}%)</td><td>${brl(r.bdi)}</td></tr><tr class="tot"><td colspan="6">TOTAL ESTIMADO (${r.cont?brl(r.mlin)+"/m linear · "+brl(r.m2)+"/m² de face":brl(r.m2)+"/m²"})</td><td>${brl(r.total)}</td></tr></tbody></table></div>`}
@@ -215,7 +216,7 @@ $("#b-pdf").onclick=async()=>{draw();if(!R)return;msg.className="omsg";
   try{await salvar(no);msg.textContent=ed?`Orçamento ${no} atualizado.`:`Orçamento ${no} salvo em Meus orçamentos.`;msg.classList.add("ok");meus()}
   catch(e){console.error(e);no="";msg.textContent="Não foi possível registrar agora; o PDF foi gerado mesmo assim.";msg.classList.add("err")}
   finally{b.disabled=false;b.textContent=EDIT?"Salvar alterações e gerar PDF":"Gerar orçamento em PDF"}
-  renderPDF(R,IN,no)};
+  ULT=no||"";renderPDF(R,IN,no)};
 const smsg=(t,ok)=>{const m=$("#sinapi-msg");m.className="omsg "+(ok?"ok":"err");m.textContent=t};
 {const k=sessionStorage.getItem("sinapiAtualizada");if(k){sessionStorage.removeItem("sinapiAtualizada");smsg(k===SINAPI.ref?`Base atualizada para ${SINAPI.ref} – ${SINAPI.uf}.`:`A atualização não foi carregada ainda (o servidor ainda entrega ${SINAPI.ref}); tente novamente em alguns minutos.`,k===SINAPI.ref)}}
 const refN=r=>{const [m,a]=String(r).split("/");return(+a||0)*12+(+m||0)};
@@ -223,4 +224,12 @@ $("#b-sinapi").onclick=async()=>{const b=$("#b-sinapi");b.disabled=true;smsg("Ve
   if(refN(j.ref)<=refN(SINAPI.ref))smsg(`Você já está usando a base SINAPI mais recente (${SINAPI.ref} – ${SINAPI.uf}).`,1);
   else{smsg(`Nova base ${j.ref} disponível; atualizando…`,1);await Promise.all(["assets/js/sinapi-am.js","assets/js/obra-modelo.js","assets/js/obra.js"].map(u=>fetch(u,{cache:"reload"})));sessionStorage.setItem("sinapiAtualizada",j.ref);location.reload()}}
   catch(e){smsg("Não foi possível verificar agora ("+(e.message||e)+").")}finally{b.disabled=false}};
+// "Enviar PDF pelo WhatsApp": gera o PDF do orçamento e compartilha com o arquivo anexado
+$("#b-wa").onclick=async ev=>{ev.preventDefault();draw();if(!R)return;const b=$("#b-wa");msg.className="omsg";if(b.dataset.busy)return;b.dataset.busy=1;const lbl=b.textContent;b.textContent="Gerando PDF…";
+  const no=ULT||"",nome=`Orcamento-${no||"obra-FSantos"}.pdf`;renderPDF(R,IN,no);
+  try{const r=await enviarPDF({el:$("#proposta"),nome,titulo:"Orçamento de obra "+(no||"FSantos Engenharia"),texto:WA_TXT,fone:"5592992262786"});
+    if(r.r==="fallback-link"){msg.innerHTML=`PDF baixado (${esc(nome)}). <a href="${esc(r.url)}" target="_blank" rel="noopener">Abrir o WhatsApp</a> e anexe o arquivo.`;msg.classList.add("ok")}
+    else if(r.r==="fallback"){msg.textContent=`PDF baixado (${nome}). Anexe-o na conversa do WhatsApp que foi aberta.`;msg.classList.add("ok")}}
+  catch(e){console.error(e);msg.textContent="Não foi possível gerar o PDF agora; use “Imprimir / salvar PDF”.";msg.classList.add("err")}
+  finally{delete b.dataset.busy;b.textContent=lbl}};
 window.__obra={montarDoc,carregar,xlsxBlob,renderPDF,orcar,input,draw,get R(){return R}};
