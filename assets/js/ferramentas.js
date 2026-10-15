@@ -310,7 +310,14 @@ const TOOLS=[
   return{steps:[["Resistência de dosagem","fcj = fck + 1,65·sd",`${fck} + 1,65 × ${f(sd)} = ${f(fcj)} MPa`],["Relação água/cimento (Abrams de referência, CP II/IV-32)","a/c = log(154/fcj) / log 17,4",`${f(ac0,3)} → adotado ${f(ac)}`],["Agregado total (Lyse típica)","m = 13·(a/c) − 2,7 ± ajuste",`m = ${f(a+pp)}`],["Teor de argamassa","a = α(1 + m) − 1 ; p = m − a",`α = ${f(al*100)}% → a = ${f(a)} ; p = ${f(pp)}`],["Consumo de cimento","C = 980 / (1/3,10 + a/2,63 + p/2,70 + a/c)",`${f(C)} kg/m³`],["Traço em volume por saco",`Vareia = 50·a/1,50×1,25 ; Vbrita = 50·p/${f(yb)}`,`areia ${f(Va)} L ; brita ${f(Vb)} L ; cimento ${f(Vc)} L`],["Água por saco","50·a/c − 4% × 50·a",`${f(ag)} L`],
    ...(pr==="B"?[["Carga da betoneira",`carga seca ≈ 62% × ${cap} L = ${f(carga)} L`,`materiais secos por saco ${f(VsecoSaco)} L → ${f(sac)} saco(s) por betonada`]]:[]),["Rendimento","V = sacos × 50 / C",`${f(rend*1000)} L por ${pr==="B"?"betonada":"traço"} → ${f(nb)} ${pr==="B"?"betonadas":"traços"}/m³`]],
    res:[["Traço unitário em massa (cimento : areia : brita : a/c)",`<b>1 : ${f(a)} : ${f(pp)} : ${f(x)}</b>`],["Traço em volume por saco de 50 kg",`1 saco : ${f(Va)} L areia úmida : ${f(Vb)} L brita : ${f(ag)} L água`],["Consumo de cimento",`${f(C)} kg/m³ (${f(C/50)} sacos/m³)`],["Relação água/cimento",f(x)],
-    ["Rendimento",`${f(rend*1000)} L por ${pr==="B"?`betonada (${v.bet})`:"traço"} · ${f(nb)} por m³ · ${f(nt)} para ${f(v.Vt)} m³`],["Classificação","Traço de referência — conferir com dosagem experimental"]],warn,html:`<h4 class="ftrh">Quantidades de materiais</h4><div class="ftrw">${tb}</div>`}}}
+    ["Rendimento",`${f(rend*1000)} L por ${pr==="B"?`betonada (${v.bet})`:"traço"} · ${f(nb)} por m³ · ${f(nt)} para ${f(v.Vt)} m³`],["Classificação","Traço de referência — conferir com dosagem experimental"]],warn,html:`<h4 class="ftrh">Quantidades de materiais</h4><div class="ftrw">${tb}</div>`}}},
+{id:"eletrico",g:"Instalações elétricas e SPDA",t:"Dimensionamento elétrico",circ:true,refs:["ABNT NBR 5410:2004 (versão corrigida 2008) — Instalações elétricas de baixa tensão: tabelas 36 (capacidade de condução), 40 (FCT), 42 (FCA), 47 (seções mínimas), 58 (condutor PE); 5.1.3.2.2 (DR 30 mA); 6.2.7 (queda de tensão); 6.3.5 (DPS)","Amazonas Energia — NDEE-03, tabela 04 (faixas de demanda × disjuntor × condutor, 220/127 V)","ABNT NBR 5419-2:2015 — Gerenciamento de risco (NÃO realizado nesta ferramenta)","ABNT NBR 5419-3:2015 — Danos físicos a estruturas: tabelas 2 (raio da esfera/malha), 4 (espaçamento de descidas), 6 e 7 (materiais), 8 e 9 (equipotencialização); 5.4 (arranjos A/B de aterramento, figura 3 — l1)","Fatores de demanda residenciais típicos de concessionárias (iluminação/TUG por faixa; aquecimento por quantidade) — conferir a norma vigente da Amazonas Energia"],
+ inp:[["sis","Sistema de fornecimento","","220/127 V (Amazonas Energia — Manaus)",null,null,["220/127 V (Amazonas Energia — Manaus)","380/220 V"]],
+  ["dvc","Queda de tensão máx. nos circuitos terminais","%",4,0.5,7],["dvr","Queda de tensão máx. no ramal (medidor → QDG)","%",1,0.2,5],["Lr","Comprimento do ramal (medidor → QDG)","m",15,1,300],
+  ["spda","Pré-dimensionar SPDA (NBR 5419-3)?","","Sim",null,null,["Sim","Não"]],["C","Edificação — comprimento","m",20,2,500],["B","Edificação — largura","m",10,2,500],["H","Edificação — altura","m",8,2,60],
+  ["np","Nível de proteção (classe do SPDA)","","III",null,null,["I","II","III","IV"]],["mat","Material de captação e descidas","","Cobre",null,null,["Cobre","Alumínio","Aço galvanizado a quente"]],["rho","Resistividade do solo","Ω·m",500,10,5000]],
+ hip:["Circuitos: Ib = S/V (F+N ou F+F) ou S/(√3·V) (trifásico), com S = P/FP quando informada em W. Condutores de cobre, isolação PVC 70 °C; capacidade pela tabela 36 (métodos B1, B2, C, D; 2 ou 3 condutores carregados), Iz = I0 × FCT (tab. 40, PVC, temperatura ambiente; para D usa-se a mesma tabela como aproximação da temperatura do solo) × FCA (tab. 42, circuitos agrupados em feixe).","Seção escolhida = menor que atende simultaneamente: seção mínima (1,5 mm² iluminação; 2,5 mm² força/TUG/TUE — tab. 47), Ib ≤ In ≤ Iz (disjuntor termomagnético, I2 = 1,45·In ⇒ I2 ≤ 1,45·Iz atendido automaticamente) e queda de tensão ΔV% = k·ρ·L·Ib/(S·V)·100 ≤ limite (k = 2 mono/bifásico, √3 trifásico; ρ = 0,0214 Ω·mm²/m a 70 °C; reatância desprezada).","Curva do disjuntor: C para motores e ar-condicionado (corrente de partida), B para cargas resistivas e iluminação. DR 30 mA (NBR 5410 5.1.3.2.2): circuitos em banheiros, cozinhas, copas, lavanderias, áreas de serviço, garagens e áreas externas, e todo circuito de chuveiro/aquecedor. Condutor PE pela tabela 58 (S ≤ 16: PE = S; 16 < S ≤ 35: 16 mm²; S > 35: S/2).","Ramal de entrada: demanda D = a·(iluminação + TUG, fatores por faixa: 1º kVA 86%, 2º 75%, 3º 66%, 4º 59%, 5º 52%, 6º 45%, 7º 40%, 8º 35%, 9º 31%, 10º 27%, acima 24%) + b·(chuveiros/aquecedores e demais TUE, fator por quantidade: 1–2 = 100%, 3 = 84%, 4 = 76%, 5 = 70%, 6 = 65%, 7 = 60%, 8 = 57%, 9 = 54%, 10+ = 52%) + ar-condicionado (100% até 10 aparelhos, 85% acima) + motores (maior 100% + demais 50%). Fatores TÍPICOS de concessionárias — confira a NDEE/NDU vigente da Amazonas Energia antes do pedido de ligação.","Categoria (220/127 V): monofásica até 10 kVA sem cargas 220 V; bifásica até 15 kVA; acima disso ou com carga trifásica, trifásica. Disjuntor geral e condutor mínimo pela tabela 04 da NDEE-03 (Amazonas Energia), conferidos com a capacidade de condução (B1) e a queda no ramal. Eletroduto pela tabela de ocupação 40% (fases + N + PE). Esquema TN-S: neutro aterrado no padrão de entrada, PE separado do N a partir do QDG, BEP junto ao QDG.","DPS no QDG (NBR 5410 6.3.5): Classe I (Iimp ≥ 12,5 kA, 10/350 µs, por modo) quando a edificação tem SPDA; Classe II (In ≥ 5 kA, 8/20 µs) quando não tem. Uc ≥ 1,1·U0 (U0 = 127 V → 175 V; U0 = 220 V → 275 V); Up ≤ 1,5 kV (220/127) ou 2,5 kV (380/220). Esquema TN-S: 1 DPS por fase (L-PE) + 1 N-PE.","SPDA (NBR 5419-3): análise de risco da NBR 5419-2 NÃO realizada — o nível de proteção é escolhido pelo usuário. Captação pelo método das malhas (malha I 5×5, II 10×10, III 15×15, IV 20×20 m; esfera rolante R = 20/30/45/60 m); descidas com espaçamento médio 10/10/15/20 m (mín. 2) distribuídas no perímetro; mini-captores (terminais aéreos 30 cm) a cada 8 m nas bordas e quinas (prática usual).","Aterramento arranjo B: anel enterrado a 0,5 m de profundidade e ~1 m das paredes; raio equivalente re = √(A/π) ≥ l1 (figura 3: classes III–IV l1 = 5 m; II l1 = máx(5; 0,02ρ − 11); I l1 = máx(5; 0,03ρ − 10)); se re < l1, hastes adicionais de comprimento lv = (l1 − re)/2 em cada descida. Seções mínimas: tab. 6 (captação/descidas: Cu 35, Al 70, aço galv. 50 mm²), tab. 7 (eletrodos: Cu 50 mm², aço galv. 80 mm²; alumínio não pode ser enterrado), tab. 8 (BEP ao aterramento: Cu 16, Al 25, aço 50 mm²), tab. 9 (ligações internas: Cu 6, Al 10, aço 16 mm²). Armaduras como descidas naturais não foram consideradas."],
+ calc(v){return eleCalc(v)}}
 ];
 
 // ---------------- MATERIAIS (estimativas) ----------------
@@ -392,6 +399,121 @@ mat("pavimento",[["fck","fck do concreto (≈ fctM,k × 7)","MPa",35,20,90],["Wf
  W("viga-aco",(v,r)=>{const m=r.res[3][1].match(/^(W\S+)/);return m?[pf(m[1])]:null});
  W("trelica",(v,r)=>r.__?[r.__.s,r.__.i,r.__.w,r.__.hef]:null)})();
 
+// ---------------- Dimensionamento elétrico (NBR 5410 / NDEE-03 / NBR 5419-3) ----------------
+const E_S=[1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240];
+const E_I={B1:[[17.5,24,32,41,57,76,101,125,151,192,232,269,309,353,415],[15.5,21,28,36,50,68,89,110,134,171,207,239,275,314,370]],
+ B2:[[16.5,23,30,38,52,69,90,111,133,168,201,232,258,294,344],[15,20,27,34,46,62,80,99,118,149,179,206,225,255,297]],
+ C:[[19.5,27,36,46,63,85,112,138,168,213,258,299,344,392,461],[17.5,24,32,41,57,76,96,119,144,184,223,259,299,341,403]],
+ D:[[22,29,38,47,63,81,104,125,148,183,216,246,278,312,361],[18,24,31,39,52,67,86,103,122,151,179,203,230,258,297]]};
+const E_FCT=[[10,1.22],[15,1.17],[20,1.12],[25,1.06],[30,1],[35,0.94],[40,0.87],[45,0.79],[50,0.71],[55,0.61],[60,0.5]];
+const E_FCA=n=>n<=1?1:n==2?0.8:n==3?0.7:n==4?0.65:n==5?0.6:n==6?0.57:n==7?0.54:n==8?0.52:n<=11?0.5:n<=15?0.45:n<=19?0.41:0.38;
+const E_DJ=[6,10,13,16,20,25,32,40,50,63,70,80,100,125,150,175,200,225,250];
+const E_DR=[25,40,63,80,100,125];
+const E_TIPOS=["Iluminação","TUG (tomadas de uso geral)","TUE — chuveiro / aquecedor","TUE — ar-condicionado","TUE — motor / bomba","TUE — outros (forno, máquina, micro-ondas)"];
+const E_LOC=["Seco (sala, quarto, escritório)","Molhado (banheiro, cozinha, lavanderia, serviço)","Externo / garagem"];
+const E_CIRC0=[
+ {d:"Iluminação social e íntima",tp:0,P:900,u:"W",fp:1,V:127,f:"1F",L:18,m:"B1",ag:3,T:30,loc:0},
+ {d:"TUG sala e quartos",tp:1,P:1500,u:"VA",fp:0.8,V:127,f:"1F",L:20,m:"B1",ag:3,T:30,loc:0},
+ {d:"TUG cozinha e serviço",tp:1,P:2400,u:"VA",fp:0.8,V:127,f:"1F",L:15,m:"B1",ag:3,T:30,loc:1},
+ {d:"Chuveiro banheiro social",tp:2,P:5500,u:"W",fp:1,V:220,f:"2F",L:14,m:"B1",ag:2,T:30,loc:1},
+ {d:"Ar-condicionado quarto 12.000 BTU",tp:3,P:1300,u:"W",fp:0.85,V:220,f:"2F",L:16,m:"B1",ag:2,T:30,loc:0},
+ {d:"Bomba d'água 1/2 cv",tp:4,P:550,u:"W",fp:0.75,V:127,f:"1F",L:25,m:"B1",ag:1,T:30,loc:2}];
+let ECIRC=E_CIRC0.map(o=>({...o}));
+const eFCT=T=>{const a=E_FCT;if(T<=a[0][0])return a[0][1];for(let i=1;i<a.length;i++)if(T<=a[i][0]){const[x0,y0]=a[i-1],[x1,y1]=a[i];return y0+(y1-y0)*(T-x0)/(x1-x0)}return 0.5};
+const ePE=S=>S<=16?S:S<=35?16:S/2,fs=S=>f(S,S%1?1:0),eR=0.0214;
+function eCirc(c,dvl){const S=c.u=="W"?c.P/c.fp:c.P,tri=c.f=="3F",Ib=tri?S/(Math.sqrt(3)*c.V):S/c.V,k=tri?Math.sqrt(3):2,nc=tri?1:0,mot=c.tp==3||c.tp==4;
+ const smin=c.tp==0?1.5:2.5,fct=eFCT(c.T),fca=E_FCA(c.ag),tab=E_I[c.m]||E_I.B1;let o=null;
+ for(let i=0;i<E_S.length;i++){const s=E_S[i];if(s<smin)continue;const Iz=tab[nc][i]*fct*fca,In=E_DJ.find(x=>x>=Ib),dv=k*eR*c.L*Ib/s/c.V*100;
+  if(In&&In<=Iz&&dv<=dvl){o={s,Iz,In,dv,crit:(()=>{const amp=E_S.find((x,j)=>x>=smin&&tab[nc][j]*fct*fca>=In),dvs=E_S.find(x=>x>=smin&&k*eR*c.L*Ib/x/c.V*100<=dvl);return s==smin&&amp==smin&&dvs==smin?"seção mínima":dvs>=amp?"queda de tensão":"capacidade de condução"})()};break}}
+ const dr=c.tp==2||c.loc>0,pol=c.f=="1F"?(c.V>=200?"2P":"1P"):c.f=="2F"?"2P":"3P";
+ return{c,S,Ib,fct,fca,o,curva:mot?"C":"B",pol,dr,drIn:o?E_DR.find(x=>x>=o.In):null,pe:o?ePE(o.s):null}}
+function eFaixa(kva){const fx=[0.86,0.75,0.66,0.59,0.52,0.45,0.40,0.35,0.31,0.27];let r=0,x=kva;for(let i=0;i<10&&x>0;i++){const p=Math.min(1,x);r+=p*fx[i];x-=p}return r+Math.max(0,x)*0.24}
+const eFq=n=>n<=2?1:[0.84,0.76,0.70,0.65,0.60,0.57,0.54][n-3]??0.52;
+const NDEE=[["1F",[[1270,10,4],[1905,15,4],[2540,20,4],[3175,25,4],[3810,30,4],[4445,35,6],[5000,40,6],[6350,50,10],[7620,60,16],[10000,70,16]]],
+ ["2F",[[2200,10,4],[3300,15,4],[4400,20,4],[5500,25,4],[6600,30,4],[7700,35,6],[8800,40,6],[11000,50,10],[15000,60,16]]],
+ ["3F",[[5710,15,4],[9520,25,4],[11430,30,4],[15240,40,6],[19050,50,10],[23000,60,16],[27000,70,16],[34200,90,25],[38000,100,25],[47000,120,35],[57000,150,50],[66000,175,70],[75000,200,95]]]];
+const E_CAB={1.5:7.1,2.5:10.7,4:13.8,6:18.1,10:27.3,16:37.4,25:56.7,35:71,50:104,70:133,95:177,120:214,150:269,185:330,240:434};
+const E_ELD=[[16,52],[20,85],[25,143],[32,238],[40,410],[50,539],[60,876],[75,1415],[85,1990]];
+function eleCalc(v){const circ=v.circ||[],R=circ.map(c=>eCirc(c,v.dvc)),warn=[],steps=[],res=[],sis380=v.sis.startsWith("380"),U0=sis380?220:127,UL=sis380?380:220;
+ let h="";
+ // ---- circuitos
+ h+=`<h4 class="ftrh">1. Circuitos terminais (NBR 5410)</h4><div class="ftrw"><table class="ftr"><thead><tr><th>Circuito</th><th>S (VA)</th><th>V / fases</th><th>Ib (A)</th><th>FCT × FCA</th><th>Seção (mm²)</th><th>Iz (A)</th><th>Disjuntor</th><th>ΔV (%)</th><th>DR 30 mA</th><th>PE (mm²)</th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${i+1}. ${esc(r.c.d)}</td><td>${f(r.S,0)}</td><td>${r.c.V} V ${r.c.f}</td><td>${f(r.Ib,2)}</td><td>${f(r.fct,2)} × ${f(r.fca,2)}</td><td>${r.o?fs(r.o.s):"—"}</td><td>${r.o?f(r.o.Iz,2):"—"}</td><td>${r.o?`${r.pol} ${r.o.In} A curva ${r.curva}`:"—"}</td><td>${r.o?f(r.o.dv,2):"—"}</td><td>${r.dr?`Sim (${r.drIn} A)`:"Não exigido"}</td><td>${r.o?fs(r.pe):"—"}</td></tr>`).join("")}</tbody></table></div>`;
+ R.forEach((r,i)=>{if(!r.o)warn.push(`Circuito ${i+1} (${esc(r.c.d)}): nenhuma seção até 240 mm² atende Ib = ${f(r.Ib,2)} A com a queda limite — divida o circuito ou reduza o comprimento.`);
+  if(r.c.V==380&&!sis380)warn.push(`Circuito ${i+1}: 380 V não existe no sistema 220/127 V.`);if(sis380&&r.c.V==127)warn.push(`Circuito ${i+1}: 127 V não existe no sistema 380/220 V (use 220 V F+N).`);
+  if(r.c.tp==2&&r.c.f=="1F"&&r.c.V<200&&r.S>4400)warn.push(`Circuito ${i+1}: chuveiro de ${f(r.S,0)} VA em 127 V gera corrente alta — prefira 220 V.`)});
+ if(R[0]){const r=R[0],tri=r.c.f=="3F";steps.push([`Corrente de projeto — circuito 1 (${esc(r.c.d)})`,tri?"Ib = S / (√3·V)":"Ib = S / V",`${f(r.S,0)} / ${tri?"(√3·":""}${r.c.V}${tri?")":""} = ${f(r.Ib,2)} A`]);
+  if(r.o){steps.push(["Capacidade corrigida","Iz = I0(tab. 36, "+r.c.m+") × FCT × FCA",`${f(r.o.Iz/(r.fct*r.fca),1)} × ${f(r.fct,2)} × ${f(r.fca,2)} = ${f(r.o.Iz,2)} A (seção ${fs(r.o.s)} mm²)`]);
+   steps.push(["Disjuntor","Ib ≤ In ≤ Iz",`${f(r.Ib,2)} ≤ ${r.o.In} ≤ ${f(r.o.Iz,2)} A → ${r.pol} ${r.o.In} A curva ${r.curva}`]);
+   steps.push(["Queda de tensão",(tri?"√3":"2")+"·ρ·L·Ib / (S·V)",`${tri?"1,732":"2"}·0,0214·${f(r.c.L,1)}·${f(r.Ib,2)} / (${fs(r.o.s)}·${r.c.V}) = ${f(r.o.dv,2)}% ≤ ${f(v.dvc,2)}%`])}}
+ steps.push(["Seções escolhidas (todos os circuitos)","menor S que atende mínima, Ib ≤ In ≤ Iz e ΔV",R.map((r,i)=>`C${i+1}: ${r.o?fs(r.o.s)+" mm² ("+r.o.crit+")":"não atende"}`).join("; ")]);
+ // ---- demanda
+ const tot=t=>R.filter(r=>t.includes(r.c.tp)),kva=a=>a.reduce((s,r)=>s+r.S,0)/1000,iltug=kva(tot([0,1])),aq=tot([2,5]),ac=tot([3]),mo=tot([4]).map(r=>r.S/1000).sort((a,b)=>b-a);
+ const Da=eFaixa(iltug),Db=kva(aq)*eFq(aq.length),Dc=kva(ac)*(ac.length<=10?1:0.85),Dd=(mo[0]||0)+mo.slice(1).reduce((s,x)=>s+x*0.5,0),D=Da+Db+Dc+Dd,CI=kva(R);
+ steps.push(["Carga instalada","CI = Σ S",`${f(CI,2)} kVA`]);
+ steps.push(["Demanda","D = a(ilum.+TUG) + b(aquec./TUE) + c(AC) + d(motores)",`${f(Da,2)} + ${f(Db,2)} + ${f(Dc,2)} + ${f(Dd,2)} = ${f(D,2)} kVA`]);
+ const has3=R.some(r=>r.c.f=="3F"),has2=R.some(r=>r.c.f=="2F"||r.c.V>=200);let cat=has3?"3F":!has2&&D<=10?"1F":D<=15?"2F":"3F";const Dva=D*1000;
+ let dj,sec,lin=null;if(!sis380){let tb=NDEE.find(x=>x[0]==cat)[1];lin=tb.find(x=>Dva<=x[0]);if(!lin&&cat!="3F"){cat="3F";tb=NDEE[2][1];lin=tb.find(x=>Dva<=x[0])}
+  if(!lin)warn.push("Demanda acima de 75 kVA: fora da tabela da NDEE-03 — atendimento em média tensão / subestação (consultar a Amazonas Energia).")}
+ const IbR=cat=="3F"?Dva/(Math.sqrt(3)*UL):cat=="2F"?Dva/(2*U0):Dva/U0;dj=lin?lin[1]:E_DJ.find(x=>x>=IbR*1.0)||250;
+ const nc=cat=="3F"?1:0;let si=E_S.findIndex(s=>s>=(lin?lin[2]:4)&&E_I.B1[nc][E_S.indexOf(s)]>=dj);const kR=cat=="3F"?Math.sqrt(3):2,VR=cat=="3F"?UL:U0;
+ const dvR=s=>kR*eR*v.Lr*IbR/s/(cat=="1F"?U0:VR)*100;while(si>=0&&si<E_S.length-1&&dvR(E_S[si])>v.dvr)si++;sec=E_S[Math.max(0,si)];
+ const nf=cat=="1F"?1:cat=="2F"?2:3,ncond=nf+2,pe=ePE(sec),area=nf*E_CAB[sec]+E_CAB[sec]+E_CAB[pe],eld=(E_ELD.find(x=>x[1]>=area)||E_ELD[E_ELD.length-1])[0];
+ const catN={"1F":"monofásica (F + N)","2F":"bifásica (2F + N)","3F":"trifásica (3F + N)"}[cat];
+ steps.push(["Categoria de atendimento",sis380?"por corrente":"NDEE-03 tab. 04 (D × categoria)",`${catN}; Ib = ${f(IbR,2)} A; disjuntor geral ${dj} A`]);
+ steps.push(["Seção do ramal","tabela NDEE ∩ Iz(B1) ≥ In ∩ ΔV ≤ "+f(v.dvr,2)+"%",`${fs(sec)} mm² (ΔV = ${f(dvR(sec),2)}%); PE ${fs(pe)} mm²; eletroduto ${eld} mm (ocupação ${f(area,0)} mm² ≤ 40%)`]);
+ const dvMax=Math.max(0,...R.filter(r=>r.o).map(r=>r.o.dv));if(dvMax+dvR(sec)>5)warn.push(`Queda total (ramal ${f(dvR(sec),2)}% + circuito ${f(dvMax,2)}%) acima de 5% (NBR 5410 6.2.7.1) — reduza o limite dos circuitos.`);
+ const spda=v.spda=="Sim",Uc=U0==127?175:275,Up=sis380?2.5:1.5;
+ h+=`<h4 class="ftrh">2. Ramal de entrada e QDG</h4><div class="ftrw"><table class="ftr kv"><tbody>
+ <tr><td>Carga instalada</td><td>${f(CI,2)} kVA</td></tr><tr><td>Demanda (fatores típicos)</td><td>${f(D,2)} kVA</td></tr>
+ <tr><td>Categoria de atendimento</td><td>${catN}</td></tr><tr><td>Disjuntor geral</td><td>${nf}P ${dj} A</td></tr>
+ <tr><td>Ramal (fases e neutro)</td><td>${nf} × ${fs(sec)} + N ${fs(sec)} mm² Cu</td></tr><tr><td>Condutor de proteção PE</td><td>${fs(pe)} mm² Cu (verde-amarelo)</td></tr>
+ <tr><td>Eletroduto do ramal</td><td>PVC rígido ${eld} mm</td></tr><tr><td>Queda no ramal</td><td>${f(dvR(sec),2)} %</td></tr>
+ <tr><td>DPS no QDG</td><td>${nf+1} un — Classe ${spda?"I, Iimp ≥ 12,5 kA (10/350 µs)":"II, In ≥ 5 kA (8/20 µs)"}, Uc ≥ ${Uc} V, Up ≤ ${f(Up,1)} kV (${nf} L-PE + 1 N-PE)</td></tr>
+ <tr><td>Aterramento (TN-S)</td><td>Haste aço cobreado 5/8" × 2,40 m no padrão; condutor de aterramento Cu 16 mm²; BEP junto ao QDG; N e PE separados após o QDG; R recomendada ≤ 10 Ω${spda?" (interligado ao aterramento do SPDA)":""}</td></tr></tbody></table></div>`;
+ res.push(["Circuitos dimensionados",`${R.filter(r=>r.o).length} de ${R.length}`],["Carga instalada / demanda",`${f(CI,2)} kVA / ${f(D,2)} kVA`],["Atendimento",catN],["Disjuntor geral",`${nf}P ${dj} A`],["Ramal",`${fs(sec)} mm² Cu, PE ${fs(pe)} mm², eletroduto ${eld} mm`],["DPS",`Classe ${spda?"I":"II"}, Uc ≥ ${Uc} V`]);
+ // ---- SPDA
+ let sp=null;if(spda){const N=["I","II","III","IV"].indexOf(v.np),M=[5,10,15,20][N],Rr=[20,30,45,60][N],esp=[10,10,15,20][N],C=v.C,B=v.B,H=v.H,per=2*(C+B);
+  const nx=Math.ceil(B/M)+1,ny=Math.ceil(C/M)+1,Lcap=nx*C+ny*B,nd=Math.max(2,Math.ceil(per/esp)),Ld=nd*(H+1),ncap=Math.max(4,Math.ceil(per/8));
+  const Ca=C+2,Ba=B+2,Lan=2*(Ca+Ba),re=Math.sqrt(Ca*Ba/Math.PI),l1=N==0?Math.max(5,0.03*v.rho-10):N==1?Math.max(5,0.02*v.rho-11):5,lv=re<l1?(l1-re)/2:0,hx=lv>0?nd*Math.max(1,Math.ceil(lv/2.4)):0;
+  const sec6={Cobre:"cabo de cobre nu 35 mm²","Alumínio":"cabo de alumínio 70 mm²","Aço galvanizado a quente":"barra/cabo de aço galvanizado 50 mm² (Ø 8 mm)"}[v.mat],secT=v.mat=="Aço galvanizado a quente"?"aço galvanizado 80 mm² (Ø 10 mm)":"cabo de cobre nu 50 mm²";
+  if(v.mat=="Alumínio")warn.push("SPDA em alumínio: o anel de aterramento deve ser de cobre (alumínio não pode ser enterrado — tab. 7); use conectores bimetálicos na transição, acima do solo.");
+  if(H>Rr)warn.push(`Altura ${f(H,1)} m maior que o raio da esfera (${Rr} m): avaliar descargas laterais e captação nas fachadas acima de ${Rr} m.`);
+  const fix=Math.ceil((Lcap+Ld)/1.0),con=nx*ny+nd*2+nd+hx;
+  sp={N,M,Rr,esp,nx,ny,Lcap,nd,Ld,ncap,Lan,re,l1,lv,hx,fix,con,C,B,H};
+  steps.push(["SPDA — captação (malha)",`malha ${M} × ${M} m (nível ${v.np}); linhas = ⌈B/M⌉+1 e ⌈C/M⌉+1`,`${nx} × ${f(C,2)} + ${ny} × ${f(B,2)} = ${f(Lcap,2)} m`]);
+  steps.push(["SPDA — descidas","n = máx(2; ⌈perímetro / espaçamento⌉)",`⌈${f(per,2)} / ${esp}⌉ = ${nd} descidas × (H + 1 m) = ${f(Ld,2)} m`]);
+  steps.push(["SPDA — aterramento (arranjo B)","re = √(A/π) ≥ l1",`re = √(${f(Ca,2)}·${f(Ba,2)}/π) = ${f(re,2)} m; l1 = ${f(l1,2)} m → ${lv>0?`hastes adicionais lv = ${f(lv,2)} m por descida`:"anel atende sem hastes adicionais"}`]);
+  h+=`<h4 class="ftrh">3. SPDA — pré-dimensionamento (NBR 5419-3)</h4><div class="ftrw"><table class="ftr kv"><tbody>
+  <tr><td>Nível de proteção</td><td>${v.np} (escolhido — sem análise de risco NBR 5419-2)</td></tr><tr><td>Malha de captação / esfera rolante</td><td>${M} × ${M} m / R = ${Rr} m</td></tr>
+  <tr><td>Método do ângulo (Franklin)</td><td>aplicável só até h ≤ ${Rr} m; ângulo pela figura 1 da NBR 5419-3 conforme a altura do captor</td></tr>
+  <tr><td>Descidas</td><td>${nd} (espaçamento médio ≤ ${esp} m), ${sec6}</td></tr><tr><td>Captação</td><td>${sec6}</td></tr>
+  <tr><td>Anel de aterramento</td><td>${f(Lan,2)} m de ${secT}, a 0,5 m de profundidade e ~1 m das paredes</td></tr>
+  <tr><td>Raio equivalente × l1</td><td>${f(re,2)} m × ${f(l1,2)} m ${re>=l1?"(atende)":"(complementar com hastes)"}</td></tr>
+  <tr><td>Equipotencialização</td><td>BEP no QDG ligado ao anel com Cu 16 mm² (Al 25 / aço 50 — tab. 8); BEL nos pavimentos com Cu 6 mm² (tab. 9); interligar tubulações metálicas, DPS Classe I, antenas e estruturas metálicas</td></tr></tbody></table></div>`;
+  res.push(["SPDA",`nível ${v.np}: malha ${M}×${M} m, ${nd} descidas, anel ${f(Lan,2)} m`])}
+ // ---- material
+ const mats=[];const cab={};R.forEach(r=>{if(!r.o)return;const nfC=r.c.f=="3F"?3:r.c.f=="2F"?2:1,nN=r.c.f=="2F"?0:1;const ad=(s,m)=>cab[s]=(cab[s]||0)+m;ad(r.o.s,r.c.L*(nfC+nN)*1.1);ad(r.pe,r.c.L*1.1)});
+ Object.keys(cab).map(Number).sort((a,b)=>a-b).forEach(s=>mats.push([`Cabo flexível Cu 750 V ${fs(s)} mm² (circuitos, +10%)`,f(cab[s],2),"m"]));
+ mats.push([`Cabo Cu ${fs(sec)} mm² — ramal (fases + N, +10%)`,f(v.Lr*(nf+1)*1.1,2),"m"],[`Cabo Cu ${fs(pe)} mm² — PE do ramal (+10%)`,f(v.Lr*1.1,2),"m"],[`Eletroduto PVC rígido ${eld} mm — ramal`,f(v.Lr*1.1,2),"m"],[`Disjuntor geral ${nf}P ${dj} A`,"1","un"]);
+ const dj2={};R.forEach(r=>{if(r.o){const k=`Disjuntor ${r.pol} ${r.o.In} A curva ${r.curva}`;dj2[k]=(dj2[k]||0)+1}});Object.entries(dj2).forEach(([k,n])=>mats.push([k,String(n),"un"]));
+ const drs={};R.forEach(r=>{if(r.dr&&r.o){const k=`Interruptor DR ${r.pol=="3P"?"4P":"2P"} ${r.drIn} A / 30 mA`;drs[k]=(drs[k]||0)+1}});Object.entries(drs).forEach(([k,n])=>mats.push([k+" (ou DR por grupo)",String(n),"un"]));
+ mats.push([`DPS Classe ${spda?"I":"II"} Uc ${Uc} V`,String(nf+1),"un"],["Haste de aterramento aço cobreado 5/8\" × 2,40 m (padrão/QDG)","1","un"],["Barramento de equipotencialização principal (BEP)","1","un"]);
+ if(sp){const s6=sec6Name(v.mat);mats.push([`${s6} — captação (+10%)`,f(sp.Lcap*1.1,2),"m"],[`${s6} — descidas (+10%)`,f(sp.Ld*1.1,2),"m"],[`${v.mat=="Aço galvanizado a quente"?"Aço galvanizado 80 mm²":"Cabo de cobre nu 50 mm²"} — anel de aterramento (+10%)`,f(sp.Lan*1.1,2),"m"],
+  ["Terminal aéreo (mini-captor) 30 cm",String(sp.ncap),"un"],["Haste de aterramento aço cobreado 5/8\" × 2,40 m (descidas)",String(sp.nd+sp.hx),"un"],["Caixa de inspeção (descida/haste)",String(sp.nd),"un"],["Conector de medição (descidas)",String(sp.nd),"un"],["Conectores (cruzamentos da malha, descidas e hastes)",String(sp.con),"un"],["Suportes / presilhas de fixação (≈ 1 m)",String(sp.fix),"un"],["Tubo de proteção mecânica da descida (2,5 m acima do piso)",f(sp.nd*2.5,2),"m"])}
+ h+=`<h4 class="ftrh">${sp?4:3}. Lista de material (estimativa)</h4><div class="ftrw"><table class="ftr"><thead><tr><th>Item</th><th>Qtd</th><th>Unid.</th></tr></thead><tbody>${mats.map(([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`).join("")}</tbody></table></div>`;
+ warn.push("PRÉ-DIMENSIONAMENTO: as instalações elétricas e o SPDA exigem projeto elaborado por profissional legalmente habilitado, com ART, e aprovação da concessionária (Amazonas Energia). O nível do SPDA deve resultar da análise de risco da NBR 5419-2.");
+ return{res,steps,warn,html:h,_sp:sp}}
+function sec6Name(m){return{Cobre:"Cabo de cobre nu 35 mm²","Alumínio":"Cabo de alumínio 70 mm²","Aço galvanizado a quente":"Aço galvanizado a quente 50 mm²"}[m]}
+// planta esquemática do SPDA
+DRAW.eletrico=(v,r)=>{const s=r._sp;if(!s)return"";const W=560,Hh=Math.max(200,Math.min(420,W*s.B/s.C)),pad=58,sx=(W-2*pad)/s.C,sy=(Hh-2*pad)/s.B,X=x=>pad+x*sx,Y=y=>pad+y*sy;let g="";
+ for(let i=0;i<s.nx;i++){const y=s.B*i/(s.nx-1);g+=`<line x1="${X(0)}" y1="${Y(y)}" x2="${X(s.C)}" y2="${Y(y)}" stroke="#f2b632" stroke-width="1.6"/>`}
+ for(let j=0;j<s.ny;j++){const x=s.C*j/(s.ny-1);g+=`<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(s.B)}" stroke="#f2b632" stroke-width="1.6"/>`}
+ const o=1*sx;g+=`<rect x="${X(0)-o}" y="${Y(0)-o}" width="${s.C*sx+2*o}" height="${s.B*sy+2*o}" fill="none" stroke="#2ee59d" stroke-dasharray="6 4" stroke-width="1.6"/>`;
+ const per=2*(s.C+s.B),pt=d=>{d%=per;return d<s.C?[d,0]:d<s.C+s.B?[s.C,d-s.C]:d<2*s.C+s.B?[s.C-(d-s.C-s.B),s.B]:[0,s.B-(d-2*s.C-s.B)]};
+ for(let k=0;k<s.nd;k++){const[x,y]=pt(k*per/s.nd);g+=`<circle cx="${X(x)}" cy="${Y(y)}" r="6" fill="#ff6b6b" stroke="#fff"/>`}
+ g+=`<text x="${W/2}" y="${pad-30}" text-anchor="middle" fill="#cfe0ff" font-size="12">C = ${f(s.C,2)} m — malha ${s.M} × ${s.M} m</text><text x="${pad-36}" y="${Hh/2}" fill="#cfe0ff" font-size="12" transform="rotate(-90 ${pad-36} ${Hh/2})" text-anchor="middle">B = ${f(s.B,2)} m</text>`;
+ return `<svg viewBox="0 0 ${W} ${Hh+30}" role="img" aria-label="Planta esquemática do SPDA">${g}<g font-size="11" fill="#cfe0ff"><line x1="${pad}" y1="${Hh+14}" x2="${pad+24}" y2="${Hh+14}" stroke="#f2b632" stroke-width="2"/><text x="${pad+30}" y="${Hh+18}">captação</text><circle cx="${pad+120}" cy="${Hh+14}" r="5" fill="#ff6b6b"/><text x="${pad+130}" y="${Hh+18}">descida (${s.nd})</text><line x1="${pad+240}" y1="${Hh+14}" x2="${pad+264}" y2="${Hh+14}" stroke="#2ee59d" stroke-dasharray="6 4" stroke-width="2"/><text x="${pad+270}" y="${Hh+18}">anel de aterramento</text></g></svg>`};
+
 // ---------------- UI ----------------
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
 const tabs=$("#ftabs"),panel=$("#fpanel");let cur=null,last=null;
@@ -399,19 +521,36 @@ const tabs=$("#ftabs"),panel=$("#fpanel");let cur=null,last=null;
 tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{open(b.dataset.id);history.replaceState(null,"","#"+b.dataset.id)});
 const allInp=t=>[...t.inp,...(t.mi||[])];
 const field=([id,lab,un,def,mn,mx,opts])=>`<label>${lab}${un&&un!="—"?` (${un})`:""}${opts?`<select id="i-${id}">${opts.map(o=>`<option ${o==def?"selected":""}>${o}</option>`).join("")}</select>`:`<input id="i-${id}" ${id=="traco"?"":'inputmode="decimal"'} value="${String(def).replace(".",",")}">`}</label>`;
-function readVals(t){const v={},err=[];allInp(t).forEach(([id,lab,un,def,mn,mx,opts])=>{const el=$("#i-"+id);if(opts){v[id]=el.value;return}
+function readVals(t){const v={},err=[];if(t.circ){v.circ=ECIRC.map(c=>({...c}));ECIRC.forEach((c,i)=>["P","fp","L","ag","T"].forEach(k=>{const x=c[k];const ok=isFinite(x)&&(k=="fp"?x>0&&x<=1:k=="T"?x>=10&&x<=60:k=="ag"?x>=1&&x<=30:x>0);const el=document.querySelector(`[data-ci="${i}"][data-ck="${k}"]`);if(el)el.classList.toggle("bad",!ok);if(!ok)err.push(`Circuito ${i+1}: valor inválido em ${({P:"potência",fp:"FP (0 a 1)",L:"comprimento",ag:"agrupamento (1 a 30)",T:"temperatura (10 a 60 °C)"})[k]}`)}))}allInp(t).forEach(([id,lab,un,def,mn,mx,opts])=>{const el=$("#i-"+id);if(opts){v[id]=el.value;return}
   if(id=="traco"){if(!traco(el.value)){err.push("Traço inválido (use 1:a:b, ex.: 1:2:3)");el.classList.add("bad")}else{el.classList.remove("bad");v[id]=el.value}return}
   const x=parseFloat(String(el.value).replace(",","."));const lo=mn??1e-9,hi=mx??1e7;
   if(!isFinite(x)||x<lo||x>hi){err.push(`${lab}: valor inválido${mn!=null||mx!=null?` (${mn??"…"} a ${mx??"…"})`:" (deve ser > 0)"}`);el.classList.add("bad")}else{el.classList.remove("bad");v[id]=x}});return{v,err}}
 function open(id){cur=TOOLS.find(t=>t.id==id)||TOOLS[0];tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id==cur.id));const t=cur;
-  panel.innerHTML=`<h2>${t.t}</h2><p class="fg">${t.g}</p><div class="fcols"><form class="oform" id="fform" onsubmit="return false"><div class="ogrid">${t.inp.map(field).join("")}</div>
+  panel.innerHTML=`<h2>${t.t}</h2><p class="fg">${t.g}</p><div class="fcols"><form class="oform" id="fform" onsubmit="return false"><div class="ogrid">${t.inp.map(field).join("")}</div>${t.circ?`<fieldset class="fmat ecirc"><legend>Circuitos terminais</legend><div id="ecl"></div><button type="button" class="btn ghost" id="eadd">+ Adicionar circuito</button></fieldset>`:""}
   ${t.mi?`<fieldset class="fmat"><legend>Materiais (estimativa)</legend><div class="ogrid">${t.mi.map(field).join("")}</div></fieldset>`:""}
   ${t.table?`<details class="ftab"><summary>Tabela de vãos máximos (editável)</summary><table><thead><tr><th>Laje</th>${TRELICADA.cargas.map(c=>`<th>q ≤ ${f(c,1)}</th>`).join("")}</tr></thead><tbody>${TRELICADA.linhas.map((r,i)=>`<tr><td>${r[0]}</td>${r.slice(1).map((x,j)=>`<td><input data-r="${i}" data-c="${j+1}" value="${f(x,1)}"></td>`).join("")}</tr>`).join("")}</tbody></table></details>`:""}
   <details><summary>Hipóteses adotadas</summary><ul>${t.hip.map(h=>`<li>${h}</li>`).join("")}</ul></details></form>
   <div class="fres" id="fres"></div></div><div class="fdraw" id="fdraw"></div><div id="fmatout"></div>`;
   if(t.id=="estacas")$("#i-tipo").onchange=()=>{const[d,q]=ESTACAS[$("#i-tipo").value];$("#i-Q").value=q;$("#i-phi").value=d;run()};
   panel.querySelectorAll(".ftab input").forEach(i=>i.oninput=()=>{const x=parseFloat(i.value.replace(",","."));if(x>0)TRELICADA.linhas[i.dataset.r][i.dataset.c]=x;run()});
-  $("#fform").addEventListener("input",run);$("#fform").addEventListener("change",run);run()}
+  if(t.circ)eRender();$("#fform").addEventListener("input",run);$("#fform").addEventListener("change",run);run()}
+function eRender(){const el=$("#ecl");if(!el)return;const o=(a,v)=>a.map(x=>`<option ${x==v?"selected":""}>${x}</option>`).join(""),io=(a,v)=>a.map((x,i)=>`<option value="${i}" ${i==v?"selected":""}>${x}</option>`).join("");
+ el.innerHTML=ECIRC.map((c,i)=>`<div class="ecard"><div class="ehd"><b>Circuito ${i+1}</b>${ECIRC.length>1?`<button type="button" class="erm" data-rm="${i}" aria-label="Remover circuito ${i+1}">✕ remover</button>`:""}</div><div class="ogrid">
+ <label class="ewide">Descrição<input data-ci="${i}" data-ck="d" value="${esc(c.d)}"></label>
+ <label>Tipo<select data-ci="${i}" data-ck="tp">${io(E_TIPOS,c.tp)}</select></label>
+ <label>Potência<input data-ci="${i}" data-ck="P" inputmode="decimal" value="${fmm(c.P)}"></label>
+ <label>Unidade<select data-ci="${i}" data-ck="u">${o(["W","VA"],c.u)}</select></label>
+ <label>Fator de potência<input data-ci="${i}" data-ck="fp" inputmode="decimal" value="${fmm(c.fp)}"></label>
+ <label>Tensão (V)<select data-ci="${i}" data-ck="V">${o([127,220,380],c.V)}</select></label>
+ <label>Fases<select data-ci="${i}" data-ck="f">${o(["1F","2F","3F"],c.f)}</select></label>
+ <label>Comprimento (m)<input data-ci="${i}" data-ck="L" inputmode="decimal" value="${fmm(c.L)}"></label>
+ <label>Método de instalação<select data-ci="${i}" data-ck="m">${o(["B1","B2","C","D"],c.m)}</select></label>
+ <label>Circuitos agrupados<input data-ci="${i}" data-ck="ag" inputmode="decimal" value="${c.ag}"></label>
+ <label>Temperatura ambiente (°C)<input data-ci="${i}" data-ck="T" inputmode="decimal" value="${c.T}"></label>
+ <label class="ewide">Local<select data-ci="${i}" data-ck="loc">${io(E_LOC,c.loc)}</select></label></div></div>`).join("");
+ el.querySelectorAll("[data-ci]").forEach(x=>{const h=()=>{const c=ECIRC[x.dataset.ci],k=x.dataset.ck;c[k]=k=="d"||k=="u"||k=="f"||k=="m"?x.value:k=="tp"||k=="loc"||k=="V"?+x.value:parseFloat(String(x.value).replace(",","."))};x.addEventListener("input",h);x.addEventListener("change",h)});
+ el.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ECIRC.splice(+b.dataset.rm,1);eRender();run()});
+ $("#eadd").onclick=()=>{ECIRC.push({d:"Novo circuito",tp:1,P:1000,u:"VA",fp:0.8,V:127,f:"1F",L:15,m:"B1",ag:1,T:30,loc:0});eRender();run()}}
 function matHTML(M,cls=""){if(!M)return"";return `<h3>Tabela resumo de aço e materiais <small>(estimativa)</small></h3>
  <table class="${cls}"><thead><tr><th>Item</th><th>Quantidade</th><th>Unid.</th></tr></thead><tbody>${M.rows.map(([a,b,c])=>`<tr><td>${a}</td><td class="n">${b}</td><td>${c}</td></tr>`).join("")}</tbody></table>
  ${M.bars.length?`<h4>Lista de barras sugerida (NBR 7480)</h4><table class="${cls}"><thead><tr><th>Posição</th><th>Ø (mm)</th><th>Qtd</th><th>Compr. (m)</th><th>kg/m</th><th>Peso (kg)</th><th>Espaç.</th></tr></thead><tbody>${M.bars.map(([a,b,q,l,m,kg,s])=>`<tr><td>${a}</td><td>${b}</td><td class="n">${q}</td><td class="n">${f(l,2)}</td><td class="n">${f(m,3)}</td><td class="n">${f(kg,1)}</td><td>${s?"c/ "+f(s*100,0)+" cm":"—"}</td></tr>`).join("")}<tr><td colspan="5"><b>Total</b></td><td class="n"><b>${f(M.bars.reduce((s,x)=>s+x[5],0),1)}</b></td><td></td></tr></tbody></table>
@@ -420,10 +559,10 @@ function matHTML(M,cls=""){if(!M)return"";return `<h3>Tabela resumo de aço e ma
  <p class="fnote">Estimativa de quantitativos para orçamento preliminar. ${M.notas.join(" ")}</p>`}
 function run(){if(cur.id=="trelica"){const u=$("#i-sec").value.startsWith("Perfil U"),fm=$("#i-forma").value,hz=fm.startsWith("Plana h"),bs=fm.startsWith("Banzo");["ub","wm","fo"].forEach(k=>$("#i-"+k).closest("label").hidden=!u);const pz=$("#i-lig").value.startsWith("Paraf");["pf","pd"].forEach(k=>$("#i-"+k).closest("label").hidden=!pz);const sob=u&&$("#i-wm").value.startsWith("U dobrado");["wa","wt"].forEach(k=>$("#i-"+k).closest("label").hidden=!sob);$("#i-telo").closest("label").hidden=!$("#i-tel").value.startsWith("Outra");["aguas","inc"].forEach(k=>$("#i-"+k).closest("label").hidden=hz);$("#i-hmin").closest("label").hidden=!bs;$("#i-r").closest("label").hidden=bs}const t=cur,{v,err}=readVals(t),box=$("#fres"),mo=$("#fmatout");if(err.length){last=null;box.innerHTML=`<div class="ferr">${err.map(esc).join("<br>")}</div>`;mo.innerHTML="";return}
   const r=t.calc({...v}),M=MAT(t,{...v},r);last={t,v,r,M};
-  box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${r.html||""}${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
+  box.innerHTML=`<h3>Resultado</h3><dl>${r.res.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${t.circ?`<p class="fnote">Tabelas completas abaixo do formulário.</p>`:r.html||""}${r.warn.length?`<div class="fwarn">${r.warn.join("<br>")}</div>`:""}
   <details open><summary>Passo a passo</summary><ol>${r.steps.map(([a,b,c])=>`<li><b>${a}</b><br><code>${b}</code><br>${c}</li>`).join("")}</ol></details>
   <button class="btn" id="fmem" type="button">Gerar memória de cálculo</button><p class="fdisc">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART.</p>`;
-  mo.innerHTML=M?`<div class="fmatbox">${matHTML(M)}</div>`:"";const dr=DRAW[t.id]?DRAW[t.id]({...v},r):"";$("#fdraw").innerHTML=dr?`<h3>Desenho esquemático <small>(cotas atualizadas com o resultado — sem escala)</small></h3>${dr}`:"";$("#fmem").onclick=memorial}
+  mo.innerHTML=(t.circ?`<div class="fmatbox ewidebox">${r.html}</div>`:"")+(M?`<div class="fmatbox">${matHTML(M)}</div>`:"");const dr=DRAW[t.id]?DRAW[t.id]({...v},r):"";$("#fdraw").innerHTML=dr?`<h3>Desenho esquemático <small>(cotas atualizadas com o resultado — sem escala)</small></h3>${dr}`:"";$("#fmem").onclick=memorial}
 function memorial(){if(!last)return;const {t,v,r,M}=last,el=$("#proposta"),hoje=new Date().toLocaleDateString("pt-BR");
   el.innerHTML=`<div class="pp-head"><img src="assets/img/logo-fsantos.png" alt=""><div><strong>FSantos Engenharia — Santos Projetos & Orçamentos</strong><br>Eng. Civil Francirley Pereira Santos — CREA 31.410-AM</div></div>
   <p class="pp-flag">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART</p><h2>MEMÓRIA DE CÁLCULO</h2><p class="pp-sub">${t.g} — ${t.t}</p><p>Manaus/AM, ${hoje}</p>
