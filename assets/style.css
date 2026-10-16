@@ -151,4 +151,4 @@ footer .credits{display:block;margin-top:.6rem;font-size:.72rem;opacity:.75;line
 @media(min-width:701px){.sobre-bg::after{background-color:rgba(11,26,48,.2)}}
 
 /* malha "blueprint" sobre toda a seção Sobre (acima da foto e do degradê, abaixo do texto) */
-.sobre::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(120,170,230,.14) 1px,transparent 1px) 0 0/100px 100px,linear-gradient(90deg,rgba(120,170,230,.14) 1px,transparent 1px) 0 0/100px 100px,linear-gradient(rgba(120,170,230,.06) 1px,transparent 1px) 0 0/20px 20px,linear-gradient(90deg,rgba(120,170,230,.06) 1px,transparent 1px) 0 0/20px 20px}
+.sobre::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(120,170,230,.14) 1px,transparent 1px) center/100px 100px,linear-gradient(90deg,rgba(120,170,230,.14) 1px,transparent 1px) center/100px 100px,linear-gradient(rgba(120,170,230,.06) 1px,transparent 1px) center/20px 20px,linear-gradient(90deg,rgba(120,170,230,.06) 1px,transparent 1px) center/20px 20px}
