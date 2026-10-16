@@ -9,7 +9,9 @@ const defs=id=>`<defs><pattern id="${id}-soil" width="14" height="14" patternUni
 <pattern id="${id}-eps" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#f4f6f8"/><circle cx="5" cy="5" r="3" fill="none" stroke="#d4d9de"/></pattern>
 <marker id="${id}-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${N}"/></marker>
 <marker id="${id}-ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#c0392b"/></marker></defs>`;
-const SV=(w,h,body,title="",cls="fsvg")=>{const id="sv"+(++n);return`<svg class="${cls}" preserveAspectRatio="xMidYMid meet" viewBox="0 0 ${w} ${h}" role="img" aria-label="${title}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,Segoe UI,Roboto,sans-serif">${defs(id)}<rect width="${w}" height="${h}" fill="#f6f2e9"/>${body.replace(/#P-/g,"#"+id+"-")}</svg>`};
+// rótulos com fundo (TB) mantidos dentro do viewBox
+const fitTB=(body,W,H)=>body.replace(/<g data-tb="([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+)">/g,(m,x,y,w,h)=>{x=+x;y=+y;w=+w;h=+h;const m2=3,dx=x<m2?m2-x:x+w>W-m2?Math.max(m2-x,W-m2-x-w):0,dy=y<m2?m2-y:y+h>H-m2?Math.max(m2-y,H-m2-y-h):0;return dx||dy?`<g transform="translate(${+dx.toFixed(1)},${+dy.toFixed(1)})">`:"<g>"});
+const SV=(w,h,body,title="",cls="fsvg")=>{const id="sv"+(++n);return`<svg class="${cls}" preserveAspectRatio="xMidYMid meet" viewBox="0 0 ${w} ${h}" role="img" aria-label="${title}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,Segoe UI,Roboto,sans-serif">${defs(id)}<rect width="${w}" height="${h}" fill="#f6f2e9"/>${fitTB(body,w,h).replace(/#P-/g,"#"+id+"-")}</svg>`};
 const fl=v=>/^(soil|con|grav|wood|sand|eps)$/.test(v)?`url(#P-${v})`:v;
 const R=(x,y,w,h,fill="none",st=N,sw=1,ex="")=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fl(fill)}" stroke="${st}" stroke-width="${sw}" ${ex}/>`;
 const L=(x1,y1,x2,y2,st=N,sw=1,ex="")=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${st}" stroke-width="${sw}" ${ex}/>`;
@@ -17,7 +19,7 @@ const P=(pts,fill="none",st=N,sw=1,ex="")=>`<polygon points="${pts.map(p=>p.join
 const PL=(pts,st=N,sw=1,ex="")=>`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${st}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round" ${ex}/>`;
 const C=(x,y,r,fill=STL,st="none",sw=1)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${fl(fill)}" stroke="${st}" stroke-width="${sw}"/>`;
 const T=(x,y,s,sz=12,an="middle",fill=N,w=600,ex="")=>`<text x="${x}" y="${y}" font-size="${sz}" text-anchor="${an}" fill="${fill}" font-weight="${w}" ${ex}>${s}</text>`;
-const TB=(x,y,s,sz=12,an="middle")=>{const w=s.replace(/<[^>]+>/g,"").length*sz*0.56+10,x0=an=="middle"?x-w/2:an=="end"?x-w:x;return R(x0,y-sz+1,w,sz+5,"#ffffffd9","none",0,'rx="3"')+T(an=="middle"?x:an=="end"?x-5:x+5,y+1,s,sz,an)};
+const TB=(x,y,s,sz=12,an="middle")=>{const w=s.replace(/<[^>]+>/g,"").length*sz*0.56+10,x0=an=="middle"?x-w/2:an=="end"?x-w:x;return`<g data-tb="${x0},${y-sz+1},${w},${sz+5}">`+R(x0,y-sz+1,w,sz+5,"#ffffffd9","none",0,'rx="3"')+T(an=="middle"?x:an=="end"?x-5:x+5,y+1,s,sz,an)+"</g>"};
 const tick=(x,y)=>L(x-4,y+4,x+4,y-4,N,1.4);
 const DH=(x1,x2,y,lab,ext=0,sz=12)=>(ext?L(x1,y-ext,x1,y+4,"#55627a",.7)+L(x2,y-ext,x2,y+4,"#55627a",.7):"")+L(x1,y,x2,y,N,1)+tick(x1,y)+tick(x2,y)+TB((x1+x2)/2,y-4,lab,sz);
 const DV=(y1,y2,x,lab,ext=0,sz=12)=>(ext?L(x-ext,y1,x+4,y1,"#55627a",.7)+L(x-ext,y2,x+4,y2,"#55627a",.7):"")+L(x,y1,x,y2,N,1)+tick(x,y1)+tick(x,y2)+`<g transform="rotate(-90 ${x-5} ${(y1+y2)/2})">${TB(x-5,(y1+y2)/2,lab,sz)}</g>`;
