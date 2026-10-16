@@ -1,12 +1,18 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ferramentas de pré-dimensionamento | FSantos Engenharia</title><meta name="description" content="Ferramentas gratuitas de pré-dimensionamento estrutural: sapatas, radier, estacas, pilares, vigas, lajes, estruturas metálicas, muro de contenção, pavimento rígido e preparo do traço de concreto.">
-<link rel="icon" href="assets/img/logo-fsantos.png"><link rel="stylesheet" href="assets/style.css?v=20261016a"><link rel="stylesheet" href="assets/ferramentas.css?v=20261015f"></head><body>
+<link rel="icon" href="assets/img/logo-fsantos.png"><link rel="stylesheet" href="assets/style.css?v=20261016a"><link rel="stylesheet" href="assets/ferramentas.css?v=20261016p"></head><body>
 <header class="nav"><a href="index.html" class="brand"><img src="assets/img/logo-fsantos.png" alt="">FSantos Engenharia</a>
 <button class="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button><nav id="menu"><a href="index.html#sobre">Sobre</a><a href="index.html#portfolio">Portfólio</a><a href="index.html#softwares">Softwares</a><a href="ferramentas.html" aria-current="page">Ferramentas</a><a href="orcamento-obra.html">Orçamento de obra</a><a href="guia-execucao.html">Guia de execução</a><a href="index.html#orcamento">Orçamento de projetos</a><a href="index.html#contato">Contato</a></nav></header>
-<section class="fhero"><h1>Ferramentas de pré-dimensionamento</h1><p>Calculadoras gratuitas para estimativas iniciais em concreto armado e estruturas metálicas, com memória de cálculo em PDF.</p>
+<section class="fhero" id="fhero"><button type="button" class="fhero-tg" id="fhero-tg" aria-controls="fhero-body" aria-expanded="true">Ocultar ▲</button><div class="fhero-body" id="fhero-body"><h1>Ferramentas de pré-dimensionamento</h1><p>Calculadoras gratuitas para estimativas iniciais em concreto armado e estruturas metálicas, com memória de cálculo em PDF.</p>
 <p>14 ferramentas com desenho esquemático cotado, tabela de materiais e memória de cálculo. <a href="guia-execucao.html">Veja também o Guia prático de execução →</a></p>
 <p><a class="btn" href="orcamento-obra.html">NOVO: Orçamento estimativo de obra (SINAPI) →</a> <a class="btn ghost" href="tabelas.html">Tabelas de engenharia →</a></p>
-<p class="fdisc big">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART.</p></section>
+<p class="fdisc big">Pré-dimensionamento orientativo — não substitui projeto estrutural com ART.</p></div></section>
+<script>(function(){var h=document.getElementById("fhero"),b=document.getElementById("fhero-tg"),K="fsFerrBanner",ss;try{ss=sessionStorage}catch(e){ss=null}function g(){try{return ss&&ss.getItem(K)}catch(e){return null}}function p(v){try{ss&&ss.setItem(K,v)}catch(e){}}
+function set(c){h.classList.toggle("min",c);b.textContent=c?"Mostrar informações ▼":"Ocultar ▲";b.setAttribute("aria-expanded",String(!c))}
+var st=g();/* auto=recolhido sozinho; open/closed=escolha manual */set(st==="auto"||st==="closed");
+var t=null,armed=!st;function busy(){return h.matches(":hover")||h.contains(document.activeElement)}function tryClose(){if(!armed)return;if(busy())return;armed=false;set(true);p("auto")}
+if(armed){t=setTimeout(function(){t=null;tryClose()},8000);h.addEventListener("mouseleave",function(){if(!t)tryClose()});h.addEventListener("focusout",function(){setTimeout(function(){if(!t)tryClose()},0)})}
+b.onclick=function(){armed=false;if(t){clearTimeout(t);t=null}var c=!h.classList.contains("min");set(c);p(c?"closed":"open")}})();</script>
 <main class="wrap fwrap"><aside class="ftabs" id="ftabs"></aside><section class="fpanel" id="fpanel"></section></main>
 <section class="wrap contact"><h2>Precisa do projeto completo?</h2><p>Projeto estrutural, fundações, instalações e arquitetura com ART.</p><a class="btn" href="index.html#orcamento">Orçamento de projetos</a> <a class="btn ghost" href="https://wa.me/5592992262786" target="_blank" rel="noopener">WhatsApp (92) 99226-2786</a></section>
 <div id="proposta"></div><footer>© 2026 FSantos Engenharia · Manaus-AM</footer>

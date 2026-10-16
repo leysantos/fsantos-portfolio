@@ -1,6 +1,6 @@
 // Configurações do site (Firestore config/site) — somente administrador verificado grava; leitura pública
 import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js?v=20261015c";
-import {ORC_CONFIG,CFG_DEF,esc} from "./orcamento.js?v=20261015c";
+import {ORC_CONFIG,CFG_DEF,esc} from "./orcamento.js?v=20261016p";
 const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {doc,getDoc,setDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),box=$("#tab-cfg");
