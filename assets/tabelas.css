@@ -19,3 +19,4 @@
 .fwrap:has(#ttabs){max-width:1440px;width:100%;grid-template-columns:230px minmax(0,1fr)}.ttab th{white-space:normal;vertical-align:bottom;min-width:4.5em}@media(max-width:900px){.fwrap:has(#ttabs){grid-template-columns:minmax(0,1fr)}}
 #tsel{display:none;width:100%;padding:.65rem .8rem;border-radius:8px;border:1px solid #f2b63266;background:var(--navy2);color:var(--txt);font:inherit}@media(max-width:900px){#ttabs{display:none}#tsel{display:block}}@media print{#tsel{display:none!important}}
 .ttab td{white-space:nowrap}.ttab td.w{white-space:normal;min-width:14em}
+@media(min-width:901px){.fwrap:has(#ttabs){align-items:start}.fwrap:has(#ttabs) .fpanel{min-height:calc(100vh - 88px)}#ttabs{position:sticky!important;top:72px;max-height:calc(100vh - 88px);overflow-y:auto;overscroll-behavior:contain}}
