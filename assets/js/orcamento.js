@@ -6,14 +6,14 @@ export const ORC_CONFIG={
     {item:"001.",nome:"Projeto de Arquitetura",coef:1,preco:13.5,incluir:true},
     {item:"002.",nome:"Projeto Estrutural",coef:1,preco:14,incluir:true},
     {item:"003.",nome:"Projeto de Instalações Elétricas",coef:0.8,preco:12.5,incluir:true},
-    {item:"004.",nome:"Projeto Hidráulico de Água Fria",coef:0.7,preco:9.5,incluir:true},
+    {item:"004.",nome:"Projeto Hidráulico de Água Fria e Quente",coef:0.7,preco:9.5,incluir:true},
     {item:"005.",nome:"Projeto de Esgoto Sanitário",coef:0.6,preco:10.5,incluir:true},
     {item:"006.",nome:"Projeto de Drenagem de Águas Pluviais",coef:0.6,preco:9.5,incluir:true},
     {item:"007.",nome:"Projeto de SPDA / Para-raios",coef:0.4,preco:8,incluir:false},
     {item:"008.",nome:"Projeto de Combate a Incêndio (PPCI)",coef:0.7,preco:12,incluir:false},
     {item:"009.",nome:"Projeto de Gás",coef:0.3,preco:8.5,incluir:false},
     {item:"010.",nome:"Projeto de Ar-condicionado",coef:0.5,preco:10,incluir:false},
-    {item:"011.",nome:"Memorial Descritivo / Laudos",coef:0.6,preco:3.5,incluir:false}],
+    {item:"011.",nome:"Laudos e Vistorias",coef:0.6,preco:3.5,incluir:false}],
   get condicoes(){return["Entregáveis: arquivos digitais DWG e PDF em .ZIP.","Revisões técnicas inclusas até aprovação no órgão competente, sem mudança significativa de escopo.",`Prazo estimado: ${this.prazo} dias úteis após recebimento de todas as informações necessárias.`,"Pagamento: 50% no início; saldo conforme cronograma acordado.",`Validade desta proposta: ${this.validade} dias.`,"Para fundações, o contratante deverá fornecer laudo de sondagem.",...String(this.obs||"").split(/\n+/).map(x=>x.trim()).filter(Boolean)]}
 };
 export const brl=n=>(+n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -24,8 +24,11 @@ const r2=n=>Math.round(n*100)/100;
 export function calcItem(it){const A=Math.max(0,+it.area||0);const disciplinas=ORC_CONFIG.disciplinas.map((d,i)=>({d,i})).filter(x=>it.sel.includes(x.i)).map(({d})=>({item:d.item,nome:d.nome,coef:d.coef,preco:d.preco,areaProjeto:r2(A*d.coef),total:r2(A*d.coef*d.preco)}));
   return{nome:String(it.nome||"").slice(0,160),area:A,disciplinas,subtotal:r2(disciplinas.reduce((s,x)=>s+x.total,0))}}
 export function calcTotal(itens,artPct=ORC_CONFIG.artPct,descPct=ORC_CONFIG.descPct){const subtotal=r2(itens.reduce((s,i)=>s+i.subtotal,0)),area=itens.reduce((s,i)=>s+i.area,0),p=Math.min(20,Math.max(0,+artPct||0)),dp=Math.min(50,Math.max(0,+descPct||0)),art=r2(subtotal*p/100),desc=r2(subtotal*dp/100),total=r2(subtotal+art-desc);return{subtotal,artPct:p,art,descPct:dp,desc,total,area,totalPorM2:area?r2(total/area):0}}
-// nome atual da disciplina pelo código (registros antigos guardam o nome antigo, ex.: 011 "ART-RRT")
-export const nomeDisc=x=>(ORC_CONFIG.disciplinas.find(d=>d.item===x.item)||x).nome;
+// nome atual da disciplina pelo código (registros antigos guardam o nome antigo, ex.: 011 "ART-RRT", 004 "Projeto Hidráulico de Água Fria")
+const codDisc=x=>{const m=String(x?.item??x?.id??"").match(/\d+/);return m?m[0].padStart(3,"0")+".":""};
+const NOMES_ANTIGOS={"memorial descritivo / laudos":"011.","memorial descritivo":"011.","laudos":"011.","art-rrt":"011.","projeto hidráulico de água fria":"004.","projeto hidraulico de agua fria":"004."};
+const codItem=x=>codDisc(x)||NOMES_ANTIGOS[String(x?.nome||"").trim().toLowerCase()]||"";
+export const nomeDisc=x=>{const c=codItem(x);return(ORC_CONFIG.disciplinas.find(d=>d.item===c)||x||{}).nome||""};
 // descrição do projeto/obra: campo antigo "projeto" ou descrições dos itens
 export const descProjeto=o=>String(o.projeto||(o.itens||[]).map(i=>i.nome).filter(Boolean).join("; ")||"").slice(0,160);
 // Configuração do site (Firestore config/site, leitura pública). Sem acesso: mantém os padrões acima.
@@ -36,14 +39,14 @@ export function aplicarConfig(c){if(!c||typeof c!=="object")return false;const C
   if(c.pagAdm&&typeof c.pagAdm==="object")C.pagAdm={pix:String(c.pagAdm.pix??C.pagAdm.pix).slice(0,120),banco:String(c.pagAdm.banco??C.pagAdm.banco).slice(0,120),titular:String(c.pagAdm.titular??C.pagAdm.titular).slice(0,120)};
   if(c.precos&&typeof c.precos==="object")C.disciplinas.forEach(d=>{const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});return true}
 export async function carregarConfig(db,F,ms=6000){try{const s=await Promise.race([F.getDoc(F.doc(db,"config","site")),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);return s.exists()?(aplicarConfig(s.data()),s.data()):null}catch(e){console.warn("config/site indisponível — usando padrões",e.code||e.message);return null}}
-const tbl=it=>`<table class="pp-t"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Área projeto (m²)</th><th>R$/m²</th><th>Total</th></tr></thead><tbody>${it.disciplinas.map(x=>`<tr><td>${esc(x.item)}</td><td>${esc(nomeDisc(x))}</td><td>${(+x.coef||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>${num(x.areaProjeto)}</td><td>${brl(x.preco)}</td><td>${brl(x.total)}</td></tr>`).join("")}<tr><td colspan="5"><b>Subtotal</b></td><td><b>${brl(it.subtotal)}</b></td></tr></tbody></table><p class="pp-amb"><small>Área base: ${num(it.area)} m² (área construída) × coef. de área da disciplina = área de projeto.</small></p>`;
-// Subtítulo e objeto da proposta conforme as disciplinas selecionadas (011 Memorial Descritivo / Laudos entra como complemento)
+const tbl=it=>`<table class="pp-t"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Área projeto (m²)</th><th>R$/m²</th><th>Total</th></tr></thead><tbody>${it.disciplinas.map(x=>`<tr><td>${esc(codItem(x)||x.item)}</td><td>${esc(nomeDisc(x))}</td><td>${(+x.coef||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>${num(x.areaProjeto)}</td><td>${brl(x.preco)}</td><td>${brl(x.total)}</td></tr>`).join("")}<tr><td colspan="5"><b>Subtotal</b></td><td><b>${brl(it.subtotal)}</b></td></tr></tbody></table><p class="pp-amb"><small>Área base: ${num(it.area)} m² (área construída) × coef. de área da disciplina = área de projeto.</small></p>`;
+// Subtítulo e objeto da proposta conforme as disciplinas selecionadas (011 Laudos e Vistorias entra como complemento)
 const lista=a=>a.length<2?(a[0]||""):a.slice(0,-1).join(", ")+" e "+a[a.length-1];
-export function escopo(itens){const C=ORC_CONFIG.disciplinas,cods=new Set((itens||[]).flatMap(i=>(i.disciplinas||[]).map(x=>x.item)));
+export function escopo(itens){const C=ORC_CONFIG.disciplinas,cods=new Set((itens||[]).flatMap(i=>(i.disciplinas||[]).map(codItem)));
   const sel=C.filter(d=>cods.has(d.item)),mem=sel.find(d=>d.item==="011."),main=sel.filter(d=>d.item!=="011.");
   if(!sel.length)return{sub:"Elaboração de projetos",obj:"a elaboração dos projetos"};
-  if(!main.length)return{sub:"Elaboração de "+mem.nome,obj:"a elaboração do "+mem.nome};
-  const extra=mem?", incluindo "+mem.nome:"",arq=main.some(d=>d.item==="001.");
+  if(!main.length)return{sub:"Elaboração de "+mem.nome,obj:"a elaboração de "+mem.nome.toLowerCase()};
+  const extra=mem?", incluindo "+mem.nome.toLowerCase():"",arq=main.some(d=>d.item==="001.");
   if(arq&&main.length>1)return{sub:"Elaboração de Projeto de Arquitetura e Projetos Complementares"+extra,obj:"a elaboração dos projetos de arquitetura e complementares ("+lista(main.filter(d=>d.item!=="001.").map(d=>d.nome.replace(/^Projeto (de |)/,"")))+")"+extra};
   if(main.length===1)return{sub:"Elaboração de "+main[0].nome+extra,obj:"a elaboração do "+main[0].nome+extra};
   const r=lista(main.map(d=>d.nome.replace(/^Projeto /,"")));return{sub:"Elaboração dos Projetos "+r+extra,obj:"a elaboração dos projetos "+r+extra}}

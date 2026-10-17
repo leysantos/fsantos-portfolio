@@ -1,4 +1,4 @@
-import {ORC_CONFIG as C,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261016p";
+import {ORC_CONFIG as C,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261017m";
 import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
