@@ -1,5 +1,5 @@
 import {orcar,PRESETS,TIPOS,TAMB,REGRAS,REGRAS_CONT,CONT_SIS,CUB,SINAPI,defCob} from "./obra-modelo.js";
-import {esc} from "./orcamento.js?v=20261017m";
+import {esc} from "./orcamento.js?v=20261017r";
 import {enviarPDF} from "./share-pdf.js";
 const F2={minimumFractionDigits:2,maximumFractionDigits:2},num=v=>(+v||0).toLocaleString("pt-BR",F2),brl=v=>"R$ "+num(v);
 const $=s=>document.querySelector(s),tb=$("#amb"),msg=$("#ob-msg"),pf=v=>parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."))||0;

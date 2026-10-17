@@ -1,6 +1,6 @@
 // Configurações do site (Firestore config/site) — somente administrador verificado grava; leitura pública
 import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js?v=20261015c";
-import {ORC_CONFIG,CFG_DEF,esc} from "./orcamento.js?v=20261017m";
+import {ORC_CONFIG,CFG_DEF,esc} from "./orcamento.js?v=20261017r";
 const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {doc,getDoc,setDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),box=$("#tab-cfg");
@@ -15,7 +15,7 @@ export function formCfg(c={}){const v={...CFG_DEF,...c,pagAdm:{...CFG_DEF.pagAdm
  <fieldset><legend>Proposta</legend><div class="cgrid">${inp("val","Validade da proposta (dias)",v.validade,'inputmode="numeric"')}${inp("prazo","Prazo padrão (dias úteis)",v.prazo,'inputmode="numeric"')}</div>
  <label class="cfull">Observações padrão da proposta (uma por linha; entram nas Condições comerciais)<textarea id="cf-obs" rows="4" maxlength="2000">${esc(v.obs)}</textarea></label></fieldset>
  <fieldset><legend>Contato</legend><div class="cgrid">${inp("wa","WhatsApp (só números, com DDI 55)",v.whatsapp,'inputmode="numeric" maxlength="15"')}${inp("fone","Telefone exibido",v.fone,'maxlength="40"')}${inp("email","E-mail",v.email,'type="email" maxlength="120"')}</div></fieldset>
- <fieldset><legend>Dados de pagamento do administrador (preenchidos só quando você está logado)</legend><div class="cgrid">${inp("pix","Chave Pix",v.pagAdm.pix,'maxlength="120"')}${inp("banco","Banco",v.pagAdm.banco,'maxlength="120"')}${inp("tit","Titular",v.pagAdm.titular,'maxlength="120"')}</div></fieldset>
+ <fieldset><legend>Dados para pagamento exibidos na proposta</legend><div class="cgrid">${inp("pix","Chave Pix",v.pagAdm.pix,'maxlength="120"')}${inp("banco","Banco",v.pagAdm.banco,'maxlength="120"')}${inp("tit","Titular",v.pagAdm.titular,'maxlength="120"')}</div><p class="pcount">Aparecem em “Dados para pagamento” na proposta de elaboração de projetos. Campo vazio não aparece; se os três ficarem vazios, a proposta usa os dados padrão. Não coloque CPF nem endereço aqui: este dado é público.</p></fieldset>
  <div class="cact"><button class="btn" id="cf-save" type="button">Salvar configurações</button><button class="btn ghost" id="cf-def" type="button">Restaurar padrões</button></div><p class="omsg" id="cf-msg" role="status"></p>
  ${c.updatedAt?.toDate?`<p class="pcount">Última alteração: ${c.updatedAt.toDate().toLocaleString("pt-BR")}</p>`:""}</form>`;
  $("#cf-save").onclick=salvar;$("#cf-def").onclick=()=>{formCfg({});msg("Padrões carregados no formulário — clique em Salvar para gravar.",1)}}

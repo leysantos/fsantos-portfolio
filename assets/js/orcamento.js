@@ -50,6 +50,9 @@ export function escopo(itens){const C=ORC_CONFIG.disciplinas,cods=new Set((itens
   if(arq&&main.length>1)return{sub:"Elaboração de Projeto de Arquitetura e Projetos Complementares"+extra,obj:"a elaboração dos projetos de arquitetura e complementares ("+lista(main.filter(d=>d.item!=="001.").map(d=>d.nome.replace(/^Projeto (de |)/,"")))+")"+extra};
   if(main.length===1)return{sub:"Elaboração de "+main[0].nome+extra,obj:"a elaboração do "+main[0].nome+extra};
   const r=lista(main.map(d=>d.nome.replace(/^Projeto /,"")));return{sub:"Elaboração dos Projetos "+r+extra,obj:"a elaboração dos projetos "+r+extra}}
+// Dados para pagamento da proposta: vêm de Configurações (config/site.pagAdm). Campo vazio não aparece; tudo vazio ou config indisponível → padrões fixos
+export function pagamentoProposta(p=ORC_CONFIG.pagAdm){const t=v=>String(v??"").trim().slice(0,120),q={pix:t(p?.pix),banco:t(p?.banco),titular:t(p?.titular)};return q.pix||q.banco||q.titular?q:{...CFG_DEF.pagAdm}}
+const pagHtml=()=>{const p=pagamentoProposta();return[p.pix&&`Chave Pix: <b>${esc(p.pix)}</b>`,p.banco&&`Banco: ${esc(p.banco)}`,p.titular&&`Titular: ${esc(p.titular)}`].filter(Boolean).join("<br>")};
 // o: {numero, data(Date|string), cliente{nome,telefone,email}, projeto, cidade, itens, total, totalPorM2}
 export function renderProposta(o,el=document.getElementById("proposta"),onClose){const C=ORC_CONFIG,c=o.cliente||{},hoje=o.data instanceof Date?o.data.toLocaleDateString("pt-BR"):(o.data||new Date().toLocaleDateString("pt-BR"));
   const E=escopo(o.itens),area=o.itens.reduce((s,i)=>s+(+i.area||0),0),multi=o.itens.length>1,blank="________________";
@@ -57,10 +60,10 @@ export function renderProposta(o,el=document.getElementById("proposta"),onClose)
 <p class="pp-flag">Proposta preliminar — sujeita a confirmação</p><h2>Proposta de honorários — elaboração de projetos</h2><p class="pp-sub">${esc(E.sub)}</p><p class="pp-note"><b>Valores referentes à elaboração dos projetos (honorários técnicos). Não incluem execução da obra, materiais ou mão de obra.</b></p><p>${C.local}, ${esc(hoje)}</p>
 <p>A(o): <b>${esc(c.nome||blank)}</b><br>Projeto / obra: ${esc(descProjeto(o)||blank)}<br>Cidade da obra: ${esc(o.cidade||blank)}<br>Telefone: ${esc(c.telefone||blank)}${c.email?`<br>E-mail: ${esc(c.email)}`:""}</p>
 <h3>1. Objeto</h3><p>A presente proposta tem por objeto ${esc(E.obj)} para a obra acima indicada, conforme disciplinas e valores descritos abaixo.</p>
-<h3>2. Área de referência</h3><p>Área construída estimada: <b>${num(area)} m²</b>${multi?" ("+o.itens.map(i=>esc(i.nome||"Projeto")+": "+num(i.area)+" m²").join("; ")+")":""}.</p>
-<h3>3. Escopo e precificação</h3>${o.itens.map((it,k)=>(multi?`<h4>3.${k+1} ${esc(it.nome||"Projeto "+(k+1))} — ${num(it.area)} m²</h4>`:"")+tbl(it)).join("")}
+<h3>2. Área de referência</h3><p>Área construída estimada: <b>${num(area)} m²</b>${multi?" ("+o.itens.map((i,k)=>esc(i.nome||"Item "+(k+1))+": "+num(i.area)+" m²").join("; ")+")":""}.</p>
+<h3>3. Escopo e precificação</h3>${o.itens.map((it,k)=>(multi?`<h4>3.${k+1} ${esc(it.nome||"Item "+(k+1))} — ${num(it.area)} m²</h4>`:"")+tbl(it)).join("")}
 ${o.art?`<table class="pp-t pp-art"><tbody><tr><td>Subtotal dos projetos</td><td>${brl(o.subtotal)}</td></tr><tr><td>Emissão das ART (${num(o.artPct)}% sobre o subtotal)</td><td>${brl(o.art)}</td></tr>${o.desc?`<tr><td>Desconto (${num(o.descPct)}% sobre o subtotal)</td><td>− ${brl(o.desc)}</td></tr>`:""}</tbody></table>`:""}<p class="pp-tot">Valor total da proposta: <b>${brl(o.total)}</b> <small>(média ${brl(o.totalPorM2)}/m²)</small></p>
-<h3>4. Condições comerciais</h3><ul>${C.condicoes.map(x=>`<li>${x}</li>`).join("")}</ul><h4>Dados para pagamento</h4><p class="pp-pag">Chave Pix: <b>leyfps@gmail.com</b><br>Banco: Banco Inter<br>Titular: Francirley Pereira Santos</p>
+<h3>4. Condições comerciais</h3><ul>${C.condicoes.map(x=>`<li>${x}</li>`).join("")}</ul><h4>Dados para pagamento</h4><p class="pp-pag">${pagHtml()}</p>
 <h3>5. Aceite</h3><p>Declaro estar de acordo com os termos desta proposta.</p>
 <div class="pp-sig"><div class="pp-sb"><div class="pp-sl"></div><div class="pp-line"></div><div class="pp-st">Assinatura do contratante</div></div><div class="pp-sb"><div class="pp-sl"><img src="assets/img/logo-fsantos.png" alt=""></div><div class="pp-line"></div><div class="pp-st"><b>ENG. CIVIL FRANCIRLEY PEREIRA SANTOS</b><br>CREA: ${C.crea}<br>${C.empresa}<br>Fone: ${C.fone} | ${C.email}</div></div></div>
 <div class="pp-act noprint"><button class="btn" data-a="print">Imprimir / salvar PDF</button><button class="btn ghost" data-a="close">Fechar</button></div>`;

@@ -1,5 +1,5 @@
 import {auth,db,ADMIN_EMAIL,FB,googleLogin} from "./firebase-config.js?v=20261015c";
-import {renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261017m";
+import {renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261017r";
 const {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {collection,getDocs,getDoc,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"];let all=[];
