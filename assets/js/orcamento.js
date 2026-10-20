@@ -13,7 +13,8 @@ export const ORC_CONFIG={
     {item:"008.",nome:"Projeto de Combate a Incêndio (PPCI)",coef:0.7,preco:12,incluir:false},
     {item:"009.",nome:"Projeto de Gás",coef:0.3,preco:8.5,incluir:false},
     {item:"010.",nome:"Projeto de Ar-condicionado",coef:0.5,preco:10,incluir:false},
-    {item:"011.",nome:"Laudos e Vistorias",coef:0.6,preco:3.5,incluir:false}],
+    {item:"011.",nome:"Laudos e Vistorias",coef:0.6,preco:3.5,incluir:false},
+    {item:"012.",nome:"Projeto de Geoprocessamento",coef:1,preco:0,incluir:false}],
   get condicoes(){return condicoesDe(this)}
 };
 // Prazo da proposta: o informado no orçamento; senão, o prazo padrão da configuração (1 a 365 dias úteis).
@@ -112,15 +113,14 @@ function htmlConsulta(o){const b=o.itens?.[0]?.briefing||{},linhas=(o.itens||[])
 <h3>3. Escopo informado</h3><ul>${linhas}</ul><p class="pp-tot">Valor sob consulta, depois da análise do vão, da carga e dos documentos.</p>`}
 // o: {numero, data(Date|string), cliente{nome,telefone,email}, projeto, cidade, itens, total, totalPorM2}
 export function renderProposta(o,el=document.getElementById("proposta"),onClose){const C=ORC_CONFIG,c=o.cliente||{},hoje=o.data instanceof Date?o.data.toLocaleDateString("pt-BR"):(o.data||new Date().toLocaleDateString("pt-BR"));
-  const sob=(o.itens||[]).some(i=>i&&i.sobConsulta);
   const E=escopo(o.itens),area=o.itens.reduce((s,i)=>s+(+i.area||0),0),multi=o.itens.length>1,blank="________________";
   el.innerHTML=`<div class="pp-head"><img src="assets/img/logo-fsantos.png" alt=""><div><strong>${C.empresa}</strong><br>${C.responsavel} — CREA ${C.crea}</div>${o.numero?`<div class="pp-num">Nº ${esc(o.numero)}</div>`:""}</div>
 <p class="pp-flag">Proposta preliminar — sujeita a confirmação</p><h2>Proposta de honorários — elaboração de projetos</h2><p class="pp-sub">${esc(E.sub)}</p><p class="pp-note"><b>Valores referentes à elaboração dos projetos (honorários técnicos). Não incluem execução da obra, materiais ou mão de obra.</b></p><p>${C.local}, ${esc(hoje)}</p>
 <p>A(o): <b>${esc(c.nome||blank)}</b><br>Projeto / obra: ${esc(descProjeto(o)||blank)}<br>Cidade da obra: ${esc(o.cidade||blank)}<br>Telefone: ${esc(c.telefone||blank)}${c.email?`<br>E-mail: ${esc(c.email)}`:""}</p>
-${sob?htmlConsulta(o):`<h3>1. Objeto</h3><p>A presente proposta tem por objeto ${esc(E.obj)} para a obra acima indicada, conforme disciplinas e valores descritos abaixo.</p>
+<h3>1. Objeto</h3><p>A presente proposta tem por objeto ${esc(E.obj)} para a obra acima indicada, conforme disciplinas e valores descritos abaixo.</p>
 <h3>2. Área de referência</h3><p>Área construída estimada: <b>${num2(area)} m²</b>${multi?" ("+o.itens.map((i,k)=>esc(i.nome||"Item "+(k+1))+": "+num2(i.area)+" m²").join("; ")+")":""}.</p>
 <h3>3. Escopo e precificação</h3>${o.itens.map((it,k)=>(multi?`<h4>3.${k+1} ${esc(it.nome||"Item "+(k+1))} — ${num2(it.area)} m²</h4>`:"")+tbl(it)).join("")}
-${o.art?`<table class="pp-t pp-art"><tbody><tr><td>Subtotal dos projetos</td><td>${brl(o.subtotal)}</td></tr><tr><td>${rotuloArt(o,"sobre o")}</td><td>${brl(o.art)}</td></tr>${o.desc?`<tr><td>Desconto (${num2(o.descPct)}% sobre o subtotal)</td><td>− ${brl(o.desc)}</td></tr>`:""}</tbody></table>`:""}<p class="pp-tot">Valor total da proposta: <b>${brl(o.total)}</b> <small>(média ${brl(o.totalPorM2)}/m²)</small></p>`}
+${o.art?`<table class="pp-t pp-art"><tbody><tr><td>Subtotal dos projetos</td><td>${brl(o.subtotal)}</td></tr><tr><td>${rotuloArt(o,"sobre o")}</td><td>${brl(o.art)}</td></tr>${o.desc?`<tr><td>Desconto (${num2(o.descPct)}% sobre o subtotal)</td><td>− ${brl(o.desc)}</td></tr>`:""}</tbody></table>`:""}<p class="pp-tot">Valor total da proposta: <b>${brl(o.total)}</b> <small>(média ${brl(o.totalPorM2)}/m²)</small></p>
 <h3>4. Condições comerciais</h3><ul>${condicoesDe(o).map(x=>`<li>${x}</li>`).join("")}</ul><h4>Dados para pagamento</h4><p class="pp-pag">${pagHtml()}</p>
 <h3>5. Aceite</h3><p>Declaro estar de acordo com os termos desta proposta.</p>
 <div class="pp-sig"><div class="pp-sb"><div class="pp-sl"></div><div class="pp-line"></div><div class="pp-st">Assinatura do contratante</div></div><div class="pp-sb"><div class="pp-sl"><img src="assets/img/logo-fsantos.png" alt=""></div><div class="pp-line"></div><div class="pp-st"><b>ENG. CIVIL FRANCIRLEY PEREIRA SANTOS</b><br>CREA: ${C.crea}<br>${C.empresa}<br>Fone: ${C.fone} | ${C.email}</div></div></div>
