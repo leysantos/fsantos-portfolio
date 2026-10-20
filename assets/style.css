@@ -83,7 +83,7 @@ footer a.restrito{color:var(--mut);opacity:.6;font-size:.8rem;text-decoration:no
 .hero .cta{grid-template-columns:repeat(3,1fr)}
 .hero .cta .btn{margin:0;max-width:none;height:52px;display:flex;align-items:center;justify-content:center;padding:0 1rem;border-radius:10px;box-sizing:border-box;white-space:nowrap}
 .hero .tcta-row{grid-template-columns:1fr 1fr;margin-top:.9rem}
-.hero .tcta-row .tcta,.hero .tcta-row .tcta.tcta-obra{display:flex;align-items:center;gap:.75rem;max-width:none;width:100%;margin:0;height:76px;padding:0 1rem;border-radius:10px;text-align:left;font-size:.92rem;font-weight:700;line-height:1.25;color:var(--txt);text-decoration:none;
+.hero .tcta-row .tcta,.hero .tcta-row .tcta.tcta-obra{display:flex;align-items:center;gap:.75rem;max-width:none;width:100%;margin:0;height:76px;padding:0 1rem;border-radius:999px;text-align:left;font-size:.92rem;font-weight:700;line-height:1.25;color:var(--txt);text-decoration:none;
   background:linear-gradient(160deg,rgba(19,40,74,.82),rgba(11,26,48,.72));backdrop-filter:blur(8px);border:1px solid rgba(242,182,50,.55);box-shadow:0 6px 20px rgba(0,0,0,.35);animation:none;transition:transform .2s,border-color .2s,box-shadow .2s;box-sizing:border-box}
 .hero .tcta-row .tcta.tcta-obra{border-color:rgba(46,196,182,.6)}
 .hero .tcta-row .tcta:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 10px 26px rgba(0,0,0,.45)}
@@ -186,7 +186,7 @@ body.pp-open .totop,body.guia .totop{display:none}
 @media(prefers-reduced-motion:reduce){.fhero.cb,.cb-body,.cb-tg svg{transition:none}}@media print{.cb-tg{display:none!important}.fhero.cb.min .cb-body{max-height:none;opacity:1;visibility:visible}}
 .hero .tag{max-width:46rem;margin-left:auto;margin-right:auto;font-size:clamp(1rem,2.3vw,1.2rem)}
 .hero-crea{margin:-1.2rem 0 1.1rem;color:#d5deea;font-size:.95rem}
-.hero .cta.cta2{grid-template-columns:1fr 1fr;max-width:520px}
+.hero .cta.cta1{grid-template-columns:1fr;max-width:280px;margin-top:.85rem}
 .assuntos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.45rem;width:min(720px,100%);margin:.9rem auto 0}
 .assuntos a{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:3.25rem;padding:.35rem .45rem;color:var(--txt);text-decoration:none;text-align:center;line-height:1.15;border:1px solid #f2b63288;border-radius:999px;background:rgba(11,26,48,.72);font-size:.88rem;font-weight:700}
 .assuntos a:hover{border-color:var(--gold);color:var(--gold)}
