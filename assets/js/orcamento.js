@@ -14,14 +14,20 @@ export const ORC_CONFIG={
     {item:"009.",nome:"Projeto de Gás",coef:0.3,preco:8.5,incluir:false},
     {item:"010.",nome:"Projeto de Ar-condicionado",coef:0.5,preco:10,incluir:false},
     {item:"011.",nome:"Laudos e Vistorias",coef:0.6,preco:3.5,incluir:false}],
-  get condicoes(){return["Entregáveis: arquivos digitais DWG e PDF em .ZIP.","Revisões técnicas inclusas até aprovação no órgão competente, sem mudança significativa de escopo.",`Prazo estimado: ${this.prazo} dias úteis após recebimento de todas as informações necessárias.`,"Pagamento: 50% no início; saldo conforme cronograma acordado.",`Validade desta proposta: ${this.validade} dias.`,"Para fundações, o contratante deverá fornecer laudo de sondagem.",...String(this.obs||"").split(/\n+/).map(x=>x.trim()).filter(Boolean)]}
+  get condicoes(){return condicoesDe(this)}
 };
+// Prazo da proposta: o informado no orçamento; senão, o prazo padrão da configuração (1 a 365 dias úteis).
+export function prazoDe(v){const raw=v&&typeof v==="object"?(v.prazo??(v.itens||[]).map(i=>i&&i.prazo).find(x=>x!=null)):v;if(raw==null||raw==="")return ORC_CONFIG.prazo;const n=Math.round(+raw);return isFinite(n)&&n>=1?Math.min(365,n):ORC_CONFIG.prazo}
+export function condicoesDe(src){const C=ORC_CONFIG,p=prazoDe(src);return["Entregáveis: arquivos digitais DWG e PDF em .ZIP.","Revisões técnicas inclusas até aprovação no órgão competente, sem mudança significativa de escopo.",`Prazo estimado: ${p} dias úteis após recebimento de todas as informações necessárias.`,"Pagamento: 50% no início; saldo conforme cronograma acordado.",`Validade desta proposta: ${C.validade} dias.`,"Para fundações, o contratante deverá fornecer laudo de sondagem.",...String(C.obs||"").split(/\n+/).map(x=>x.trim()).filter(Boolean)]}
 export const brl=n=>(+n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 export const num=n=>(+n||0).toLocaleString("pt-BR",{maximumFractionDigits:2});
 export const esc=s=>String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
 const r2=n=>Math.round(n*100)/100;
 // Acréscimos sobre o valor base do Projeto Estrutural (item 002). O percentual é informado no formulário.
 export const ITEM_EST="002.";
+// R$/m² do estrutural pela área construída: abaixo de 100 m² o maior valor, de 100 a 1.000 o médio, acima de 1.000 o menor.
+export const PRECO_EST={min:10,med:17.5,max:25};
+export function precoEstrutural(area){const A=Math.max(0,+area||0);return A<100?PRECO_EST.max:A<=1000?PRECO_EST.med:PRECO_EST.min}
 export const COMPLEXIDADE_EST=[
   {id:"fundacao",nome:"Fundação profunda"},
   {id:"vao",nome:"Vão maior que 8 m"},
@@ -31,21 +37,30 @@ export const COMPLEXIDADE_EST=[
   {id:"marquise",nome:"Marquise em balanço"},
   {id:"mezanino",nome:"Mezanino em estrutura metálica"},
   {id:"cisterna",nome:"Caixa de retenção / cisterna"},
-  {id:"pduplo",nome:"Pé-direito duplo"}];
+  {id:"pduplo",nome:"Pé-direito duplo"},
+  {id:"rolante",nome:"Ponte rolante / viga de rolamento"},
+  {id:"metalica",nome:"Estrutura metálica"},
+  {id:"reforco",nome:"Reforço estrutural ou remoção de elemento"},
+  {id:"helicoidal",nome:"Escada helicoidal ou com degraus em balanço"},
+  {id:"nervurada",nome:"Laje nervurada ou protendida"},
+  {id:"transicao",nome:"Viga de transição"}];
 export function parsePct(v){let s=String(v??"").trim().replace("%","").replace(/\s/g,"");if(!s)return 0;if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");const n=+s;return isFinite(n)?n:0}
 // objeto {id: percentual} ou lista [{id,pct}] — só itens conhecidos, cada um de 0 a 100
 export function lerComplexidade(raw){const map={};if(Array.isArray(raw))raw.forEach(x=>{if(x&&x.id!=null)map[x.id]=x.pct});else if(raw&&typeof raw==="object")Object.assign(map,raw);
   const out={};COMPLEXIDADE_EST.forEach(c=>{const n=r2(parsePct(map[c.id]));if(n>0)out[c.id]=Math.min(100,n)});return out}
 // item de entrada: {nome, area, sel:[índices das disciplinas], complexidade?:{id:percentual}}
 export function calcItem(it){const A=Math.max(0,+it.area||0),sel=Array.isArray(it.sel)?it.sel:[],iEst=ORC_CONFIG.disciplinas.findIndex(d=>d.item===ITEM_EST),cx=sel.includes(iEst)?lerComplexidade(it.complexidade):{};
-  const disciplinas=ORC_CONFIG.disciplinas.map((d,i)=>({d,i})).filter(x=>sel.includes(x.i)).map(({d})=>{const areaProjeto=r2(A*d.coef),base=r2(areaProjeto*d.preco);
-    if(d.item!==ITEM_EST)return{item:d.item,nome:d.nome,coef:d.coef,preco:d.preco,areaProjeto,total:base};
+  const disciplinas=ORC_CONFIG.disciplinas.map((d,i)=>({d,i})).filter(x=>sel.includes(x.i)).map(({d})=>{const preco=d.item===ITEM_EST?precoEstrutural(A):d.preco,areaProjeto=r2(A*d.coef),base=r2(areaProjeto*preco);
+    if(d.item!==ITEM_EST)return{item:d.item,nome:d.nome,coef:d.coef,preco,areaProjeto,total:base};
     const complexidade=COMPLEXIDADE_EST.filter(c=>cx[c.id]).map(c=>{const pct=cx[c.id];return{id:c.id,nome:c.nome,pct,valor:r2(base*pct/100)}}),acrescimo=r2(complexidade.reduce((s,x)=>s+x.valor,0));
-    const row={item:d.item,nome:d.nome,coef:d.coef,preco:d.preco,areaProjeto,base,total:r2(base+acrescimo)};
+    const row={item:d.item,nome:d.nome,coef:d.coef,preco,areaProjeto,base,total:r2(base+acrescimo)};
     if(complexidade.length){row.acrescimo=acrescimo;row.pctComplexidade=r2(complexidade.reduce((s,x)=>s+x.pct,0));row.complexidade=complexidade}
     return row});
   return{nome:String(it.nome||"").slice(0,160),area:A,disciplinas,...(Object.keys(cx).length?{complexidade:cx}:{}),subtotal:r2(disciplinas.reduce((s,x)=>s+x.total,0))}}
-export function calcTotal(itens,artPct=ORC_CONFIG.artPct,descPct=ORC_CONFIG.descPct){const subtotal=r2(itens.reduce((s,i)=>s+i.subtotal,0)),area=itens.reduce((s,i)=>s+i.area,0),p=Math.min(20,Math.max(0,+artPct||0)),dp=Math.min(50,Math.max(0,+descPct||0)),art=r2(subtotal*p/100),desc=r2(subtotal*dp/100),total=r2(subtotal+art-desc);return{subtotal,artPct:p,art,descPct:dp,desc,total,area,totalPorM2:area?r2(total/area):0}}
+export const ART_MIN=108;
+export function calcTotal(itens,artPct=ORC_CONFIG.artPct,descPct=ORC_CONFIG.descPct){const subtotal=r2(itens.reduce((s,i)=>s+i.subtotal,0)),area=itens.reduce((s,i)=>s+i.area,0),p=Math.min(20,Math.max(0,+artPct||0)),dp=Math.min(50,Math.max(0,+descPct||0)),artCalc=r2(subtotal*p/100),art=p>0&&subtotal>0&&artCalc<ART_MIN?ART_MIN:artCalc,desc=r2(subtotal*dp/100),total=r2(subtotal+art-desc);return{subtotal,artPct:p,art,descPct:dp,desc,total,area,totalPorM2:area?r2(total/area):0}}
+export function artUsaMinimo(o){const p=+o?.artPct||0,sub=+o?.subtotal||0,art=+o?.art||0;if(!(p>0&&sub>0))return false;return r2(sub*p/100)<ART_MIN-0.001&&art>=ART_MIN-0.001}
+export function rotuloArt(o,lig="do"){const p=num(o?.artPct||0);return artUsaMinimo(o)?`Emissão das ART (${p}% ${lig} subtotal; mínimo ${brl(ART_MIN)})`:`Emissão das ART (${p}% ${lig} subtotal)`}
 // nome atual da disciplina pelo código (registros antigos guardam o nome antigo, ex.: 011 "ART-RRT", 004 "Projeto Hidráulico de Água Fria")
 const codDisc=x=>{const m=String(x?.item??x?.id??"").match(/\d+/);return m?m[0].padStart(3,"0")+".":""};
 const NOMES_ANTIGOS={"memorial descritivo / laudos":"011.","memorial descritivo":"011.","laudos":"011.","art-rrt":"011.","projeto hidráulico de água fria":"004.","projeto hidraulico de agua fria":"004."};
@@ -64,7 +79,7 @@ export function aplicarConfig(c){if(!c||typeof c!=="object")return false;const C
   if(n(c.artPct,0,20))C.artPct=c.artPct;if(n(c.descMax,0,50))C.descMax=c.descMax;if(n(c.descPct,0,50))C.descPct=Math.min(c.descPct,C.descMax);if(n(c.validade,1,365))C.validade=Math.round(c.validade);if(n(c.prazo,1,365))C.prazo=Math.round(c.prazo);
   if(typeof c.obs==="string")C.obs=c.obs.slice(0,2000);if(typeof c.whatsapp==="string"&&/^\d{10,15}$/.test(c.whatsapp))C.whatsapp=c.whatsapp;if(typeof c.email==="string"&&c.email.includes("@"))C.email=c.email.slice(0,120);if(typeof c.fone==="string"&&c.fone.trim())C.fone=c.fone.slice(0,40);
   if(c.pagAdm&&typeof c.pagAdm==="object")C.pagAdm={pix:String(c.pagAdm.pix??C.pagAdm.pix).slice(0,120),banco:String(c.pagAdm.banco??C.pagAdm.banco).slice(0,120),titular:String(c.pagAdm.titular??C.pagAdm.titular).slice(0,120)};
-  if(c.precos&&typeof c.precos==="object")C.disciplinas.forEach(d=>{const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});return true}
+  if(c.precos&&typeof c.precos==="object")C.disciplinas.forEach(d=>{if(d.item===ITEM_EST)return;const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});return true}
 export async function carregarConfig(db,F,ms=6000){try{const s=await Promise.race([F.getDoc(F.doc(db,"config","site")),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);return s.exists()?(aplicarConfig(s.data()),s.data()):null}catch(e){console.warn("config/site indisponível — usando padrões",e.code||e.message);return null}}
 const tbl=it=>`<table class="pp-t"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Área projeto (m²)</th><th>R$/m²</th><th>Total</th></tr></thead><tbody>${it.disciplinas.map(htmlLinhasDisciplina).join("")}<tr><td colspan="5"><b>Subtotal</b></td><td><b>${brl(it.subtotal)}</b></td></tr></tbody></table><p class="pp-amb"><small>Área base: ${num(it.area)} m² (área construída) × coef. de área da disciplina = área de projeto.${(it.disciplinas||[]).some(x=>(x.complexidade||[]).length)?" Cada percentual de complexidade incide sobre o valor base do projeto estrutural e soma ao total da disciplina.":""}</small></p>`;
 // Subtítulo e objeto da proposta conforme as disciplinas selecionadas (011 Laudos e Vistorias entra como complemento)
@@ -89,8 +104,8 @@ export function renderProposta(o,el=document.getElementById("proposta"),onClose)
 <h3>1. Objeto</h3><p>A presente proposta tem por objeto ${esc(E.obj)} para a obra acima indicada, conforme disciplinas e valores descritos abaixo.</p>
 <h3>2. Área de referência</h3><p>Área construída estimada: <b>${num(area)} m²</b>${multi?" ("+o.itens.map((i,k)=>esc(i.nome||"Item "+(k+1))+": "+num(i.area)+" m²").join("; ")+")":""}.</p>
 <h3>3. Escopo e precificação</h3>${o.itens.map((it,k)=>(multi?`<h4>3.${k+1} ${esc(it.nome||"Item "+(k+1))} — ${num(it.area)} m²</h4>`:"")+tbl(it)).join("")}
-${o.art?`<table class="pp-t pp-art"><tbody><tr><td>Subtotal dos projetos</td><td>${brl(o.subtotal)}</td></tr><tr><td>Emissão das ART (${num(o.artPct)}% sobre o subtotal)</td><td>${brl(o.art)}</td></tr>${o.desc?`<tr><td>Desconto (${num(o.descPct)}% sobre o subtotal)</td><td>− ${brl(o.desc)}</td></tr>`:""}</tbody></table>`:""}<p class="pp-tot">Valor total da proposta: <b>${brl(o.total)}</b> <small>(média ${brl(o.totalPorM2)}/m²)</small></p>
-<h3>4. Condições comerciais</h3><ul>${C.condicoes.map(x=>`<li>${x}</li>`).join("")}</ul><h4>Dados para pagamento</h4><p class="pp-pag">${pagHtml()}</p>
+${o.art?`<table class="pp-t pp-art"><tbody><tr><td>Subtotal dos projetos</td><td>${brl(o.subtotal)}</td></tr><tr><td>${rotuloArt(o,"sobre o")}</td><td>${brl(o.art)}</td></tr>${o.desc?`<tr><td>Desconto (${num(o.descPct)}% sobre o subtotal)</td><td>− ${brl(o.desc)}</td></tr>`:""}</tbody></table>`:""}<p class="pp-tot">Valor total da proposta: <b>${brl(o.total)}</b> <small>(média ${brl(o.totalPorM2)}/m²)</small></p>
+<h3>4. Condições comerciais</h3><ul>${condicoesDe(o).map(x=>`<li>${x}</li>`).join("")}</ul><h4>Dados para pagamento</h4><p class="pp-pag">${pagHtml()}</p>
 <h3>5. Aceite</h3><p>Declaro estar de acordo com os termos desta proposta.</p>
 <div class="pp-sig"><div class="pp-sb"><div class="pp-sl"></div><div class="pp-line"></div><div class="pp-st">Assinatura do contratante</div></div><div class="pp-sb"><div class="pp-sl"><img src="assets/img/logo-fsantos.png" alt=""></div><div class="pp-line"></div><div class="pp-st"><b>ENG. CIVIL FRANCIRLEY PEREIRA SANTOS</b><br>CREA: ${C.crea}<br>${C.empresa}<br>Fone: ${C.fone} | ${C.email}</div></div></div>
 <div class="pp-act noprint"><button class="btn" data-a="print">Imprimir / salvar PDF</button><button class="btn ghost" data-a="close">Fechar</button></div>`;

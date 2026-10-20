@@ -1,6 +1,6 @@
 // Configurações do site (Firestore config/site) — somente administrador verificado grava; leitura pública
 import {auth,db,ADMIN_EMAIL,FB} from "./firebase-config.js?v=20261015c";
-import {ORC_CONFIG,CFG_DEF,esc} from "./orcamento.js?v=20261017r";
+import {ORC_CONFIG,CFG_DEF,esc,ITEM_EST,PRECO_EST,brl} from "./orcamento.js?v=20261020e";
 const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {doc,getDoc,setDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),box=$("#tab-cfg");
@@ -11,7 +11,7 @@ export function formCfg(c={}){const v={...CFG_DEF,...c,pagAdm:{...CFG_DEF.pagAdm
  box.innerHTML=`<div class="ptop"><h2>Configurações do site</h2></div><p class="pcount">Valores usados pela calculadora “Orçamento de projetos” e pela proposta em PDF. Se a configuração não puder ser lida, o site usa os padrões do código.</p>
  <form id="cf-form" class="cform" onsubmit="return false">
  <fieldset><legend>Honorários</legend><div class="cgrid">${inp("art","Emissão das ART (% sobre o subtotal)",n2(v.artPct),'inputmode="decimal"')}${inp("desc","Desconto padrão (%)",n2(v.descPct),'inputmode="decimal"')}${inp("dmax","Desconto máximo (%)",n2(v.descMax),'inputmode="decimal"')}</div>
- <div class="otab"><table class="ptab"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Valor base (R$/m²)</th></tr></thead><tbody>${DISC.map(d=>`<tr><td>${d.item}</td><td>${esc(d.nome)}</td><td>${n2(d.coef)}</td><td><input class="cf-pr" data-it="${d.item}" inputmode="decimal" value="${n2(v.precos[d.item]??d.preco)}"></td></tr>`).join("")}</tbody></table></div></fieldset>
+ <div class="otab"><table class="ptab"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Valor base (R$/m²)</th></tr></thead><tbody>${DISC.map(d=>d.item===ITEM_EST?`<tr><td>${d.item}</td><td>${esc(d.nome)}</td><td>${n2(d.coef)}</td><td>${brl(PRECO_EST.max)} até 100 m² · ${brl(PRECO_EST.med)} de 100 a 1.000 m² · ${brl(PRECO_EST.min)} acima de 1.000 m²</td></tr>`:`<tr><td>${d.item}</td><td>${esc(d.nome)}</td><td>${n2(d.coef)}</td><td><input class="cf-pr" data-it="${d.item}" inputmode="decimal" value="${n2(v.precos[d.item]??d.preco)}"></td></tr>`).join("")}</tbody></table></div></fieldset>
  <fieldset><legend>Proposta</legend><div class="cgrid">${inp("val","Validade da proposta (dias)",v.validade,'inputmode="numeric"')}${inp("prazo","Prazo padrão (dias úteis)",v.prazo,'inputmode="numeric"')}</div>
  <label class="cfull">Observações padrão da proposta (uma por linha; entram nas Condições comerciais)<textarea id="cf-obs" rows="4" maxlength="2000">${esc(v.obs)}</textarea></label></fieldset>
  <fieldset><legend>Contato</legend><div class="cgrid">${inp("wa","WhatsApp (só números, com DDI 55)",v.whatsapp,'inputmode="numeric" maxlength="15"')}${inp("fone","Telefone exibido",v.fone,'maxlength="40"')}${inp("email","E-mail",v.email,'type="email" maxlength="120"')}</div></fieldset>

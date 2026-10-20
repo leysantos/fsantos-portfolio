@@ -1,4 +1,4 @@
-import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,carregarConfig,parsePct} from "./orcamento.js?v=20261020a";
+import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,rotuloArt,carregarConfig,parsePct,prazoDe} from "./orcamento.js?v=20261020e";
 import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
@@ -15,16 +15,17 @@ const f=id=>$("#o-"+id).value.trim();
 const estOn=d=>[...d.querySelectorAll(".disc input:checked")].some(x=>C.disciplinas[+x.value]?.item===ITEM_EST);
 function readCx(d){const o={};d.querySelectorAll(".i-cx").forEach(i=>{const v=parsePct(i.value);if(v>0)o[i.dataset.cx]=v});return o}
 function read(){return[...box.children].map(d=>{const sel=[...d.querySelectorAll(".disc input:checked")].map(x=>+x.value),complexidade=estOn(d)?readCx(d):{};return{...calcItem({nome:d.querySelector(".i-nome").value.trim(),area:parseFloat(d.querySelector(".i-area").value.replace(/\./g,"").replace(",","."))||0,sel,complexidade}),sel}})}
-function build(){const itens=read(),t=calcTotal(itens);return{cliente:{nome:f("nome").slice(0,120),telefone:f("tel").slice(0,40),email:f("email").slice(0,120)},projeto:descProjeto({itens}),cidade:f("cid").slice(0,100),itens,subtotal:t.subtotal,artPct:t.artPct,art:t.art,...(t.desc?{descPct:t.descPct,desc:t.desc}:{}),total:t.total,totalPorM2:t.totalPorM2,area:t.area}}
+function lerPrazo(){const el=$("#o-prazo");return prazoDe(el&&el.value.trim()!==""?parsePct(el.value):"")}
+function build(){const itens=read(),t=calcTotal(itens),prazo=lerPrazo();if(itens[0])itens[0].prazo=prazo;return{cliente:{nome:f("nome").slice(0,120),telefone:f("tel").slice(0,40),email:f("email").slice(0,120)},projeto:descProjeto({itens}),cidade:f("cid").slice(0,100),itens,prazo,subtotal:t.subtotal,artPct:t.artPct,art:t.art,...(t.desc?{descPct:t.descPct,desc:t.desc}:{}),total:t.total,totalPorM2:t.totalPorM2,area:t.area}}
 function draw(){[...box.children].forEach((d,i)=>{d.querySelector(".ono").textContent=box.children.length>1?" — item "+(i+1):"";d.querySelector(".rm").hidden=box.children.length<2;d.querySelector(".cx").hidden=!estOn(d);d.querySelectorAll(".i-cx").forEach(i=>{if(parsePct(i.value)>100)i.value="100"})});
   const o=build(),multi=o.itens.length>1;
   $("#o-tab tbody").innerHTML=o.itens.map((it,k)=>(multi?`<tr class="grp"><td colspan="6">${esc(it.nome||"Item "+(k+1))} — ${num(it.area)} m²</td></tr>`:"")+(it.disciplinas.map(htmlLinhasDisciplina).join("")||'<tr><td colspan="6">Selecione ao menos uma disciplina.</td></tr>')+(multi?`<tr class="sub"><td colspan="5">Subtotal</td><td>${brl(it.subtotal)}</td></tr>`:"")).join("");
-  $("#o-sub").textContent=brl(o.subtotal);$("#o-artl").textContent=`Emissão das ART (${num(o.artPct)}% do subtotal)`;$("#o-artv").textContent=brl(o.art);{const r=$("#o-descr");if(r){r.hidden=!o.desc;$("#o-descl").textContent=`Desconto (${num(o.descPct||0)}% do subtotal)`;$("#o-descv").textContent="− "+brl(o.desc||0)}}$("#o-tot").textContent=brl(o.total);$("#o-med").textContent=brl(o.totalPorM2)+"/m²";
-  const t=`Olá! Gostaria de um orçamento para ELABORAÇÃO DE PROJETOS (honorários técnicos — não inclui execução da obra, materiais ou mão de obra).\nCliente: ${o.cliente.nome||"-"}${o.projeto?`\nProjeto: ${o.projeto}`:""}\nCidade: ${o.cidade||"-"}\n`+o.itens.map((it,k)=>`• ${it.nome||"Item "+(k+1)} (${num(it.area)} m²): ${it.disciplinas.map(nomeDisc).join(", ")}${textoComplexidade(it)?`\n  Complexidade do estrutural: ${textoComplexidade(it)}`:""}`).join("\n")+`\n${o.art?`Subtotal dos projetos: ${brl(o.subtotal)}\nEmissão das ART (${num(o.artPct)}%): ${brl(o.art)}\n${o.desc?`Desconto (${num(o.descPct)}%): − ${brl(o.desc)}\n`:""}`:""}Total estimado (honorários de projeto): ${brl(o.total)}`;
+  $("#o-sub").textContent=brl(o.subtotal);$("#o-artl").textContent=rotuloArt(o,"do");$("#o-artv").textContent=brl(o.art);{const r=$("#o-descr");if(r){r.hidden=!o.desc;$("#o-descl").textContent=`Desconto (${num(o.descPct||0)}% do subtotal)`;$("#o-descv").textContent="− "+brl(o.desc||0)}}$("#o-tot").textContent=brl(o.total);$("#o-med").textContent=brl(o.totalPorM2)+"/m²";
+  const t=`Olá! Gostaria de um orçamento para ELABORAÇÃO DE PROJETOS (honorários técnicos — não inclui execução da obra, materiais ou mão de obra).\nCliente: ${o.cliente.nome||"-"}${o.projeto?`\nProjeto: ${o.projeto}`:""}\nCidade: ${o.cidade||"-"}\nPrazo de elaboração: ${o.prazo} dias úteis\n`+o.itens.map((it,k)=>`• ${it.nome||"Item "+(k+1)} (${num(it.area)} m²): ${it.disciplinas.map(nomeDisc).join(", ")}${textoComplexidade(it)?`\n  Complexidade do estrutural: ${textoComplexidade(it)}`:""}`).join("\n")+`\n${o.art?`Subtotal dos projetos: ${brl(o.subtotal)}\n${rotuloArt(o,"do")}: ${brl(o.art)}\n${o.desc?`Desconto (${num(o.descPct)}%): − ${brl(o.desc)}\n`:""}`:""}Total estimado (honorários de projeto): ${brl(o.total)}`;
   WA_TXT=t;$("#o-wa").href=`https://wa.me/${C.whatsapp}?text=`+encodeURIComponent(t);return o}
 let WA_TXT="",ULT="";
 function numero(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(4));return`ORC-${new Date().getFullYear()}-`+[...r].map(b=>a[b%a.length]).join("")}
-$("#o-form").addEventListener("input",draw);$("#o-add").onclick=addItem;addItem();
+$("#o-form").addEventListener("input",e=>{if(e.target&&e.target.id==="o-prazo")e.target.dataset.user="1";draw()});$("#o-add").onclick=addItem;addItem();
 // ---- conta (Firebase Auth) + Meus orçamentos ----
 let FBM=null,USER=null,PERFIL=null,ADMIN=false,EDIT=null,MEUS=[];const ADM="leyfps@gmail.com";
 async function fb(){if(FBM)return FBM;const [cfg,A,F]=await Promise.all([import("./firebase-config.js?v=20261015c"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js")]);return FBM={...cfg,A,F}}
@@ -71,6 +72,7 @@ function carregar(o,editar){box.innerHTML="";const its=o.itens?.length?o.itens:[
     const cx=it.complexidade&&!Array.isArray(it.complexidade)?it.complexidade:Object.fromEntries((it.disciplinas||[]).flatMap(x=>x.complexidade||[]).map(x=>[x.id,x.pct]));
     d.querySelectorAll(".i-cx").forEach(i=>{const v=cx[i.dataset.cx];i.value=v?String(v).replace(".",","):""})});
   $("#o-nome").value=o.cliente?.nome||"";$("#o-tel").value=o.cliente?.telefone||"";$("#o-email").value=o.cliente?.email||"";$("#o-cid").value=o.cidade||"";
+  const pz=$("#o-prazo"),salvo=o.prazo??o.itens?.[0]?.prazo;if(pz){if(salvo!=null&&salvo!==""){pz.value=String(prazoDe(salvo));pz.dataset.user="1"}else{pz.value=String(C.prazo);delete pz.dataset.user}}
   const r=draw();let av="";if(Math.abs((r.total||0)-(o.total||0))>0.05)av=` Atenção: com a tabela de preços atual o total é ${brl(r.total)} (salvo: ${brl(o.total)}). "Gerar proposta" na lista usa os valores salvos.`;
   if(editar){EDIT={id:o.id,numero:o.numero,uid:o.uid};$("#om-edt").textContent=`Editando ${o.numero}${USER&&o.uid!==USER.uid?" (orçamento de outro usuário — modo administrador)":""} — ao gerar a proposta as alterações serão salvas neste mesmo orçamento.`;$("#om-ed").hidden=false;$("#o-gerar").textContent="Salvar alterações e gerar proposta"}else fimEdit();
   mm(`Orçamento ${o.numero} carregado${editar?" para edição":""}.`+av,!av);$("#o-form").scrollIntoView({behavior:"smooth"})}
@@ -78,13 +80,13 @@ $("#o-gerar").onclick=async()=>{const o=draw();msg.className="omsg";
   if(!o.cliente.nome){msg.textContent="Informe o nome do cliente.";msg.classList.add("err");$("#o-nome").focus();return}
   if(!o.itens.length||o.itens.some(i=>!i.area||!i.disciplinas.length)){msg.textContent="Cada projeto precisa de área e de ao menos uma disciplina.";msg.classList.add("err");return}
   if(!USER){const btn=$("#o-gerar");btn.disabled=true;btn.textContent="Enviando…";o.numero=numero();
-    try{const {db,F}=await fb();const {area,...doc}=o;await Promise.race([F.addDoc(F.collection(db,"orcamentos"),{...doc,semLogin:true,status:"novo",createdAt:F.serverTimestamp()}),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
+    try{const {db,F}=await fb();const {area,prazo,...doc}=o;await Promise.race([F.addDoc(F.collection(db,"orcamentos"),{...doc,semLogin:true,status:"novo",createdAt:F.serverTimestamp()}),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
       msg.textContent=`Orçamento ${o.numero} registrado; entraremos em contato. Entre na sua conta (acima) para salvar seus orçamentos em Meus orçamentos e gerar a proposta novamente depois.`;msg.classList.add("ok")}
     catch(e){console.error(e);o.numero="";msg.textContent="Não foi possível registrar o orçamento agora. A proposta foi gerada mesmo assim; envie pelo WhatsApp para confirmar.";msg.classList.add("err")}
     finally{btn.disabled=false;btn.textContent="Gerar proposta"}
     ULT=o.numero||"";renderProposta({...o,data:new Date()});return}
   const btn=$("#o-gerar"),ed=!!EDIT;btn.disabled=true;btn.textContent="Salvando…";o.numero=ed?EDIT.numero:numero();
-  try{const {db,F}=await fb();const {area,...doc}=o;let op;
+  try{const {db,F}=await fb();const {area,prazo,...doc}=o;let op;
     if(ed){op=F.updateDoc(F.doc(db,"orcamentos",EDIT.id),{...doc,...(doc.pagamento?{}:{pagamento:F.deleteField()}),uid:EDIT.uid,updatedAt:F.serverTimestamp()})}
     else op=F.addDoc(F.collection(db,"orcamentos"),{...doc,uid:USER.uid,status:"novo",createdAt:F.serverTimestamp()});
     await Promise.race([op,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
@@ -105,4 +107,4 @@ $("#o-wa").onclick=async ev=>{ev.preventDefault();const o=draw(),b=$("#o-wa");ms
   finally{delete b.dataset.busy;b.textContent=lbl}};
 
 // configuração do site (ART, preços, prazos, contato) — usa os padrões se indisponível
-(async()=>{try{const {db,F}=await fb();if(await carregarConfig(db,F)){draw()}}catch(e){console.warn(e)}})();
+(async()=>{try{const {db,F}=await fb();if(await carregarConfig(db,F)){const el=$("#o-prazo");if(el&&!el.dataset.user)el.value=String(C.prazo);draw()}}catch(e){console.warn(e)}})();
