@@ -31,7 +31,12 @@ a{color:var(--gold)}.nav{position:sticky;top:0;z-index:5;display:flex;justify-co
 .ogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}.oform label{display:flex;flex-direction:column;font-size:.9rem;color:var(--mut)}
 .oform input:not([type=checkbox]){margin-top:.25rem;padding:.6rem;border-radius:8px;border:1px solid #ffffff2a;background:var(--navy2);color:var(--txt);font:inherit}
 fieldset{border:1px solid #ffffff22;border-radius:10px;margin:1rem 0}legend{color:var(--gold);padding:0 .4rem}.disc{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.3rem}.disc label{flex-direction:row!important;gap:.5rem;color:var(--txt)!important;align-items:center}
-.disc input{accent-color:var(--gold);width:18px;height:18px}.otab{overflow-x:auto}#o-tab{width:100%;border-collapse:collapse;font-size:.92rem}#o-tab th,#o-tab td{padding:.5rem;border-bottom:1px solid #ffffff18;text-align:left}#o-tab td:nth-child(n+3),#o-tab th:nth-child(n+3){text-align:right}
+.disc input{accent-color:var(--gold);width:18px;height:18px}.disc-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin:.15rem 0 .7rem}.disc-actions .btn{margin:0}
+.cx{margin-top:.85rem;padding:.75rem 1rem;background:#0b1a30}.cx .onote{margin:.15rem 0 .7rem}.cxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.55rem .9rem}
+.cx label{color:var(--txt)!important;font-size:.88rem}.cxin{display:flex;align-items:center;gap:.35rem;color:var(--mut)}.cxin input{width:5.2rem;margin-top:.2rem}
+.cx[hidden]{display:none!important}
+#o-tab tr.cxrow td{color:#c5d0e0;font-weight:400;font-size:.84rem}#proposta .pp-t tr.cxrow td{font-style:italic;color:#333;background:#f7f4ea}
+.otab{overflow-x:auto}#o-tab{width:100%;border-collapse:collapse;font-size:.92rem}#o-tab th,#o-tab td{padding:.5rem;border-bottom:1px solid #ffffff18;text-align:left}#o-tab td:nth-child(n+3),#o-tab th:nth-child(n+3){text-align:right}
 #o-tab tfoot td{font-weight:700;color:var(--gold);text-align:right}.onote{color:var(--mut);font-size:.85rem}
 #proposta{display:none}body.pp-open>*:not(#proposta):not(.html2pdf__overlay):not(.html2pdf__container){display:none!important}body.pp-open{background:#fff}
 body.pp-open #proposta{display:block;max-width:820px;margin:0 auto;padding:2rem;background:#fff;color:#111;font-family:Georgia,serif;line-height:1.5}

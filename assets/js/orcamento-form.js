@@ -1,18 +1,26 @@
-import {ORC_CONFIG as C,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,carregarConfig} from "./orcamento.js?v=20261017r";
+import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,calcItem,calcTotal,renderProposta,brl,num,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,carregarConfig,parsePct} from "./orcamento.js?v=20261020a";
 import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
   d.innerHTML=`<legend>Relação dos projetos<span class="ono"></span></legend><div class="ogrid"><label>Descrição do projeto<input class="i-nome" maxlength="160" placeholder="Ex.: Residência térrea"></label><label>Área construída (m²)<input class="i-area" inputmode="decimal" value="100"></label></div>
-  <div class="disc">${C.disciplinas.map((x,i)=>`<label><input type="checkbox" value="${i}" ${x.incluir?"checked":""}> ${x.nome}</label>`).join("")}</div><button type="button" class="rm">Remover projeto</button>`;
-  d.querySelector(".rm").onclick=()=>{d.remove();draw()};box.append(d);draw()}
-const cf=v=>(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});const f=id=>$("#o-"+id).value.trim();
-function read(){return[...box.children].map(d=>{const sel=[...d.querySelectorAll(".disc input:checked")].map(x=>+x.value);return{...calcItem({nome:d.querySelector(".i-nome").value.trim(),area:parseFloat(d.querySelector(".i-area").value.replace(/\./g,"").replace(",","."))||0,sel}),sel}})}
+  <div class="disc-actions"><button type="button" class="btn ghost small" data-act="all">Marcar todas</button><button type="button" class="btn ghost small" data-act="none">Desmarcar todas</button></div>
+  <div class="disc">${C.disciplinas.map((x,i)=>`<label><input type="checkbox" value="${i}" ${x.incluir?"checked":""}> ${x.nome}</label>`).join("")}</div>
+  <fieldset class="cx" hidden><legend>Complexidade do projeto estrutural</legend><p class="onote">Informe o percentual de acréscimo de cada item sobre o valor base do estrutural (máximo 100% por item). Deixe em branco o que não se aplica.</p><div class="cxgrid">${COMPLEXIDADE_EST.map(c=>`<label>${c.nome}<span class="cxin"><input class="i-cx" data-cx="${c.id}" inputmode="decimal" placeholder="0" aria-label="Percentual de ${c.nome}">%</span></label>`).join("")}</div></fieldset>
+  <button type="button" class="rm">Remover projeto</button>`;
+  d.querySelector(".rm").onclick=()=>{d.remove();draw()};
+  d.querySelector('[data-act="all"]').onclick=()=>{d.querySelectorAll(".disc input").forEach(c=>c.checked=true);draw()};
+  d.querySelector('[data-act="none"]').onclick=()=>{d.querySelectorAll(".disc input").forEach(c=>c.checked=false);draw()};
+  box.append(d);draw()}
+const f=id=>$("#o-"+id).value.trim();
+const estOn=d=>[...d.querySelectorAll(".disc input:checked")].some(x=>C.disciplinas[+x.value]?.item===ITEM_EST);
+function readCx(d){const o={};d.querySelectorAll(".i-cx").forEach(i=>{const v=parsePct(i.value);if(v>0)o[i.dataset.cx]=v});return o}
+function read(){return[...box.children].map(d=>{const sel=[...d.querySelectorAll(".disc input:checked")].map(x=>+x.value),complexidade=estOn(d)?readCx(d):{};return{...calcItem({nome:d.querySelector(".i-nome").value.trim(),area:parseFloat(d.querySelector(".i-area").value.replace(/\./g,"").replace(",","."))||0,sel,complexidade}),sel}})}
 function build(){const itens=read(),t=calcTotal(itens);return{cliente:{nome:f("nome").slice(0,120),telefone:f("tel").slice(0,40),email:f("email").slice(0,120)},projeto:descProjeto({itens}),cidade:f("cid").slice(0,100),itens,subtotal:t.subtotal,artPct:t.artPct,art:t.art,...(t.desc?{descPct:t.descPct,desc:t.desc}:{}),total:t.total,totalPorM2:t.totalPorM2,area:t.area}}
-function draw(){[...box.children].forEach((d,i)=>{d.querySelector(".ono").textContent=box.children.length>1?" — item "+(i+1):"";d.querySelector(".rm").hidden=box.children.length<2});
+function draw(){[...box.children].forEach((d,i)=>{d.querySelector(".ono").textContent=box.children.length>1?" — item "+(i+1):"";d.querySelector(".rm").hidden=box.children.length<2;d.querySelector(".cx").hidden=!estOn(d);d.querySelectorAll(".i-cx").forEach(i=>{if(parsePct(i.value)>100)i.value="100"})});
   const o=build(),multi=o.itens.length>1;
-  $("#o-tab tbody").innerHTML=o.itens.map((it,k)=>(multi?`<tr class="grp"><td colspan="6">${esc(it.nome||"Item "+(k+1))} — ${num(it.area)} m²</td></tr>`:"")+(it.disciplinas.map(x=>`<tr><td>${x.item}</td><td>${x.nome}</td><td>${cf(x.coef)}</td><td>${num(x.areaProjeto)}</td><td>${brl(x.preco)}</td><td>${brl(x.total)}</td></tr>`).join("")||'<tr><td colspan="6">Selecione ao menos uma disciplina.</td></tr>')+(multi?`<tr class="sub"><td colspan="5">Subtotal</td><td>${brl(it.subtotal)}</td></tr>`:"")).join("");
+  $("#o-tab tbody").innerHTML=o.itens.map((it,k)=>(multi?`<tr class="grp"><td colspan="6">${esc(it.nome||"Item "+(k+1))} — ${num(it.area)} m²</td></tr>`:"")+(it.disciplinas.map(htmlLinhasDisciplina).join("")||'<tr><td colspan="6">Selecione ao menos uma disciplina.</td></tr>')+(multi?`<tr class="sub"><td colspan="5">Subtotal</td><td>${brl(it.subtotal)}</td></tr>`:"")).join("");
   $("#o-sub").textContent=brl(o.subtotal);$("#o-artl").textContent=`Emissão das ART (${num(o.artPct)}% do subtotal)`;$("#o-artv").textContent=brl(o.art);{const r=$("#o-descr");if(r){r.hidden=!o.desc;$("#o-descl").textContent=`Desconto (${num(o.descPct||0)}% do subtotal)`;$("#o-descv").textContent="− "+brl(o.desc||0)}}$("#o-tot").textContent=brl(o.total);$("#o-med").textContent=brl(o.totalPorM2)+"/m²";
-  const t=`Olá! Gostaria de um orçamento para ELABORAÇÃO DE PROJETOS (honorários técnicos — não inclui execução da obra, materiais ou mão de obra).\nCliente: ${o.cliente.nome||"-"}${o.projeto?`\nProjeto: ${o.projeto}`:""}\nCidade: ${o.cidade||"-"}\n`+o.itens.map((it,k)=>`• ${it.nome||"Item "+(k+1)} (${num(it.area)} m²): ${it.disciplinas.map(nomeDisc).join(", ")}`).join("\n")+`\n${o.art?`Subtotal dos projetos: ${brl(o.subtotal)}\nEmissão das ART (${num(o.artPct)}%): ${brl(o.art)}\n${o.desc?`Desconto (${num(o.descPct)}%): − ${brl(o.desc)}\n`:""}`:""}Total estimado (honorários de projeto): ${brl(o.total)}`;
+  const t=`Olá! Gostaria de um orçamento para ELABORAÇÃO DE PROJETOS (honorários técnicos — não inclui execução da obra, materiais ou mão de obra).\nCliente: ${o.cliente.nome||"-"}${o.projeto?`\nProjeto: ${o.projeto}`:""}\nCidade: ${o.cidade||"-"}\n`+o.itens.map((it,k)=>`• ${it.nome||"Item "+(k+1)} (${num(it.area)} m²): ${it.disciplinas.map(nomeDisc).join(", ")}${textoComplexidade(it)?`\n  Complexidade do estrutural: ${textoComplexidade(it)}`:""}`).join("\n")+`\n${o.art?`Subtotal dos projetos: ${brl(o.subtotal)}\nEmissão das ART (${num(o.artPct)}%): ${brl(o.art)}\n${o.desc?`Desconto (${num(o.descPct)}%): − ${brl(o.desc)}\n`:""}`:""}Total estimado (honorários de projeto): ${brl(o.total)}`;
   WA_TXT=t;$("#o-wa").href=`https://wa.me/${C.whatsapp}?text=`+encodeURIComponent(t);return o}
 let WA_TXT="",ULT="";
 function numero(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=crypto.getRandomValues(new Uint8Array(4));return`ORC-${new Date().getFullYear()}-`+[...r].map(b=>a[b%a.length]).join("")}
@@ -59,7 +67,9 @@ $("#om-cancel").onclick=()=>{fimEdit();mm("Edição cancelada; o próximo orçam
 function carregar(o,editar){box.innerHTML="";const its=o.itens?.length?o.itens:[{}];
   its.forEach((it,k)=>{addItem();const d=box.lastElementChild;d.querySelector(".i-nome").value=it.nome||(k===0&&o.projeto&&its.length===1?o.projeto:"");d.querySelector(".i-area").value=it.area!=null?String(it.area).replace(".",","):"";
     const sel=Array.isArray(it.sel)?it.sel:(it.disciplinas||[]).map(x=>C.disciplinas.findIndex(c=>c.item===x.item)).filter(i=>i>=0);
-    d.querySelectorAll(".disc input").forEach(c=>c.checked=sel.includes(+c.value))});
+    d.querySelectorAll(".disc input").forEach(c=>c.checked=sel.includes(+c.value));
+    const cx=it.complexidade&&!Array.isArray(it.complexidade)?it.complexidade:Object.fromEntries((it.disciplinas||[]).flatMap(x=>x.complexidade||[]).map(x=>[x.id,x.pct]));
+    d.querySelectorAll(".i-cx").forEach(i=>{const v=cx[i.dataset.cx];i.value=v?String(v).replace(".",","):""})});
   $("#o-nome").value=o.cliente?.nome||"";$("#o-tel").value=o.cliente?.telefone||"";$("#o-email").value=o.cliente?.email||"";$("#o-cid").value=o.cidade||"";
   const r=draw();let av="";if(Math.abs((r.total||0)-(o.total||0))>0.05)av=` Atenção: com a tabela de preços atual o total é ${brl(r.total)} (salvo: ${brl(o.total)}). "Gerar proposta" na lista usa os valores salvos.`;
   if(editar){EDIT={id:o.id,numero:o.numero,uid:o.uid};$("#om-edt").textContent=`Editando ${o.numero}${USER&&o.uid!==USER.uid?" (orçamento de outro usuário — modo administrador)":""} — ao gerar a proposta as alterações serão salvas neste mesmo orçamento.`;$("#om-ed").hidden=false;$("#o-gerar").textContent="Salvar alterações e gerar proposta"}else fimEdit();
