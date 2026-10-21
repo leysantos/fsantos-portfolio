@@ -4,7 +4,7 @@ const {onAuthStateChanged}=await import(FB+"firebase-auth.js");
 const {collection,getDocs,query,orderBy,doc,updateDoc,deleteDoc,serverTimestamp}=await import(FB+"firebase-firestore.js");
 const $=s=>document.querySelector(s),STATUS=["novo","em análise","enviado","aprovado","recusado"],TIPO={baixo:"Casa baixo padrão",medio:"Casa médio padrão",alto:"Casa alto padrão",galpao:"Galpão (modelo anterior)",galpao_ind:"Galpão industrial",galpao_com:"Galpão comercial"};let all=[],loaded=false;
 STATUS.forEach(s=>$("#o-fst").insertAdjacentHTML("beforeend",`<option>${s}</option>`));
-document.querySelectorAll(".ptabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".ptabs button").forEach(x=>x.classList.toggle("on",x===b));["proj","obra","cfg"].forEach(t=>{const e=$("#tab-"+t);if(e)e.hidden=b.dataset.tab!==t});if(b.dataset.tab==="obra"&&!loaded)load()});
+document.querySelectorAll(".ptabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".ptabs button").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll("[id^=tab-]").forEach(e=>{e.hidden=e.id!=="tab-"+b.dataset.tab});if(b.dataset.tab==="obra"&&!loaded)load()});
 const cls=s=>"st st-"+String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
 const dt=o=>o.createdAt?.toDate?o.createdAt.toDate():null,fd=o=>dt(o)?.toLocaleDateString("pt-BR")??"—";
 onAuthStateChanged(auth,u=>{if(!(u&&u.email===ADMIN_EMAIL&&u.emailVerified)){all=[];loaded=false}});

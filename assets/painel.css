@@ -8,6 +8,14 @@
 .pdbox{position:relative;background:var(--navy);border:1px solid #ffffff22;border-radius:14px;max-width:820px;width:100%;padding:1.5rem}.pdbox .x{position:absolute;top:.3rem;right:.6rem;background:none;border:0;color:#fff;font-size:2rem;cursor:pointer}
 .pdbox textarea{width:100%;min-height:90px}.pdbox dl{display:grid;grid-template-columns:max-content 1fr;gap:.3rem 1rem}.pdbox dt{color:var(--mut)}.pdbox dd{margin:0}.pdbtn{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem}.pdbtn .btn{margin:0}.btn.danger{background:#b8473a;color:#fff}
 .ptabs{display:flex;gap:.4rem;margin-bottom:1rem;border-bottom:1px solid #ffffff22}.ptabs button{background:none;border:0;border-bottom:3px solid transparent;color:var(--txt);padding:.6rem 1rem;font:inherit;cursor:pointer}.ptabs button.on{border-color:var(--gold);color:var(--gold);font-weight:700}
+.md-item{background:var(--navy2);border:1px solid #ffffff14;border-radius:12px;padding:1rem;margin:0 0 1rem}
+.md-thumbs{display:flex;flex-wrap:wrap;gap:.6rem;margin:.6rem 0}
+.md-thumbs figure{margin:0;width:140px}
+.md-thumbs img{width:140px;height:100px;object-fit:contain;background:#f4f7fb;border-radius:8px;display:block}
+.md-thumbs button{margin:.25rem 0 0;padding:.2rem .5rem;font-size:.8rem}
+.md-item label{display:flex;flex-direction:column;gap:.3rem;font-size:.92rem;min-width:0}
+.md-item input,#md-obra{padding:.55rem;border-radius:8px;border:1px solid #ffffff2a;background:var(--navy);color:var(--txt);font:inherit;width:100%;max-width:36rem}
+.est-faixas{display:flex;flex-wrap:wrap;gap:.55rem}.est-faixas label{display:flex;flex-direction:column;gap:.15rem;font-size:.78rem;color:var(--mut)}.est-faixas input{width:7.5rem;max-width:none}
 .st-semlogin{background:#6b7a8f33;color:#c9d3e0;border:1px solid #8a97a8;font-size:.72rem;padding:.05rem .4rem;border-radius:6px;vertical-align:middle}
 .cform fieldset{border:1px solid #ffffff22;border-radius:12px;padding:.8rem 1rem;margin:0 0 1rem;min-width:0}.cform legend{color:var(--gold);padding:0 .4rem}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.6rem 1rem}.cform label{display:flex;flex-direction:column;gap:.3rem;font-size:.92rem;min-width:0}.cform input,.cform textarea{padding:.6rem;border-radius:8px;border:1px solid #ffffff2a;background:var(--navy2);color:var(--txt);font:inherit;min-width:0;width:100%;box-sizing:border-box}.cform .cfull{margin-top:.8rem}.cform .ptab input{max-width:8rem}.cact{display:flex;gap:.6rem;flex-wrap:wrap}
 @media(max-width:640px){.ptabs{flex-wrap:wrap;gap:0}.ptabs button{flex:1 1 30%;padding:.55rem .4rem;font-size:.92rem;min-width:0}}

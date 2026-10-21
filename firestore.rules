@@ -238,6 +238,23 @@ service cloud.firestore {
       allow write: if isAdmin() && docId == 'site' && validConfig(request.resource.data);
     }
 
+    // Imagens da home (destaques) e trocas de foto do portfólio. Leitura pública; só o administrador grava.
+    function validMidia(d, maxItens) {
+      return d.keys().hasOnly(['itens', 'updatedAt'])
+        && d.itens is list
+        && d.itens.size() <= maxItens
+        && d.updatedAt == request.time;
+    }
+
+    match /midia/{docId} {
+      allow read: if docId == 'destaques' || docId == 'portfolio';
+      allow create, update: if isAdmin() && (
+        (docId == 'destaques' && validMidia(request.resource.data, 24))
+        || (docId == 'portfolio' && validMidia(request.resource.data, 80))
+      );
+      allow delete: if false;
+    }
+
     // Todo o resto fica fechado.
     match /{document=**} {
       allow read, write: if false;
