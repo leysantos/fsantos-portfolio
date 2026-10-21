@@ -202,6 +202,10 @@ body.pp-open .totop,body.guia .totop{display:none}
 .enviar ul{margin:.2rem 0 .6rem;padding-left:1.1rem}
 .card.caso{border-color:#f2b63266}
 .caso-r{color:var(--txt)!important}
+.caso-discs{display:flex;flex-wrap:wrap;gap:.35rem;margin:.4rem 0 .15rem}
+.caso-discs button{font:inherit;font-size:.74rem;line-height:1.2;color:var(--gold);background:transparent;border:1px solid #f2b63266;border-radius:999px;padding:.18rem .55rem;cursor:pointer}
+.caso-discs button:hover{background:#f2b63222}
+.lb-caso .lb-disc{display:block;color:var(--gold);font-size:.78rem;font-weight:600;margin-top:.12rem}
 .lb figcaption{white-space:normal;text-align:left;width:0;min-width:100%;max-width:100%;margin:.35rem 0 0;box-sizing:border-box}
 .lb-caso{width:100%;box-sizing:border-box;background:rgba(19,40,74,.94);border:1px solid #ffffff22;border-radius:10px;padding:.35rem .5rem .45rem}
 .lb-caso .lb-tit{margin:0 0 .28rem;color:var(--txt);font-weight:700;font-size:.9rem;line-height:1.2}
