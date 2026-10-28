@@ -213,8 +213,43 @@ service cloud.firestore {
     }
 
     // Configurações do site (calculadora de honorários / proposta): leitura pública, escrita só do administrador
+    function extraOk(x) {
+      return x is map
+        && x.keys().hasOnly(['item', 'nome', 'coef', 'preco', 'incluir'])
+        && x.keys().hasAll(['item', 'nome', 'coef', 'preco', 'incluir'])
+        && x.item is string && x.item.matches('^0(1[3-9]|[2-9][0-9])\\.$')
+        && str(x.nome, 1, 80)
+        && num(x.coef, 0.05, 5)
+        && num(x.preco, 0, 10000)
+        && x.incluir is bool;
+    }
+
+    function extrasOk(xs) {
+      return xs is list && xs.size() <= 20
+        && (xs.size() < 1 || extraOk(xs[0]))
+        && (xs.size() < 2 || extraOk(xs[1]))
+        && (xs.size() < 3 || extraOk(xs[2]))
+        && (xs.size() < 4 || extraOk(xs[3]))
+        && (xs.size() < 5 || extraOk(xs[4]))
+        && (xs.size() < 6 || extraOk(xs[5]))
+        && (xs.size() < 7 || extraOk(xs[6]))
+        && (xs.size() < 8 || extraOk(xs[7]))
+        && (xs.size() < 9 || extraOk(xs[8]))
+        && (xs.size() < 10 || extraOk(xs[9]))
+        && (xs.size() < 11 || extraOk(xs[10]))
+        && (xs.size() < 12 || extraOk(xs[11]))
+        && (xs.size() < 13 || extraOk(xs[12]))
+        && (xs.size() < 14 || extraOk(xs[13]))
+        && (xs.size() < 15 || extraOk(xs[14]))
+        && (xs.size() < 16 || extraOk(xs[15]))
+        && (xs.size() < 17 || extraOk(xs[16]))
+        && (xs.size() < 18 || extraOk(xs[17]))
+        && (xs.size() < 19 || extraOk(xs[18]))
+        && (xs.size() < 20 || extraOk(xs[19]));
+    }
+
     function validConfig(d) {
-      return d.keys().hasOnly(['artPct', 'descPct', 'descMax', 'validade', 'prazo', 'obs', 'whatsapp', 'fone', 'email', 'pagAdm', 'precos', 'updatedAt'])
+      return d.keys().hasOnly(['artPct', 'descPct', 'descMax', 'validade', 'prazo', 'obs', 'whatsapp', 'fone', 'email', 'pagAdm', 'precos', 'extras', 'seqExtra', 'updatedAt'])
         && d.keys().hasAll(['artPct', 'descPct', 'descMax', 'validade', 'prazo', 'whatsapp', 'precos', 'updatedAt'])
         && num(d.artPct, 0, 20)
         && num(d.descPct, 0, 50) && num(d.descMax, 0, 50) && d.descPct <= d.descMax
@@ -230,6 +265,8 @@ service cloud.firestore {
               && (!('banco' in d.pagAdm) || str(d.pagAdm.banco, 0, 120))
               && (!('titular' in d.pagAdm) || str(d.pagAdm.titular, 0, 120))))
         && d.precos is map && d.precos.size() <= 20
+        && (!('extras' in d) || extrasOk(d.extras))
+        && (!('seqExtra' in d) || (d.seqExtra is int && d.seqExtra >= 13 && d.seqExtra <= 100))
         && d.updatedAt == request.time;
     }
 

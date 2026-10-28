@@ -1,16 +1,20 @@
-import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,PRECO_EST,calcItem,calcTotal,renderProposta,brl,num2,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,rotuloArt,carregarConfig,parsePct,prazoDe,rotBrief} from "./orcamento.js?v=20261020r";
+import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,PRECO_EST,calcItem,calcTotal,renderProposta,brl,num2,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,rotuloArt,carregarConfig,parsePct,prazoDe,rotBrief} from "./orcamento.js?v=20261028a";
 import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
   d.innerHTML=`<legend>Relação dos projetos<span class="ono"></span></legend><div class="ogrid"><label>Descrição do projeto<input class="i-nome" maxlength="160" placeholder="Ex.: Residência térrea"></label><label>Área construída (m²)<input class="i-area" inputmode="decimal" value="100"></label></div>
   <div class="disc-actions"><button type="button" class="btn ghost small" data-act="all">Marcar todas</button><button type="button" class="btn ghost small" data-act="none">Desmarcar todas</button></div>
-  <div class="disc">${C.disciplinas.map((x,i)=>`<label><input type="checkbox" value="${i}" ${x.incluir?"checked":""}> ${x.nome}</label>`).join("")}</div>
+  <div class="disc"></div>
   <fieldset class="cx" hidden><legend>Complexidade do projeto estrutural</legend><p class="onote">Informe o percentual de acréscimo de cada item sobre o valor base do estrutural (máximo 100% por item). Deixe em branco o que não se aplica.</p><div class="cxgrid">${COMPLEXIDADE_EST.map(c=>`<label>${c.nome}<span class="cxin"><input class="i-cx" data-cx="${c.id}" inputmode="decimal" placeholder="0" aria-label="Percentual de ${c.nome}">%</span></label>`).join("")}</div></fieldset>
   <button type="button" class="rm">Remover projeto</button>`;
   d.querySelector(".rm").onclick=()=>{d.remove();draw()};
   d.querySelector('[data-act="all"]').onclick=()=>{d.querySelectorAll(".disc input").forEach(c=>c.checked=true);draw()};
   d.querySelector('[data-act="none"]').onclick=()=>{d.querySelectorAll(".disc input").forEach(c=>c.checked=false);draw()};
-  box.append(d);draw()}
+  box.append(d);pintarDisc(d,null);draw()}
+function discHtml(marcados){return C.disciplinas.map((x,i)=>`<label><input type="checkbox" value="${i}" data-item="${esc(x.item)}" ${(marcados?marcados.has(x.item):x.incluir)?"checked":""}> ${esc(x.nome)}</label>`).join("")}
+function marcarDe(d){return new Set([...d.querySelectorAll(".disc input:checked")].map(x=>x.dataset.item||C.disciplinas[+x.value]?.item).filter(Boolean))}
+function pintarDisc(d,marcados){const el=d.querySelector(".disc");if(el)el.innerHTML=discHtml(marcados)}
+export function sincronizarDisciplinas(novas){[...box.children].forEach(d=>{const on=marcarDe(d);(novas||[]).forEach(item=>{const x=C.disciplinas.find(y=>y.item===item);if(x&&x.incluir)on.add(item)});pintarDisc(d,on)})}
 const f=id=>$("#o-"+id).value.trim();
 const estOn=d=>[...d.querySelectorAll(".disc input:checked")].some(x=>C.disciplinas[+x.value]?.item===ITEM_EST);
 function readCx(d){const o={};d.querySelectorAll(".i-cx").forEach(i=>{const v=parsePct(i.value);if(v>0)o[i.dataset.cx]=v});return o}
@@ -71,7 +75,7 @@ $("#om-cancel").onclick=()=>{fimEdit();mm("Edição cancelada; o próximo orçam
 // restaura o formulário a partir do documento salvo (área, disciplinas marcadas, % ART, cliente/projeto/cidade)
 function carregar(o,editar){box.innerHTML="";const its=o.itens?.length?o.itens:[{}];
   its.forEach((it,k)=>{addItem();const d=box.lastElementChild;d.querySelector(".i-nome").value=it.nome||(k===0&&o.projeto&&its.length===1?o.projeto:"");d.querySelector(".i-area").value=it.area!=null?String(it.area).replace(".",","):"";
-    const sel=Array.isArray(it.sel)?it.sel:(it.disciplinas||[]).map(x=>C.disciplinas.findIndex(c=>c.item===x.item)).filter(i=>i>=0);
+    const sel=Array.isArray(it.disciplinas)?it.disciplinas.map(x=>C.disciplinas.findIndex(c=>c.item===x.item)).filter(i=>i>=0&&i<C.disciplinas.length):(Array.isArray(it.sel)?it.sel.filter(i=>i>=0&&i<C.disciplinas.length):[]);
     d.querySelectorAll(".disc input").forEach(c=>c.checked=sel.includes(+c.value));
     const cx=it.complexidade&&!Array.isArray(it.complexidade)?it.complexidade:Object.fromEntries((it.disciplinas||[]).flatMap(x=>x.complexidade||[]).map(x=>[x.id,x.pct]));
     d.querySelectorAll(".i-cx").forEach(i=>{const v=cx[i.dataset.cx];i.value=v?String(v).replace(".",","):""})});
@@ -115,4 +119,4 @@ $("#o-wa").onclick=async ev=>{ev.preventDefault();const o=draw(),b=$("#o-wa");ms
   finally{delete b.dataset.busy;b.textContent=lbl}};
 
 // configuração do site (ART, preços, prazos, contato) — usa os padrões se indisponível
-(async()=>{try{const {db,F}=await fb();if(await carregarConfig(db,F)){const el=$("#o-prazo");if(el&&!el.dataset.user)el.value=String(C.prazo);draw()}}catch(e){console.warn(e)}})();
+(async()=>{try{const {db,F}=await fb();const antes=new Set(C.disciplinas.map(d=>d.item));if(await carregarConfig(db,F)){sincronizarDisciplinas(C.disciplinas.filter(d=>!antes.has(d.item)).map(d=>d.item));const el=$("#o-prazo");if(el&&!el.dataset.user)el.value=String(C.prazo);draw()}}catch(e){console.warn(e)}})();

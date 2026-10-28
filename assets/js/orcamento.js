@@ -76,12 +76,22 @@ export function textoComplexidade(it){const cx=(it?.disciplinas||[]).flatMap(x=>
 // descrição do projeto/obra: campo antigo "projeto" ou descrições dos itens
 export const descProjeto=o=>String(o.projeto||(o.itens||[]).map(i=>i.nome).filter(Boolean).join("; ")||"").slice(0,160);
 // Configuração do site (Firestore config/site, leitura pública). Sem acesso: mantém os padrões acima.
-export const CFG_DEF=JSON.parse(JSON.stringify({artPct:7,descPct:0,descMax:15,validade:30,prazo:30,obs:"",whatsapp:"5592992262786",email:"leyfps@gmail.com",fone:"(92) 99226-2786",pagAdm:{pix:"leyfps@gmail.com",banco:"Banco Inter",titular:"Francirley Pereira Santos"},precos:{}}));
+export const CFG_DEF=JSON.parse(JSON.stringify({artPct:7,descPct:0,descMax:15,validade:30,prazo:30,obs:"",whatsapp:"5592992262786",email:"leyfps@gmail.com",fone:"(92) 99226-2786",pagAdm:{pix:"leyfps@gmail.com",banco:"Banco Inter",titular:"Francirley Pereira Santos"},precos:{},extras:[],seqExtra:13}));
+const DISC_BASE=ORC_CONFIG.disciplinas.map(d=>({...d}));
+const codExtra=item=>{const m=String(item||"").match(/^(\d{3})\.$/);if(!m)return 0;const n=+m[1];return n>=13&&n<=99?n:0};
+export function normalizarExtras(lista){if(!Array.isArray(lista))return [];const vistos=new Set(),out=[];
+  for(const raw of lista){if(out.length>=20||!raw||typeof raw!=="object")continue;const n=codExtra(raw.item);if(!n||vistos.has(n))continue;
+    const nome=String(raw.nome||"").trim().replace(/\s+/g," ").slice(0,80);if(!nome)continue;
+    const coef=r2(+raw.coef),preco=r2(+raw.preco);if(!(coef>=0.05&&coef<=5)||!(preco>=0&&preco<=10000))continue;
+    vistos.add(n);out.push({item:String(n).padStart(3,"0")+".",nome,coef,preco,incluir:!!raw.incluir})}
+  return out}
+function montarDisciplinas(extras){ORC_CONFIG.disciplinas.splice(0,ORC_CONFIG.disciplinas.length,...DISC_BASE.map(d=>({...d})),...normalizarExtras(extras))}
 export function aplicarConfig(c){if(!c||typeof c!=="object")return false;const C=ORC_CONFIG,n=(v,a,b)=>typeof v==="number"&&isFinite(v)&&v>=a&&v<=b;
+  montarDisciplinas(c.extras);
   if(n(c.artPct,0,20))C.artPct=c.artPct;if(n(c.descMax,0,50))C.descMax=c.descMax;if(n(c.descPct,0,50))C.descPct=Math.min(c.descPct,C.descMax);if(n(c.validade,1,365))C.validade=Math.round(c.validade);if(n(c.prazo,1,365))C.prazo=Math.round(c.prazo);
   if(typeof c.obs==="string")C.obs=c.obs.slice(0,2000);if(typeof c.whatsapp==="string"&&/^\d{10,15}$/.test(c.whatsapp))C.whatsapp=c.whatsapp;if(typeof c.email==="string"&&c.email.includes("@"))C.email=c.email.slice(0,120);if(typeof c.fone==="string"&&c.fone.trim())C.fone=c.fone.slice(0,40);
   if(c.pagAdm&&typeof c.pagAdm==="object")C.pagAdm={pix:String(c.pagAdm.pix??C.pagAdm.pix).slice(0,120),banco:String(c.pagAdm.banco??C.pagAdm.banco).slice(0,120),titular:String(c.pagAdm.titular??C.pagAdm.titular).slice(0,120)};
-  if(c.precos&&typeof c.precos==="object"){C.disciplinas.forEach(d=>{if(d.item===ITEM_EST)return;const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});if(n(c.precos.estMin,0,10000))PRECO_EST.min=c.precos.estMin;if(n(c.precos.estMed,0,10000))PRECO_EST.med=c.precos.estMed;if(n(c.precos.estMax,0,10000))PRECO_EST.max=c.precos.estMax}return true}
+  if(c.precos&&typeof c.precos==="object"){C.disciplinas.forEach(d=>{if(d.item===ITEM_EST||codExtra(d.item))return;const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});if(n(c.precos.estMin,0,10000))PRECO_EST.min=c.precos.estMin;if(n(c.precos.estMed,0,10000))PRECO_EST.med=c.precos.estMed;if(n(c.precos.estMax,0,10000))PRECO_EST.max=c.precos.estMax}return true}
 export async function carregarConfig(db,F,ms=6000){try{const s=await Promise.race([F.getDoc(F.doc(db,"config","site")),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);return s.exists()?(aplicarConfig(s.data()),s.data()):null}catch(e){console.warn("config/site indisponível — usando padrões",e.code||e.message);return null}}
 const tbl=it=>`<table class="pp-t"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Área projeto (m²)</th><th>R$/m²</th><th>Total</th></tr></thead><tbody>${it.disciplinas.map(htmlLinhasDisciplina).join("")}<tr><td colspan="5"><b>Subtotal</b></td><td><b>${brl(it.subtotal)}</b></td></tr></tbody></table><p class="pp-amb"><small>Área base: ${num2(it.area)} m² (área construída) × coef. de área da disciplina = área de projeto.${(it.disciplinas||[]).some(x=>(x.complexidade||[]).length)?" Cada percentual de complexidade incide sobre o valor base do projeto estrutural e soma ao total da disciplina.":""}</small></p>`;
 // Subtítulo e objeto da proposta conforme as disciplinas selecionadas (011 Laudos e Vistorias entra como complemento)
