@@ -46,8 +46,24 @@ function celLb(rotulo,valor){return `<td><b>${escHtml(rotulo)}</b><span>${escHtm
 function grupoDe(idx){const p=typeof PROJ!=="undefined"&&PROJ.find(x=>x.t===T);if(!p||!Array.isArray(p.g))return null;if(p.g.reduce((a,g)=>a+(g.q|0),0)!==G.length)return null;let acc=0;for(const g of p.g){if(idx<acc+g.q)return {g,n:idx-acc+1};acc+=g.q}return null}
 function larguraLb(){const w=Math.round(li.getBoundingClientRect().width);if(w>8)lc.style.width=w+"px"}
 function show(){li.src=G[i];const c=CASOS[T];const ga=grupoDe(i);if(!c){lc.textContent=ga?`${T} — ${ga.g.n} · ${ga.n}/${ga.g.q}`:`${T} — ${i+1}/${G.length}`}else{const f=ga?ga.g:c;const disc=ga?`<span class="lb-disc">${escHtml(ga.g.n)} · ${ga.n}/${ga.g.q}</span>`:"";lc.innerHTML=`<div class="lb-caso"><p class="lb-tit">${escHtml(T)}${disc}</p><table><tr>${celLb("Cliente",c.cliente)}${celLb("Problema",f.problema)}${celLb("Contratado",f.contratado)}</tr><tr>${celLb("Entrega",f.entrega)}${celLb("Resultado",f.resultado)}${celLb("Prancha",ga?`${ga.n}/${ga.g.q}`:`${i+1}/${G.length}`)}</tr></table></div>`}const sync=()=>requestAnimationFrame(larguraLb);li.onload=sync;if(li.complete)sync()}
-lb.querySelector(".x").onclick=()=>lb.hidden=true;lb.querySelector(".pv").onclick=e=>{i=(i-1+G.length)%G.length;show()};lb.querySelector(".nx").onclick=()=>{i=(i+1)%G.length;show()};
-lb.onclick=e=>{if(e.target==lb)lb.hidden=true};document.onkeydown=e=>{if(lb.hidden)return;if(e.key=="Escape")lb.hidden=true;if(e.key=="ArrowRight")lb.querySelector(".nx").click();if(e.key=="ArrowLeft")lb.querySelector(".pv").click()};
+function prevLb(){if(!G.length)return;i=(i-1+G.length)%G.length;animLb(-1);show()}
+function nextLb(){if(!G.length)return;i=(i+1)%G.length;animLb(1);show()}
+function animLb(dir){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;li.style.setProperty("--lb-dx",dir>0?"28px":"-28px");li.classList.remove("lb-slide");void li.offsetWidth;li.classList.add("lb-slide")}
+let swipeStart=null,swipedAt=0;
+const foiSwipe=()=>Date.now()-swipedAt<450;
+function iniciaSwipe(x,y,el){if(lb.hidden||(el&&el.closest&&el.closest("button")))return;swipeStart={x,y}}
+function terminaSwipe(x,y){if(!swipeStart)return;const dx=x-swipeStart.x,dy=y-swipeStart.y;swipeStart=null;if(Math.abs(dx)<48||Math.abs(dx)<=Math.abs(dy))return;swipedAt=Date.now();dx<0?nextLb():prevLb()}
+lb.addEventListener("pointerdown",e=>{if(!e.isPrimary){swipeStart=null;return}iniciaSwipe(e.clientX,e.clientY,e.target)},{passive:true});
+lb.addEventListener("pointerup",e=>{if(e.isPrimary)terminaSwipe(e.clientX,e.clientY)},{passive:true});
+lb.addEventListener("pointercancel",e=>{if(e.isPrimary)swipeStart=null},{passive:true});
+lb.addEventListener("touchstart",e=>{if(e.touches.length>1){swipeStart=null;return}const t=e.touches[0];if(t)iniciaSwipe(t.clientX,t.clientY,e.target)},{passive:true});
+lb.addEventListener("touchend",e=>{const t=e.changedTouches[0];if(t)terminaSwipe(t.clientX,t.clientY)},{passive:true});
+lb.addEventListener("touchcancel",()=>{swipeStart=null},{passive:true});
+lb.querySelector(".x").onclick=()=>{if(foiSwipe())return;lb.hidden=true};
+lb.querySelector(".pv").onclick=()=>{if(foiSwipe())return;prevLb()};
+lb.querySelector(".nx").onclick=()=>{if(foiSwipe())return;nextLb()};
+lb.onclick=e=>{if(foiSwipe()||e.target!=lb)return;lb.hidden=true};
+document.onkeydown=e=>{if(lb.hidden)return;if(e.key=="Escape")lb.hidden=true;if(e.key=="ArrowRight")nextLb();if(e.key=="ArrowLeft")prevLb()};
 $("#y").textContent=new Date().getFullYear();
 const SEED_DESTAQUE=[{t:"Projeto de Caixa de Retenção",s:"12×12×2,63 m — 180 m³",img:["assets/img/destaques/caixa-retencao.jpg"]},{t:"Projeto de escada metálica",s:"Revestimento do piso em madeira e guarda-corpo em vidro",img:["assets/img/destaques/escada-metalica.png"]}];
 const escHtml=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

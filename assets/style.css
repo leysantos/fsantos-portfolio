@@ -22,6 +22,7 @@ a{color:var(--gold)}.nav{position:sticky;top:0;z-index:5;display:flex;justify-co
 .lb{position:fixed;inset:0;background:#000e;z-index:10;display:flex;align-items:center;justify-content:center}.lb[hidden]{display:none}
 .lb figure{margin:0;width:fit-content;max-width:min(96vw,1280px);max-height:96vh;display:flex;flex-direction:column;align-items:stretch;text-align:center}.lb img{display:block;width:auto;max-width:min(96vw,1280px);max-height:calc(96vh - 8.2rem);height:auto;object-fit:contain}.lb figcaption{color:var(--mut)}
 .lb button{position:absolute;background:none;border:0;color:#fff;font-size:3rem;cursor:pointer;padding:1rem}.x{top:0;right:1rem}.pv{left:0}.nx{right:0}
+.lb{overflow:hidden;overscroll-behavior:contain;touch-action:pan-y pinch-zoom}.lb figure,.lb img{touch-action:pan-y pinch-zoom}.lb img.lb-slide{animation:lb-slide .18s ease}@keyframes lb-slide{from{opacity:.4;transform:translateX(var(--lb-dx,28px))}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.lb img.lb-slide{animation:none}}
 @media(max-width:1180px){.nav nav{display:none}}@media(max-width:640px){.hero{padding-top:3rem}}
 .slides,.ov{position:absolute;inset:0}.sl{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}.sl.on{opacity:1;z-index:1}
 .bg{position:absolute;inset:0;background:center/cover no-repeat;filter:blur(3.5px);transform:scale(1.06)}
