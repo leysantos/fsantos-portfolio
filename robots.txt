@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /painel.html
+Disallow: /honorarios.html
+
+Sitemap: https://leysantos.github.io/fsantos-portfolio/sitemap.xml
