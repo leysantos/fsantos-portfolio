@@ -1,5 +1,6 @@
-const C={all:"Todos",dest:"Destaques",met:"Estruturas metálicas",rol:"Ponte rolante",est:"Estrutural (concreto)",res:"Residencial e arquitetura",com:"Comercial e saúde",ins:"Instalações",inf:"Infraestrutura",pub:"Projetos públicos SEMINF"};
+const C={all:"Todos",dest:"Destaques",met:"Metálicas",rol:"Ponte rolante",est:"Concreto",res:"Residencial",com:"Comercial",ins:"Instalações",inf:"Infraestrutura",pub:"SEMINF"};
 const CASOS={
+"Edifício Bom Sucesso":{cliente:"Eng. Kleber Fernandes Braga",problema:"Edifício residencial Bom Sucesso, com estrutura em concreto, cisterna e instalações de gás.",contratado:"Projeto estrutural, executivo da cisterna e projeto de gás.",entrega:"Pranchas por disciplina, com até 10 por disciplina.",resultado:"Residencial Bom Sucesso — estrutura, cisterna e gás."},
 "Pontes rolantes — modelos Sol Master":{cliente:"Amazon Aço e Sol Master",problema:"Vários modelos de ponte rolante, com capacidades e vãos diferentes.",contratado:"Dimensionamento e detalhamento em estrutura metálica.",entrega:"Pranchas de cada modelo, na ordem do conjunto.",resultado:"Conjunto de modelos Sol Master, da dupla de 40 t ao vão de 27 m."},
 "Casa Dr. Ozires — Planalto":{cliente:"Dr. Ozires",problema:"Casa térrea no bairro Planalto, em Manaus, com arquitetura e complementares.",contratado:"Arquitetura, estrutura metálica, água fria, águas pluviais e instalações elétricas.",entrega:"Pranchas de cada disciplina, na ordem do conjunto.",resultado:"Casa térrea com 292,30 m² de projeção, em terreno de 330,00 m²."},
 "Casa Rafael e Ana Luiza — Mosaico":{cliente:"Rafael e Ana Luiza Caputti",problema:"Residência unifamiliar no Condomínio Mosaico, em Ponta Negra, com arquitetura e complementares.",contratado:"Arquitetura, estrutura em concreto, água fria e quente, águas pluviais, esgoto e ponto de entrada.",entrega:"Pranchas de cada disciplina, na ordem do conjunto.",resultado:"Residência de 244,48 m² em terreno de 250,00 m², no Condomínio Mosaico, em Ponta Negra."},
@@ -27,7 +28,7 @@ const CASOS={
 "Feira do Mutirão":{cliente:"SEMINF",problema:"Construção da Feira do Mutirão, na Alameda Alphaville, s/n, Novo Aleixo, em Manaus.",contratado:"Estrutura em concreto e metálica, água fria, esgoto e prevenção de incêndio.",entrega:"Pranchas de cada parte, na ordem do conjunto.",resultado:"Feira de 1.300,43 m² em terreno de 2.184,51 m², na Alameda Alphaville, Novo Aleixo."}
 };
 const ORDEM=Object.keys(CASOS);
-const posto=t=>t==="Feira do Mutirão"?-1:(CASOS[t]?ORDEM.indexOf(t):1000);
+const posto=t=>t==="Edifício Bom Sucesso"?-2:t==="Feira do Mutirão"?-1:(CASOS[t]?ORDEM.indexOf(t):1000);
 const $=s=>document.querySelector(s),grid=$("#grid"),lb=$("#lb"),li=lb.querySelector("img"),lc=lb.querySelector("figcaption");let G=[],i=0,T="";
 Object.entries(C).forEach(([k,v])=>{const b=document.createElement("button");b.textContent=v;b.dataset.k=k;if(k=="all")b.className="on";b.onclick=()=>{document.querySelectorAll(".filters button").forEach(x=>x.classList.toggle("on",x==b));render(k)};$("#filters").append(b)});
 function scoreCapa(u){const n=String(u||"").toLowerCase();let s=0;
