@@ -8,7 +8,7 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "assets" / "data.js"
 
-HIDE = {"Casa térrea 10×30 — projeto teste"}
+HIDE = set()  # stubs removidos; Casa 10×30 voltou como MCP · agente Grok
 
 REWRITE_S = {
     "MasterClin": "Clínica em Manaus — fachada, recepção e ambientes em render 3D",
