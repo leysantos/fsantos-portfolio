@@ -14,7 +14,10 @@ export const ORC_CONFIG={
     {item:"009.",nome:"Projeto de Gás",coef:0.3,preco:8.5,incluir:false},
     {item:"010.",nome:"Projeto de Ar-condicionado",coef:0.5,preco:10,incluir:false},
     {item:"011.",nome:"Laudos e Vistorias",coef:0.6,preco:3.5,incluir:false},
-    {item:"012.",nome:"Projeto de Geoprocessamento",coef:1,preco:0,incluir:false}],
+    {item:"012.",nome:"Projeto de Geoprocessamento",coef:1,preco:0,incluir:false},
+    {item:"090.",nome:"Elaboração de orçamento",coef:1,preco:8,incluir:false},
+    {item:"091.",nome:"Projeto de muro de contenção",coef:1,preco:18,incluir:false},
+    {item:"092.",nome:"Projeto de fundações",coef:1,preco:16,incluir:false}],
   get condicoes(){return condicoesDe(this)}
 };
 // Prazo da proposta: o informado no orçamento; senão, o prazo padrão da configuração (1 a 365 dias úteis).
@@ -85,13 +88,17 @@ export function normalizarExtras(lista){if(!Array.isArray(lista))return [];const
     const coef=r2(+raw.coef),preco=r2(+raw.preco);if(!(coef>=0.05&&coef<=5)||!(preco>=0&&preco<=10000))continue;
     vistos.add(n);out.push({item:String(n).padStart(3,"0")+".",nome,coef,preco,incluir:!!raw.incluir})}
   return out}
-function montarDisciplinas(extras){ORC_CONFIG.disciplinas.splice(0,ORC_CONFIG.disciplinas.length,...DISC_BASE.map(d=>({...d})),...normalizarExtras(extras))}
+function montarDisciplinas(extras){
+  const base=DISC_BASE.map(d=>({...d})),used=new Set(base.map(d=>d.item));
+  const extrasOk=normalizarExtras(extras).filter(x=>!used.has(x.item));
+  ORC_CONFIG.disciplinas.splice(0,ORC_CONFIG.disciplinas.length,...base,...extrasOk);
+}
 export function aplicarConfig(c){if(!c||typeof c!=="object")return false;const C=ORC_CONFIG,n=(v,a,b)=>typeof v==="number"&&isFinite(v)&&v>=a&&v<=b;
   montarDisciplinas(c.extras);
   if(n(c.artPct,0,20))C.artPct=c.artPct;if(n(c.descMax,0,50))C.descMax=c.descMax;if(n(c.descPct,0,50))C.descPct=Math.min(c.descPct,C.descMax);if(n(c.validade,1,365))C.validade=Math.round(c.validade);if(n(c.prazo,1,365))C.prazo=Math.round(c.prazo);
   if(typeof c.obs==="string")C.obs=c.obs.slice(0,2000);if(typeof c.whatsapp==="string"&&/^\d{10,15}$/.test(c.whatsapp))C.whatsapp=c.whatsapp;if(typeof c.email==="string"&&c.email.includes("@"))C.email=c.email.slice(0,120);if(typeof c.fone==="string"&&c.fone.trim())C.fone=c.fone.slice(0,40);
   if(c.pagAdm&&typeof c.pagAdm==="object")C.pagAdm={pix:String(c.pagAdm.pix??C.pagAdm.pix).slice(0,120),banco:String(c.pagAdm.banco??C.pagAdm.banco).slice(0,120),titular:String(c.pagAdm.titular??C.pagAdm.titular).slice(0,120)};
-  if(c.precos&&typeof c.precos==="object"){C.disciplinas.forEach(d=>{if(d.item===ITEM_EST||codExtra(d.item))return;const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});if(n(c.precos.estMin,0,10000))PRECO_EST.min=c.precos.estMin;if(n(c.precos.estMed,0,10000))PRECO_EST.med=c.precos.estMed;if(n(c.precos.estMax,0,10000))PRECO_EST.max=c.precos.estMax}return true}
+  if(c.precos&&typeof c.precos==="object"){const baseItens=new Set(DISC_BASE.map(d=>d.item));C.disciplinas.forEach(d=>{if(d.item===ITEM_EST||(codExtra(d.item)&&!baseItens.has(d.item)))return;const v=c.precos[d.item];if(n(v,0,10000))d.preco=v});if(n(c.precos.estMin,0,10000))PRECO_EST.min=c.precos.estMin;if(n(c.precos.estMed,0,10000))PRECO_EST.med=c.precos.estMed;if(n(c.precos.estMax,0,10000))PRECO_EST.max=c.precos.estMax}return true}
 export async function carregarConfig(db,F,ms=6000){try{const s=await Promise.race([F.getDoc(F.doc(db,"config","site")),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);return s.exists()?(aplicarConfig(s.data()),s.data()):null}catch(e){console.warn("config/site indisponível — usando padrões",e.code||e.message);return null}}
 const tbl=it=>`<table class="pp-t"><thead><tr><th>Item</th><th>Disciplina</th><th>Coef. área</th><th>Área projeto (m²)</th><th>R$/m²</th><th>Total</th></tr></thead><tbody>${it.disciplinas.map(htmlLinhasDisciplina).join("")}<tr><td colspan="5"><b>Subtotal</b></td><td><b>${brl(it.subtotal)}</b></td></tr></tbody></table><p class="pp-amb"><small>Área base: ${num2(it.area)} m² (área construída) × coef. de área da disciplina = área de projeto.${(it.disciplinas||[]).some(x=>(x.complexidade||[]).length)?" Cada percentual de complexidade incide sobre o valor base do projeto estrutural e soma ao total da disciplina.":""}</small></p>`;
 // Subtítulo e objeto da proposta conforme as disciplinas selecionadas (011 Laudos e Vistorias entra como complemento)

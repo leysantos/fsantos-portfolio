@@ -188,13 +188,42 @@ service cloud.firestore {
     }
 
     match /orcamentos/{orcamentoId} {
-      allow create: if (request.auth != null && validNovoOrcamento(request.resource.data))
-        || validLead(request.resource.data);
+      // Propostas com preço: só administrador (ou conta autenticada legada). Lead público sem preço vai em /solicitacoes.
+      allow create: if request.auth != null && validNovoOrcamento(request.resource.data);
       allow read: if isAdmin() || (request.auth != null && resource.data.get('uid', '') == request.auth.uid);
       allow update: if (request.auth != null && resource.data.get('uid', '') == request.auth.uid
             && validEdicaoOrcamento(request.resource.data, resource.data))
         || (isAdmin() && validAdminOrcamento(request.resource.data, resource.data));
       allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+    }
+
+    function validNovaSolicitacao(d) {
+      return d.keys().hasOnly(['numero', 'cliente', 'cidade', 'projeto', 'area', 'quem', 'tipo', 'fase', 'arquitetura', 'sondagem', 'disciplinas', 'mensagem', 'status', 'createdAt'])
+        && d.keys().hasAll(['numero', 'cliente', 'cidade', 'area', 'quem', 'tipo', 'fase', 'arquitetura', 'sondagem', 'disciplinas', 'status', 'createdAt'])
+        && d.numero is string && d.numero.matches('^SOL-[0-9]{4}-[A-Z0-9]{4}$')
+        && validCliente(d.cliente)
+        && str(d.cidade, 1, 100)
+        && (!('projeto' in d) || str(d.projeto, 0, 160))
+        && d.area is number && d.area > 0 && d.area <= 100000
+        && str(d.quem, 1, 40) && str(d.tipo, 1, 40) && str(d.fase, 1, 40)
+        && str(d.arquitetura, 1, 40) && str(d.sondagem, 1, 40)
+        && d.disciplinas is list && d.disciplinas.size() >= 1 && d.disciplinas.size() <= 20
+        && (!('mensagem' in d) || str(d.mensagem, 0, 2000))
+        && d.status == 'novo'
+        && d.createdAt == request.time;
+    }
+
+    function validAdminSolicitacao(d, old) {
+      return d.diff(old).affectedKeys().hasOnly(['status', 'notas', 'updatedAt'])
+        && d.status in ['novo', 'em análise', 'respondido', 'arquivado']
+        && (!('notas' in d) || str(d.notas, 0, 5000))
+        && d.updatedAt == request.time;
+    }
+
+    match /solicitacoes/{id} {
+      allow create: if validNovaSolicitacao(request.resource.data);
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && validAdminSolicitacao(request.resource.data, resource.data);
     }
 
     match /orcamentos_obra/{orcamentoId} {

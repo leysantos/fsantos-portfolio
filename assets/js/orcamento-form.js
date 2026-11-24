@@ -1,4 +1,4 @@
-import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,PRECO_EST,calcItem,calcTotal,renderProposta,brl,num2,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,rotuloArt,carregarConfig,parsePct,prazoDe,rotBrief} from "./orcamento.js?v=20261028a";
+import {ORC_CONFIG as C,COMPLEXIDADE_EST,ITEM_EST,PRECO_EST,calcItem,calcTotal,renderProposta,brl,num2,esc,nomeDisc,descProjeto,htmlLinhasDisciplina,textoComplexidade,rotuloArt,carregarConfig,parsePct,prazoDe,rotBrief} from "./orcamento.js?v=20261124b";
 import {enviarPDF} from "./share-pdf.js";
 const $=s=>document.querySelector(s),box=$("#o-itens"),msg=$("#o-msg");let n=0;
 function addItem(){if(box.children.length>=10)return;const k=n++;const d=document.createElement("fieldset");d.className="oitem";
@@ -90,12 +90,7 @@ $("#o-gerar").onclick=async()=>{const o=draw();msg.className="omsg";
   if(!o.cliente.telefone){msg.textContent="Informe o telefone ou WhatsApp.";msg.classList.add("err");$("#o-tel").focus();return}
   if(!o.cidade){msg.textContent="Informe a cidade da obra.";msg.classList.add("err");$("#o-cid").focus();return}
   if(!o.itens.length||o.itens.some(i=>!i.area||!i.disciplinas.length)){msg.textContent="Cada projeto precisa de área e de ao menos uma disciplina.";msg.classList.add("err");return}
-  if(!USER){const btn=$("#o-gerar");btn.disabled=true;btn.textContent="Enviando…";o.numero=numero();
-    try{const {db,F}=await fb();const {area,prazo,...doc}=o;await Promise.race([F.addDoc(F.collection(db,"orcamentos"),{...doc,semLogin:true,status:"novo",createdAt:F.serverTimestamp()}),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),12000))]);
-      msg.textContent=`Orçamento ${o.numero} registrado; entraremos em contato. Entre na sua conta (acima) para salvar seus orçamentos em Meus orçamentos e gerar a proposta novamente depois.`;msg.classList.add("ok")}
-    catch(e){console.error(e);o.numero="";msg.textContent="Não foi possível registrar o orçamento agora. A proposta foi gerada mesmo assim; envie pelo WhatsApp para confirmar.";msg.classList.add("err")}
-    finally{btn.disabled=false;btn.textContent="Gerar proposta"}
-    ULT=o.numero||"";renderProposta({...o,data:new Date()});return}
+  if(!USER||!ADMIN){msg.textContent="Entre como administrador para gerar e salvar a proposta.";msg.classList.add("err");return}
   const btn=$("#o-gerar"),ed=!!EDIT;btn.disabled=true;btn.textContent="Salvando…";o.numero=ed?EDIT.numero:numero();
   try{const {db,F}=await fb();const {area,prazo,...doc}=o;let op;
     if(ed){op=F.updateDoc(F.doc(db,"orcamentos",EDIT.id),{...doc,...(doc.pagamento?{}:{pagamento:F.deleteField()}),uid:EDIT.uid,updatedAt:F.serverTimestamp()})}
@@ -120,3 +115,12 @@ $("#o-wa").onclick=async ev=>{ev.preventDefault();const o=draw(),b=$("#o-wa");ms
 
 // configuração do site (ART, preços, prazos, contato) — usa os padrões se indisponível
 (async()=>{try{const {db,F}=await fb();const antes=new Set(C.disciplinas.map(d=>d.item));if(await carregarConfig(db,F)){sincronizarDisciplinas(C.disciplinas.filter(d=>!antes.has(d.item)).map(d=>d.item));const el=$("#o-prazo");if(el&&!el.dataset.user)el.value=String(C.prazo);draw()}}catch(e){console.warn(e)}})();
+// Prefill a partir de uma solicitação do site (?sol=…&nome=…)
+(()=>{const p=QS;if(!p.get("nome")&&!p.get("tel")&&!p.get("area"))return;
+  if(p.get("nome"))$("#o-nome").value=p.get("nome");
+  if(p.get("tel"))$("#o-tel").value=p.get("tel");
+  if(p.get("email"))$("#o-email").value=p.get("email");
+  if(p.get("cid"))$("#o-cid").value=p.get("cid");
+  [["o-quem","quem"],["o-fase","fase"],["o-tipo","tipo"],["o-arq","arq"],["o-sond","sond"]].forEach(([id,k])=>{const el=$("#"+id),v=p.get(k);if(el&&v)el.value=v});
+  const d=box.firstElementChild;if(d){if(p.get("proj"))d.querySelector(".i-nome").value=p.get("proj");if(p.get("area"))d.querySelector(".i-area").value=p.get("area").replace(".",",")}
+  draw()})();
