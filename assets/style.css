@@ -244,6 +244,9 @@ body.pp-open .totop,body.guia .totop{display:none}
 .enviar ul{margin:.2rem 0 .6rem;padding-left:1.1rem}
 .card.caso{border-color:#f2b63266}
 .caso-r{color:var(--txt)!important}
+.casos-reais>.grid{margin-top:.4rem}
+.casos-reais .caso-real .caso-r{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.86rem;line-height:1.4;color:#c5d0e0!important;margin-top:.35rem}
+.lb-real-d{margin:.15rem 0 0;font-size:.82rem;line-height:1.4;color:#c5d0e0}
 .caso-discs{display:flex;flex-wrap:wrap;gap:.35rem;margin:.4rem 0 .15rem}
 .caso-discs button{font:inherit;font-size:.74rem;font-weight:600;line-height:1.2;color:var(--gold);background:linear-gradient(180deg,rgba(242,182,50,.12),rgba(242,182,50,.04));border:1px solid rgba(242,182,50,.55);border-radius:8px;padding:.22rem .6rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .15s ease,border-color .15s ease,background .15s ease,color .15s ease}
 .caso-discs button:hover{border-color:var(--gold);color:#ffe29a;transform:translateY(-1px);background:linear-gradient(180deg,rgba(242,182,50,.22),rgba(242,182,50,.08))}
