@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 import shutil
 import json
+import sys
 
 OUT = Path(r"d:\dev-santos\fsantos-portfolio\assets\img\casos-reais")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -77,12 +78,166 @@ CASES = {
         "prefer": "execu",
     },
     "residencia-gabriel": {
-        "dirs": [Path(r"C:\Users\User 1\Pictures\ENGENHARIA\PROJETO GABRIEL")],
+        "dirs": [
+            Path(r"C:\Users\User 1\Pictures\ENGENHARIA\PROJETO GABRIEL"),
+            Path(r"C:\Users\FSantos\Pictures\Imagens\ENGENHARIA\PROJETO GABRIEL"),
+        ],
         "extra": [
-            Path(r"C:\Users\User 1\Pictures\ENGENHARIA\PROJETO GABRIEL\fachada finalizada.jpeg")
+            Path(r"C:\Users\User 1\Pictures\ENGENHARIA\PROJETO GABRIEL\fachada finalizada.jpeg"),
+            Path(r"C:\Users\FSantos\Pictures\Imagens\ENGENHARIA\PROJETO GABRIEL\fachada finalizada.jpeg"),
         ],
         "n": 1,
         "prefer": "fachada",
+    },
+    # Avell — fotos de campo de projetos FSantos (Amazon Aço / Sol Master). Sem render nem inspeção.
+    "ponte-rolante-40t": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Ponte Rolante 40t Dupla\Fotos")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "berco-bobinas": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Berço das Bobinas\Imagens")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "viga-rolamento": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Novo projeto linha de vida\fotos")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "galpao-amazon-aco": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Projeto Galpão Amazon Aço\IMAGENS")
+        ],
+        "n": 1,
+        "only_jpg": True,
+        "prefer": "wa0060",
+    },
+    "balancim-ponte": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Projeto Novo Balancim\fotos")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "casa-mosaico": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Rafael Caputti\Projeto Mosaico\IMAGENS\fotos dia 22102022"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Rafael Caputti\Projeto Mosaico\IMAGENS\fotos dia 11112022"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Rafael Caputti\Projeto Mosaico\IMAGENS\fotos - 29032023"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Rafael Caputti\Projeto Mosaico\IMAGENS\fotos - 23052023"),
+        ],
+        "n": 8,
+        "only_jpg": True,
+        "per_dir": 2,
+    },
+    "edicula-caputti": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Rafael Caputti\Projeto Edicula\imagem")
+        ],
+        "n": 6,
+        "only_jpg": True,
+    },
+    "galpao-metalico": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Harlen\Projeto Galpão Estrutura Metálica\IMAGENS")
+        ],
+        "n": 8,
+        "only_jpg": True,
+        "prefer": "img-",
+    },
+    "casa-flavia": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Flavia\Projeto Casa da Flavia\projetos\fotos")
+        ],
+        "n": 8,
+        "only_jpg": True,
+        "prefer": "img-",
+    },
+    "galpao-alvorada": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Projeto Alvorada e Cidade Nova\imagens")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "linha-de-vida": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Felipe Nicolas\Projetos Itamar\Linha de vida\FOTOS")
+        ],
+        "n": 8,
+        "only_jpg": True,
+    },
+    "muro-contencao": {
+        "files": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Israel Brito\Muro de Contenção\fotos\IMG-20240418-WA0080.jpg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Israel Brito\Muro de Contenção\fotos\Imagem do WhatsApp de 2024-04-17 à(s) 15.29.03_463bab98.jpg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Israel Brito\Muro de Contenção\fotos\Imagem do WhatsApp de 2024-04-17 à(s) 15.37.27_2c0a3510.jpg"),
+        ],
+        "n": 3,
+        "only_jpg": True,
+    },
+    "vestiario-fabril": {
+        "dirs": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Harlen\Projeto Fabril\EST_VESTIARIO_FABRIL\IMAGENS")
+        ],
+        "n": 8,
+        "only_jpg": True,
+        "prefer": "img-",
+    },
+    "escada-dom-pedro": {
+        "files": [
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\06_Eng_Altemir\PROJETO ESTRUTURAL ESCADA DOM PEDRO\IMAGENS\WhatsApp Unknown 2021-04-29 at 20.32.11\WhatsApp Image 2021-04-10 at 10.49.29 (1).jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\06_Eng_Altemir\PROJETO ESTRUTURAL ESCADA DOM PEDRO\IMAGENS\WhatsApp Unknown 2021-04-29 at 20.32.11\WhatsApp Image 2021-04-10 at 10.49.29 (2).jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\06_Eng_Altemir\PROJETO ESTRUTURAL ESCADA DOM PEDRO\IMAGENS\WhatsApp Unknown 2021-04-29 at 20.32.11\WhatsApp Image 2021-04-12 at 10.04.03.jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\06_Eng_Altemir\PROJETO ESTRUTURAL ESCADA DOM PEDRO\IMAGENS\WhatsApp Unknown 2021-04-29 at 20.32.11\WhatsApp Image 2021-04-12 at 10.04.02 (1).jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\06_Eng_Altemir\PROJETO ESTRUTURAL ESCADA DOM PEDRO\IMAGENS\WhatsApp Unknown 2021-04-29 at 20.32.11\WhatsApp Image 2021-04-27 at 10.24.14 (1).jpeg"),
+        ],
+        "n": 5,
+    },
+    "escritorio-concreto": {
+        "files": [
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\17_Eng_Jose_Junior\CONST ESCRITÓRIO\PROJETOS ESCRITORIO SRA MARLUCE\fotos\WhatsApp Image 2022-04-14 at 18.37.07.jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\17_Eng_Jose_Junior\CONST ESCRITÓRIO\PROJETOS ESCRITORIO SRA MARLUCE\fotos\WhatsApp Image 2022-04-01 at 11.32.16.jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\17_Eng_Jose_Junior\CONST ESCRITÓRIO\PROJETOS ESCRITORIO SRA MARLUCE\fotos\WhatsApp Image 2022-03-25 at 13.04.37.jpeg"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\17_Eng_Jose_Junior\CONST ESCRITÓRIO\PROJETOS ESCRITORIO SRA MARLUCE\fotos\WhatsApp Image 2022-03-23 at 09.57.49 (1).jpeg"),
+        ],
+        "n": 4,
+    },
+    "ponte-rolante-5-10t": {
+        "files": [
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\11_Eng_Felipe_Nicolas\PROJETO DE PONTE ROLANTE EM AÇO\PROJETO ITAMAR - PONTE ROLANTE\IMAGENS\FOTOS DA PONTE ROLANTE\IMG_2607.JPEG"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\11_Eng_Felipe_Nicolas\PROJETO DE PONTE ROLANTE EM AÇO\PROJETO ITAMAR - PONTE ROLANTE\IMAGENS\FOTOS DA PONTE ROLANTE\IMG_2610.JPEG"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\11_Eng_Felipe_Nicolas\PROJETO DE PONTE ROLANTE EM AÇO\PROJETO ITAMAR - PONTE ROLANTE\IMAGENS\FOTOS DA PONTE ROLANTE\IMG_2611.JPEG"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\11_Eng_Felipe_Nicolas\PROJETO DE PONTE ROLANTE EM AÇO\PROJETO ITAMAR - PONTE ROLANTE\IMAGENS\FOTOS DA PONTE ROLANTE\IMG_2615.JPEG"),
+            Path(r"G:\Meu Drive\ENGENHARIA\03_Projetos\11_Eng_Felipe_Nicolas\PROJETO DE PONTE ROLANTE EM AÇO\PROJETO ITAMAR - PONTE ROLANTE\IMAGENS\FOTOS DA PONTE ROLANTE\IMG_2617.JPEG"),
+        ],
+        "n": 5,
+    },
+    "casa-portinari": {
+        "files": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Francirley Santos\Casa 65B - Portinari\imagens\area-gourmet-concluida.jpg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Francirley Santos\Casa 65B - Portinari\imagens\IMG-20250322-WA0013.jpg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Francirley Santos\Casa 65B - Portinari\imagens\IMG-20250323-WA0009.jpg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Francirley Santos\Casa 65B - Portinari\imagens\IMG-20250323-WA0012.jpg"),
+        ],
+        "n": 4,
+    },
+    "oficina-empilhadeiras": {
+        "files": [
+            Path(r"D:\Engenharia\03_Projetos\Eng. Hudson Smith\Projeto Oficina de Empilhadeiras\fotos\WhatsApp Image 2026-07-01 at 12.22.12.jpeg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Hudson Smith\Projeto Oficina de Empilhadeiras\fotos\WhatsApp Image 2026-07-01 at 12.22.07.jpeg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Hudson Smith\Projeto Oficina de Empilhadeiras\fotos\WhatsApp Image 2026-07-01 at 12.22.06.jpeg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Hudson Smith\Projeto Oficina de Empilhadeiras\fotos\WhatsApp Image 2026-07-01 at 12.22.04.jpeg"),
+            Path(r"D:\Engenharia\03_Projetos\Eng. Hudson Smith\Projeto Oficina de Empilhadeiras\fotos\WhatsApp Image 2026-07-01 at 12.22.11.jpeg"),
+        ],
+        "n": 5,
     },
 }
 
@@ -98,7 +253,7 @@ def collect(dirs, extra=None):
             if not p.is_file() or p.suffix.lower() not in EXTS:
                 continue
             name = p.name.lower()
-            if "banner" in name:
+            if any(k in name for k in ("banner", "captura", "collage", "render", "archirender", "croqui")):
                 continue
             try:
                 sz = p.stat().st_size
@@ -153,11 +308,31 @@ def pick(files, n, slug, prefer=None):
     return picked[:n]
 
 
-def main():
+def main(only=None):
+    manifest_path = OUT / "_manifest.json"
     manifest = {}
-    for slug, cfg in CASES.items():
-        files = collect(cfg.get("dirs"), cfg.get("extra"))
-        picked = pick(files, cfg["n"], slug, cfg.get("prefer"))
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            manifest = {}
+    chosen = {k: v for k, v in CASES.items() if not only or k in only}
+    for slug, cfg in chosen.items():
+        if cfg.get("per_dir"):
+            files = []
+            for d in cfg.get("dirs") or []:
+                chunk = collect([d], None)
+                if cfg.get("only_jpg"):
+                    chunk = [p for p in chunk if p.suffix.lower() in {".jpg", ".jpeg"}]
+                files.extend(pick(chunk, cfg["per_dir"], slug, cfg.get("prefer")))
+            picked = files[: cfg["n"]]
+        elif cfg.get("files"):
+            picked = [p for p in cfg["files"] if p.exists()][: cfg["n"]]
+        else:
+            files = collect(cfg.get("dirs"), cfg.get("extra"))
+            if cfg.get("only_jpg"):
+                files = [p for p in files if p.suffix.lower() in {".jpg", ".jpeg"}]
+            picked = pick(files, cfg["n"], slug, cfg.get("prefer"))
         dest_dir = OUT / slug
         if dest_dir.exists():
             shutil.rmtree(dest_dir)
@@ -179,4 +354,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
